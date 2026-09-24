@@ -1,0 +1,37 @@
+.hero-bg {
+  background-image: linear-gradient(120deg, #07110D 10%, #07110dcc 45%, #07110d66), url("assets/fa-german-fb-cover.jpg");
+}
+
+.brand img {
+  clip-path: polygon(50% 0, 95% 15%, 100% 58%, 93% 82%, 50% 100%, 7% 82%, 0 58%, 5% 15%);
+}
+
+.teams {
+  background-image: linear-gradient(120deg, #07110D 8%, #07110de6 52%, #07110db8), url("assets/fa-german-fb-cover.jpg");
+  background-size: cover;
+  background-position: center;
+}
+
+#method {
+  background: var(--light);
+  color: #132019;
+}
+
+#method p {
+  color: var(--muted);
+}
+
+#method .method-card {
+  border-color: var(--line);
+}
+
+#coach {
+  background-image: linear-gradient(120deg, #07110D 10%, #07110dcc 45%, #07110d66), url("assets/fa-german-fb-cover.jpg");
+  background-size: cover;
+  background-position: center;
+  color: #fff;
+}
+
+#coach p {
+  color: #aab7b0;
+}
