@@ -112,10 +112,18 @@
       <div class="container">
         <div class="section-heading reveal"><div><div class="eyebrow">ГАЛЕРИЯ</div><h2>Футболът <em>в действие.</em></h2><p>Тренировки, мачове, турнири и моменти от живота на ФА Герман.</p></div></div>
         <div class="gallery-grid">
-          <button class="gallery-item g1 reveal" data-label="Тренировка">training.jpg</button>
-          <button class="gallery-item g2 reveal" data-label="Отбор">IMG_3277.jpg</button>
-          <button class="gallery-item g3 reveal" data-label="Мач">IMG_3280.jpg</button>
-          <button class="gallery-item g4 reveal" data-label="Академия">IMG_3276.jpg</button>
+          <button class="gallery-item g1 reveal" data-label="Тренировка" data-full="https://fa-german.eu/wp-content/uploads/2022/11/training-1024x576.jpg">
+            <img src="https://fa-german.eu/wp-content/uploads/2022/11/training-1024x576.jpg" alt="Тренировка" loading="lazy">
+          </button>
+          <button class="gallery-item g2 reveal" data-label="Отбор" data-full="https://fa-german.eu/wp-content/uploads/2025/04/IMG_3277-1024x683.jpg">
+            <img src="https://fa-german.eu/wp-content/uploads/2025/04/IMG_3277-1024x683.jpg" alt="Отбор" loading="lazy">
+          </button>
+          <button class="gallery-item g3 reveal" data-label="Мач" data-full="https://fa-german.eu/wp-content/uploads/2025/04/IMG_3280.jpg">
+            <img src="https://fa-german.eu/wp-content/uploads/2025/04/IMG_3280.jpg" alt="Мач" loading="lazy">
+          </button>
+          <button class="gallery-item g4 reveal" data-label="Академия" data-full="https://fa-german.eu/wp-content/uploads/2025/04/IMG_3276-1024x576.jpg">
+            <img src="https://fa-german.eu/wp-content/uploads/2025/04/IMG_3276-1024x576.jpg" alt="Академия" loading="lazy">
+          </button>
         </div>
         <p class="data-note">Заменете демонстрационните плочки с реалните снимки на академията. За детски снимки е необходима подходяща правна база/съгласие.</p>
       </div>
@@ -157,7 +165,13 @@
           <div class="contact-links"><a href="tel:+359000000000">+359 00 000 0000</a><a href="mailto:info@fa-german.eu">info@fa-german.eu</a></div>
           <div class="socials"><a href="#" aria-label="Facebook">f</a><a href="#" aria-label="Instagram">ig</a><a href="#" aria-label="YouTube">▶</a></div>
         </div>
-        <div class="map-placeholder reveal"><div><span>📍</span><strong>Герман • София</strong><small>Google Maps се зарежда след интеракция.</small></div></div>
+        <div class="map-embed reveal">
+          <iframe
+            src="https://www.google.com/maps?q=Футболна+Академия+Герман,+Герман,+Панчарево,+София&output=embed"
+            width="100%" height="100%" style="border:0" loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            title="Карта — Футболна Академия Герман, Панчарево, София"></iframe>
+        </div>
       </div>
     </section>
   </main>
@@ -169,6 +183,7 @@
 
   <div class="mobile-cta"><a href="#registration">ЗАПИШИ СЕ</a><a href="tel:+359000000000">📞</a></div>
   <div class="modal" id="newsModal" aria-hidden="true"><div class="modal-backdrop"></div><div class="modal-card"><button class="modal-close" aria-label="Затвори">×</button><div class="eyebrow green">АКАДЕМИЯТА</div><h2 id="modalTitle"></h2><p id="modalText"></p></div></div>
+  <div class="modal lightbox-modal" id="galleryModal" aria-hidden="true"><div class="modal-backdrop"></div><div class="lightbox-card"><button class="modal-close lightbox-close" aria-label="Затвори">×</button><img id="lightboxImg" src="" alt=""><p id="lightboxLabel" class="lightbox-label"></p></div></div>
   <script src="script.js"></script>
 </body>
 </html>

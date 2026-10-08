@@ -26,6 +26,22 @@ document.querySelector('#registrationForm')?.addEventListener('submit',e=>{
   e.currentTarget.reset();
 });
 
-document.querySelectorAll('.gallery-item').forEach(btn=>btn.addEventListener('click',()=>{
-  alert('Галерия: "'+btn.dataset.label+'". Тук може да бъде включен production lightbox с реалните снимки.');
-}));
+const galleryModal=document.querySelector('#galleryModal');
+const lightboxImg=document.querySelector('#lightboxImg');
+const lightboxLabel=document.querySelector('#lightboxLabel');
+function openLightbox(btn){
+  lightboxImg.src=btn.dataset.full||btn.querySelector('img')?.src||'';
+  lightboxImg.alt=btn.dataset.label||'';
+  lightboxLabel.textContent=btn.dataset.label||'';
+  galleryModal.classList.add('open');
+  galleryModal.setAttribute('aria-hidden','false');
+}
+function closeLightbox(){
+  galleryModal.classList.remove('open');
+  galleryModal.setAttribute('aria-hidden','true');
+  lightboxImg.src='';
+}
+document.querySelectorAll('.gallery-item').forEach(btn=>btn.addEventListener('click',()=>openLightbox(btn)));
+galleryModal?.querySelector('.lightbox-close')?.addEventListener('click',closeLightbox);
+galleryModal?.querySelector('.modal-backdrop')?.addEventListener('click',closeLightbox);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox()});
