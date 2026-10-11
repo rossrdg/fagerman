@@ -19,7 +19,6 @@ def create_registration():
     parent_name = (data.get("parent") or "").strip()
     phone = (data.get("phone") or "").strip()
     email = (data.get("email") or "").strip()
-    message = (data.get("message") or "").strip()
     age_raw = data.get("age")
 
     if not child_name:
@@ -48,7 +47,6 @@ def create_registration():
         parent_name=parent_name,
         phone=phone,
         email=email,
-        message=message or None,
     )
     db.session.add(registration)
     db.session.commit()

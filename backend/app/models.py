@@ -12,7 +12,8 @@ class Registration(db.Model):
     parent_name = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(40), nullable=False)
     email = db.Column(db.String(120), nullable=False)
-    message = db.Column(db.Text, nullable=True)
+    # Not collected from the parent anymore — the admin proposes a date/time
+    # after reviewing the request, so these stay nullable until then.
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def to_dict(self):
@@ -23,6 +24,5 @@ class Registration(db.Model):
             "parent_name": self.parent_name,
             "phone": self.phone,
             "email": self.email,
-            "message": self.message,
             "created_at": self.created_at.isoformat(),
         }
