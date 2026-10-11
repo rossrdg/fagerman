@@ -17,3 +17,13 @@
 .admin-table td.message-cell{white-space:normal;max-width:260px;color:var(--muted)}
 .admin-table td.empty-state{text-align:center;color:var(--muted);padding:40px;white-space:normal}
 @media(max-width:767px){.admin-header{padding:16px}.admin-main{padding:16px}}
+
+/* Admin navigation */
+.admin-nav{display:flex;gap:6px;padding:0 28px;background:#0d1913;border-bottom:1px solid #ffffff14;overflow-x:auto}
+.admin-nav a{display:inline-block;padding:14px 18px;font-size:13px;font-weight:700;color:#bdc9c2;border-bottom:3px solid transparent;white-space:nowrap;transition:.2s}
+.admin-nav a:hover{color:#fff}
+.admin-nav a.active{color:#fff;border-bottom-color:var(--green)}
+.admin-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.admin-toolbar h1{font-size:26px;margin:0}
+.admin-toolbar .admin-status{margin:0}
+@media(max-width:767px){.admin-nav{padding:0 12px}}

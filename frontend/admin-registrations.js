@@ -42,7 +42,7 @@ async function loadRegistrations() {
     const registrations = data.registrations || [];
 
     if (registrations.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="10" class="empty-state">Все още няма подадени записвания.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Все още няма подадени записвания.</td></tr>';
     } else {
       tbody.innerHTML = registrations.map(r => `
         <tr>
