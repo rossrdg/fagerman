@@ -16,6 +16,7 @@ def _add_missing_registration_columns():
         "training_date": "DATE",
         "training_time": "TIME",
         "processed": "BOOLEAN NOT NULL DEFAULT 0",
+        "notified_at": "DATETIME",
     }
     with db.engine.begin() as conn:
         for name, ddl in wanted.items():

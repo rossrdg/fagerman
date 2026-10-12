@@ -59,6 +59,22 @@
     </div>
   </main>
 
+  <div class="modal" id="notifyModal" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="notifyTitle">
+      <button class="modal-close" type="button" aria-label="Затвори">×</button>
+      <div class="eyebrow green">УВЕДОМЯВАНЕ</div>
+      <h2 id="notifyTitle" class="notify-title">Да се уведоми ли родителят?</h2>
+      <p id="notifyText"></p>
+      <p id="notifyWarn" class="notify-warn" hidden></p>
+      <p id="notifyError" class="notify-error" hidden></p>
+      <div class="notify-actions">
+        <button id="notifyYes" class="btn btn-primary" type="button">Да, изпрати имейл</button>
+        <button id="notifyNo" class="btn btn-outline" type="button">Не</button>
+      </div>
+    </div>
+  </div>
+
   <script src="admin-registrations.js"></script>
 </body>
 </html>

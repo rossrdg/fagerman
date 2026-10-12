@@ -1,9 +1,10 @@
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, current_app, request, jsonify
 
 from app import db
+from app.mailer import MailError, build_trial_training_email, send_email
 from app.models import Registration
 
 registration_bp = Blueprint("registration", __name__)
@@ -113,3 +114,33 @@ def update_registration(registration_id):
 
     db.session.commit()
     return jsonify({"ok": True, "registration": registration.to_dict()})
+
+
+@registration_bp.post("/registration/<int:registration_id>/notify")
+def notify_parent(registration_id):
+    """Emails the parent the trial-training day/time. Admin-only (no auth yet)."""
+    registration = db.session.get(Registration, registration_id)
+    if registration is None:
+        return jsonify({"ok": False, "error": "Записът не е намерен."}), 404
+
+    if not registration.training_date or not registration.training_time:
+        return jsonify({
+            "ok": False,
+            "error": "Първо задайте ден и час на тренировката.",
+        }), 400
+
+    subject, body = build_trial_training_email(registration)
+    try:
+        sent = send_email(registration.email, subject, body)
+    except MailError:
+        current_app.logger.exception("Could not send email for registration %s", registration_id)
+        return jsonify({
+            "ok": False,
+            "error": "Имейлът не можа да бъде изпратен. Опитайте отново.",
+        }), 502
+
+    if sent:
+        registration.notified_at = datetime.now(timezone.utc)
+        db.session.commit()
+
+    return jsonify({"ok": True, "sent": sent, "registration": registration.to_dict()})

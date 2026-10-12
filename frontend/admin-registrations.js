@@ -36,6 +36,17 @@ function flashStatus(text, isError = false) {
   statusTimer = setTimeout(showTotal, isError ? 4000 : 1800);
 }
 
+function formatDay(isoDate) {
+  if (!isoDate) return '—';
+  const [y, m, d] = isoDate.split('-');
+  return `${d}.${m}.${y}`;
+}
+
+function notifiedBadge(r) {
+  if (!r.notified_at) return '';
+  return `<span class="notified-badge" title="Родителят е уведомен на ${escapeHtml(formatCreatedAt(r.notified_at))}">✉ Уведомен</span>`;
+}
+
 function rowHtml(r) {
   return `
     <tr data-id="${r.id}" class="${r.processed ? 'is-processed' : ''}">
@@ -48,7 +59,7 @@ function rowHtml(r) {
       <td>${formatCreatedAt(r.created_at)}</td>
       <td class="admin-edit"><input type="date" class="js-date" value="${r.training_date || ''}" aria-label="Ден на тренировката"></td>
       <td class="admin-edit"><input type="time" class="js-time" step="900" value="${r.training_time || ''}" aria-label="Час на тренировката"></td>
-      <td class="check-cell"><input type="checkbox" class="js-processed" ${r.processed ? 'checked' : ''} aria-label="Записан"></td>
+      <td class="check-cell"><input type="checkbox" class="js-processed" ${r.processed ? 'checked' : ''} aria-label="Записан">${notifiedBadge(r)}</td>
     </tr>`;
 }
 
@@ -117,6 +128,14 @@ tbody.addEventListener('change', async (e) => {
     Object.assign(record, data.registration);
     tr.classList.toggle('is-processed', record.processed);
     flashStatus('Запазено ✓');
+
+    if (input.classList.contains('js-processed') && record.processed) {
+      if (record.training_date && record.training_time) {
+        openNotifyModal(record);
+      } else {
+        flashStatus('Отбелязан е, но без ден и час родителят не може да бъде уведомен.', true);
+      }
+    }
   } catch (err) {
     // Put the controls back to the last saved values.
     tr.querySelector('.js-date').value = record.training_date || '';
@@ -127,6 +146,79 @@ tbody.addEventListener('change', async (e) => {
     inputs.forEach(i => (i.disabled = false));
   }
 });
+
+// ---- "Notify parent?" modal ----
+const notifyModal = document.querySelector('#notifyModal');
+const notifyText = document.querySelector('#notifyText');
+const notifyWarn = document.querySelector('#notifyWarn');
+const notifyError = document.querySelector('#notifyError');
+const notifyYes = document.querySelector('#notifyYes');
+const notifyNo = document.querySelector('#notifyNo');
+let notifyTarget = null;
+
+function openNotifyModal(record) {
+  notifyTarget = record;
+  notifyText.textContent =
+    `Да изпратя ли имейл до ${record.parent_name} (${record.email}), че ${record.child_name} ` +
+    `е записан за пробна тренировка на ${formatDay(record.training_date)} от ${record.training_time} ч.?`;
+
+  notifyWarn.hidden = !record.notified_at;
+  if (record.notified_at) {
+    notifyWarn.textContent = `Вече е изпратен имейл на ${formatCreatedAt(record.notified_at)}. Ще се изпрати нов.`;
+  }
+  notifyError.hidden = true;
+  notifyYes.disabled = false;
+  notifyNo.disabled = false;
+  notifyModal.classList.add('open');
+  notifyModal.setAttribute('aria-hidden', 'false');
+  notifyYes.focus();
+}
+
+function closeNotifyModal() {
+  notifyModal.classList.remove('open');
+  notifyModal.setAttribute('aria-hidden', 'true');
+  notifyTarget = null;
+}
+
+notifyYes.addEventListener('click', async () => {
+  const record = notifyTarget;
+  if (!record) return;
+
+  notifyYes.disabled = true;
+  notifyNo.disabled = true;
+  notifyYes.textContent = 'Изпращане...';
+  notifyError.hidden = true;
+
+  try {
+    const res = await fetch(`/api/registration/${record.id}/notify`, { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || 'Грешка при изпращане.');
+    }
+
+    Object.assign(record, data.registration);
+    const tr = tbody.querySelector(`tr[data-id="${record.id}"]`);
+    if (tr) tr.querySelector('.check-cell').innerHTML =
+      `<input type="checkbox" class="js-processed" checked aria-label="Записан">${notifiedBadge(record)}`;
+
+    closeNotifyModal();
+    flashStatus(data.sent
+      ? 'Имейлът е изпратен ✓'
+      : 'Тестов режим: имейлът не е изпратен реално (няма настроен MAIL_SERVER).');
+  } catch (err) {
+    notifyError.textContent = err.message;
+    notifyError.hidden = false;
+    notifyYes.disabled = false;
+    notifyNo.disabled = false;
+  } finally {
+    notifyYes.textContent = 'Да, изпрати имейл';
+  }
+});
+
+notifyNo.addEventListener('click', closeNotifyModal);
+notifyModal.querySelector('.modal-close').addEventListener('click', closeNotifyModal);
+notifyModal.querySelector('.modal-backdrop').addEventListener('click', closeNotifyModal);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && notifyModal.classList.contains('open')) closeNotifyModal(); });
 
 refreshBtn.addEventListener('click', loadRegistrations);
 loadRegistrations();

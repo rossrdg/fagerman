@@ -38,3 +38,13 @@
 .admin-table tr.is-processed td{background:#f0faf3}
 .admin-table tr.is-processed td:nth-child(2){font-weight:700}
 .admin-status.saved{color:#16803c}
+
+/* Notify-parent modal */
+.notify-title{font-size:28px;margin-bottom:14px}
+.notify-warn{background:#fff7e6;border:1px solid #f0c975;color:#7a5a06;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600}
+.notify-error{color:#d93025;font-weight:700;font-size:14px}
+.notify-actions{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+.btn-outline{background:#fff;color:var(--dark);border-color:#cbd6d0}
+.btn-outline:hover{background:#f0f3f1}
+.btn:disabled{opacity:.6;cursor:wait}
+.notified-badge{display:block;margin-top:4px;font-size:10px;font-weight:700;color:#16803c;white-space:nowrap}

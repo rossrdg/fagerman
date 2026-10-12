@@ -19,6 +19,8 @@ class Registration(db.Model):
     training_date = db.Column(db.Date, nullable=True)
     training_time = db.Column(db.Time, nullable=True)
     processed = db.Column(db.Boolean, nullable=False, default=False, server_default="0")
+    # When the parent was last emailed about the trial training (None = never).
+    notified_at = db.Column(db.DateTime, nullable=True)
 
     def to_dict(self):
         return {
@@ -32,4 +34,5 @@ class Registration(db.Model):
             "training_date": self.training_date.isoformat() if self.training_date else None,
             "training_time": self.training_time.strftime("%H:%M") if self.training_time else None,
             "processed": bool(self.processed),
+            "notified_at": self.notified_at.isoformat() if self.notified_at else None,
         }

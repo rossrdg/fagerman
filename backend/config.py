@@ -1,7 +1,21 @@
 import os
 from pathlib import Path
 
+try:  # lets a local backend/.env file provide the settings below
+    from dotenv import load_dotenv
+
+    load_dotenv(Path(__file__).resolve().parent / ".env")
+except ImportError:
+    pass
+
 BASE_DIR = Path(__file__).resolve().parent
+
+
+def _env_bool(name, default):
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in ("1", "true", "yes", "on")
 
 
 class Config:
@@ -20,3 +34,16 @@ class Config:
     FRONTEND_DIR = os.environ.get(
         "FRONTEND_DIR", str(BASE_DIR.parent / "frontend")
     )
+
+    # --- Outgoing email (parent notifications) ---
+    # With MAIL_SERVER empty nothing is sent: the email is only printed in the
+    # server log ("dry run"), which is what you want while developing locally.
+    MAIL_SERVER = os.environ.get("MAIL_SERVER", "")
+    MAIL_PORT = int(os.environ.get("MAIL_PORT", "465"))
+    MAIL_USE_SSL = _env_bool("MAIL_USE_SSL", True)    # port 465
+    MAIL_USE_TLS = _env_bool("MAIL_USE_TLS", False)   # STARTTLS, port 587
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
+    MAIL_FROM = os.environ.get("MAIL_FROM", os.environ.get("MAIL_USERNAME", ""))
+    MAIL_FROM_NAME = os.environ.get("MAIL_FROM_NAME", "Футболна Академия Герман")
+    MAIL_REPLY_TO = os.environ.get("MAIL_REPLY_TO", "")
