@@ -40,3 +40,10 @@ API-то тръгва на `http://127.0.0.1:5000`. При първото ста
 - Прост admin изглед/endpoint за новините вместо хардкоднати карти
 - Когато е готово за deploy: конфигуриране на cPanel Python Selector
   (WSGI) за superhosting.bg
+
+## Имейл уведомления към родителите
+
+Настройките са в environment променливи (или в `backend/.env`, копирай от `.env.example`):
+`MAIL_SERVER`, `MAIL_PORT`, `MAIL_USE_SSL`, `MAIL_USE_TLS`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM`.
+Ако `MAIL_SERVER` е празен, имейлът само се записва в лога (тестов режим) и не се изпраща.
+Шаблонът на текста е във `app/mailer.py` (`build_trial_training_email`).

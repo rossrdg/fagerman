@@ -1,8 +1,10 @@
 import re
+from datetime import date, datetime, timezone
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, current_app, request, jsonify
 
 from app import db
+from app.mailer import MailError, build_trial_training_email, send_email
 from app.models import Registration
 
 registration_bp = Blueprint("registration", __name__)
@@ -63,3 +65,82 @@ def list_registrations():
     is being saved. Lock this down before it ever goes to production."""
     registrations = Registration.query.order_by(Registration.created_at.desc()).all()
     return jsonify({"ok": True, "registrations": [r.to_dict() for r in registrations]})
+
+
+@registration_bp.patch("/registration/<int:registration_id>")
+def update_registration(registration_id):
+    """Admin-only fields: training day, training time, processed flag.
+    No auth yet — must be protected before production."""
+    registration = db.session.get(Registration, registration_id)
+    if registration is None:
+        return jsonify({"ok": False, "error": "Записът не е намерен."}), 404
+
+    data = request.get_json(silent=True) or {}
+    errors = {}
+
+    if "training_date" in data:
+        raw = (data["training_date"] or "").strip() if isinstance(data["training_date"], str) or data["training_date"] is None else None
+        if raw is None:
+            errors["training_date"] = "Невалидна дата."
+        elif raw == "":
+            registration.training_date = None
+        else:
+            try:
+                registration.training_date = date.fromisoformat(raw)
+            except ValueError:
+                errors["training_date"] = "Невалидна дата."
+
+    if "training_time" in data:
+        raw = (data["training_time"] or "").strip() if isinstance(data["training_time"], str) or data["training_time"] is None else None
+        if raw is None:
+            errors["training_time"] = "Невалиден час."
+        elif raw == "":
+            registration.training_time = None
+        else:
+            try:
+                registration.training_time = datetime.strptime(raw[:5], "%H:%M").time()
+            except ValueError:
+                errors["training_time"] = "Невалиден час."
+
+    if "processed" in data:
+        if isinstance(data["processed"], bool):
+            registration.processed = data["processed"]
+        else:
+            errors["processed"] = "Невалидна стойност."
+
+    if errors:
+        db.session.rollback()
+        return jsonify({"ok": False, "errors": errors}), 400
+
+    db.session.commit()
+    return jsonify({"ok": True, "registration": registration.to_dict()})
+
+
+@registration_bp.post("/registration/<int:registration_id>/notify")
+def notify_parent(registration_id):
+    """Emails the parent the trial-training day/time. Admin-only (no auth yet)."""
+    registration = db.session.get(Registration, registration_id)
+    if registration is None:
+        return jsonify({"ok": False, "error": "Записът не е намерен."}), 404
+
+    if not registration.training_date or not registration.training_time:
+        return jsonify({
+            "ok": False,
+            "error": "Първо задайте ден и час на тренировката.",
+        }), 400
+
+    subject, body = build_trial_training_email(registration)
+    try:
+        sent = send_email(registration.email, subject, body)
+    except MailError:
+        current_app.logger.exception("Could not send email for registration %s", registration_id)
+        return jsonify({
+            "ok": False,
+            "error": "Имейлът не можа да бъде изпратен. Опитайте отново.",
+        }), 502
+
+    if sent:
+        registration.notified_at = datetime.now(timezone.utc)
+        db.session.commit()
+
+    return jsonify({"ok": True, "sent": sent, "registration": registration.to_dict()})

@@ -27,3 +27,24 @@
 .admin-toolbar h1{font-size:26px;margin:0}
 .admin-toolbar .admin-status{margin:0}
 @media(max-width:767px){.admin-nav{padding:0 12px}}
+
+/* Admin-editable columns */
+.admin-table th.col-admin{background:#e6f0fb;color:#0558b0}
+.admin-table .col-center,.admin-table td.check-cell{text-align:center}
+.admin-table td.admin-edit input[type=date],.admin-table td.admin-edit input[type=time]{font:inherit;font-size:13px;padding:7px 9px;border:1px solid #d8e0db;border-radius:8px;background:#fbfcfb;color:#132019}
+.admin-table td.admin-edit input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px #0779ea22}
+.admin-table td.admin-edit input:disabled,.admin-table td.check-cell input:disabled{opacity:.5}
+.admin-table td.check-cell input{width:20px;height:20px;cursor:pointer;accent-color:var(--green)}
+.admin-table tr.is-processed td{background:#f0faf3}
+.admin-table tr.is-processed td:nth-child(2){font-weight:700}
+.admin-status.saved{color:#16803c}
+
+/* Notify-parent modal */
+.notify-title{font-size:28px;margin-bottom:14px}
+.notify-warn{background:#fff7e6;border:1px solid #f0c975;color:#7a5a06;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600}
+.notify-error{color:#d93025;font-weight:700;font-size:14px}
+.notify-actions{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+.btn-outline{background:#fff;color:var(--dark);border-color:#cbd6d0}
+.btn-outline:hover{background:#f0f3f1}
+.btn:disabled{opacity:.6;cursor:wait}
+.notified-badge{display:block;margin-top:4px;font-size:10px;font-weight:700;color:#16803c;white-space:nowrap}

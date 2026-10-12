@@ -5,6 +5,25 @@ from flask_cors import CORS
 db = SQLAlchemy()
 
 
+def _add_missing_registration_columns():
+    """db.create_all() never alters an existing table, so databases created
+    before the admin columns existed get them added here. Replace with
+    Flask-Migrate once the schema starts changing more often."""
+    from sqlalchemy import inspect, text
+
+    existing = {c["name"] for c in inspect(db.engine).get_columns("registrations")}
+    wanted = {
+        "training_date": "DATE",
+        "training_time": "TIME",
+        "processed": "BOOLEAN NOT NULL DEFAULT 0",
+        "notified_at": "DATETIME",
+    }
+    with db.engine.begin() as conn:
+        for name, ddl in wanted.items():
+            if name not in existing:
+                conn.execute(text(f"ALTER TABLE registrations ADD COLUMN {name} {ddl}"))
+
+
 def create_app(config_object="config.Config"):
     """Application factory. Keeps setup in one place so we can add
     blueprints (news, teams, auth, ...) here as the project grows."""
@@ -25,6 +44,7 @@ def create_app(config_object="config.Config"):
 
     with app.app_context():
         db.create_all()
+        _add_missing_registration_columns()
 
     @app.get("/api/health")
     def health():
