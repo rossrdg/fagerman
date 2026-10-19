@@ -1,10 +1,12 @@
 from datetime import datetime, timezone
 
-from flask import Blueprint, jsonify, request
+from urllib.parse import quote
+
+from flask import Blueprint, current_app, jsonify, render_template, request
 
 from app import db
 from app.models import Post
-from app.news_utils import extract_youtube_id, sanitize_html, slugify
+from app.news_utils import extract_youtube_id, make_excerpt, sanitize_html, slugify
 
 # Public: only published articles. Used by the homepage "Новини" section.
 news_bp = Blueprint("news", __name__)
@@ -13,7 +15,13 @@ news_bp = Blueprint("news", __name__)
 # same as the registrations admin — must be added before production).
 admin_news_bp = Blueprint("admin_news", __name__)
 
+# Public HTML page of one article (not under /api): /news/<slug>
+page_bp = Blueprint("news_page", __name__)
+
 STATUSES = ("draft", "published")
+MONTHS_BG = ["януари", "февруари", "март", "април", "май", "юни", "юли",
+             "август", "септември", "октомври", "ноември", "декември"]
+DEFAULT_SHARE_IMAGE = "/assets/fa-german-fb-cover.jpg"
 MAX_BODY = 100_000
 
 
@@ -42,6 +50,39 @@ def get_news(slug):
     if post is None:
         return jsonify({"ok": False, "error": "Статията не е намерена."}), 404
     return jsonify({"ok": True, "post": post.to_dict(full=True)})
+
+
+# ------------------------------------------------------------ HTML page ---
+def _absolute(path):
+    """Facebook needs absolute URLs. SITE_URL (e.g. https://fa-german.eu) is
+    set in production; locally the current host is used."""
+    base = (current_app.config.get("SITE_URL") or request.url_root).rstrip("/")
+    if path.startswith("http://") or path.startswith("https://"):
+        return path
+    return base + path
+
+
+@page_bp.get("/news/<slug>")
+def news_page(slug):
+    post = Post.query.filter_by(slug=slug, status="published").first()
+    if post is None:
+        return render_template("news_post.html", post=None), 404
+
+    page_url = _absolute(f"/news/{post.slug}")
+    date_bg = None
+    if post.published_at:
+        d = post.published_at
+        date_bg = f"{d.day} {MONTHS_BG[d.month - 1]} {d.year} г."
+
+    return render_template(
+        "news_post.html",
+        post=post,
+        page_url=page_url,
+        share_url="https://www.facebook.com/sharer/sharer.php?u=" + quote(page_url, safe=""),
+        image_url=_absolute(post.cover_image or DEFAULT_SHARE_IMAGE),
+        description=post.excerpt or make_excerpt(post.body),
+        date_bg=date_bg,
+    )
 
 
 # ----------------------------------------------------------------- admin ---

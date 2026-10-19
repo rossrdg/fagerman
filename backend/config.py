@@ -26,6 +26,10 @@ class Config:
 
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-change-me")
 
+    # Public address of the site, used for absolute links in Facebook share
+    # tags (og:url, og:image). Production: https://fa-german.eu
+    SITE_URL = os.environ.get("SITE_URL", "")
+
     CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "*").split(",")
 
     # Where the static site (index.html, styles.css, script.js, assets/)

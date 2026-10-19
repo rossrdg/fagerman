@@ -42,9 +42,10 @@ def create_app(config_object="config.Config"):
     from app.routes.registration import registration_bp
     app.register_blueprint(registration_bp, url_prefix="/api")
 
-    from app.routes.news import admin_news_bp, news_bp
+    from app.routes.news import admin_news_bp, news_bp, page_bp
     app.register_blueprint(news_bp, url_prefix="/api")
     app.register_blueprint(admin_news_bp, url_prefix="/api")
+    app.register_blueprint(page_bp)  # /news/<slug>
 
     with app.app_context():
         db.create_all()
