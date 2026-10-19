@@ -24,6 +24,16 @@ API-то тръгва на `http://127.0.0.1:5000`. При първото ста
 | GET   | /api/health           | Проверка дали API-то работи                |
 | POST  | /api/registration      | Записва заявка от регистрационната форма   |
 | GET   | /api/registration      | Списък с всички заявки (временно, без auth)|
+| GET   | /api/news              | Публикувани статии (`?limit=`, `?offset=`) |
+| GET   | /api/news/<slug>       | Една публикувана статия с пълен текст      |
+| GET/POST | /api/admin/news     | Всички статии (с чернови) / нова статия    |
+| GET/PATCH/DELETE | /api/admin/news/<id> | Четене / редакция / изтриване     |
+
+Новините: `title`, `excerpt`, `body` (HTML от редактора, чисти се на сървъра),
+`category`, `cover_image`, `youtube_url` (само YouTube линк), `status`
+(`draft` / `published`). Адресът (`slug`) се създава от заглавието при
+създаване и не се променя, за да не се чупят вече споделени линкове.
+`/api/admin/*` е без вход — трябва да се защити преди production.
 
 ### POST /api/registration — очаквани полета
 
