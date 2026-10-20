@@ -113,15 +113,25 @@ $('#newBtn').addEventListener('click', () => openEditor(null));
 const quill = new Quill('#editor', {
   theme: 'snow',
   placeholder: 'Напиши статията тук…',
-  modules: { toolbar: '#toolbar' },
+  modules: {
+    toolbar: '#toolbar',
+    // Photos dropped or pasted into the text are uploaded (and resized) instead of
+    // being embedded as huge inline data.
+    uploader: {
+      mimetypes: ['image/jpeg', 'image/png', 'image/webp'],
+      handler: (range, files) => insertImages([...files], range.index)
+    }
+  },
   // Only what the server keeps anyway (see sanitize_html in the backend).
-  formats: ['header', 'bold', 'italic', 'underline', 'strike', 'list', 'blockquote', 'link']
+  formats: ['header', 'bold', 'italic', 'underline', 'strike', 'list', 'blockquote', 'link', 'image']
 });
 
 function getBodyHtml() {
-  if (quill.getText().trim() === '') return '';
+  if (quill.getText().trim() === '' && !quill.root.querySelector('img')) return '';
   // Quill writes &nbsp; next to formatted words, which blocks line wrapping on the site.
-  return quill.getSemanticHTML().replace(/&nbsp;/g, ' ');
+  return quill.getSemanticHTML()
+    .replace(/&nbsp;/g, ' ')
+    .replace(/<img[^>]*src="data:[^"]*"[^>]*>/g, ''); // pasted inline images cannot be saved
 }
 
 function setBodyHtml(html) {
@@ -155,7 +165,7 @@ function openEditor(post) {
   editorStatus.textContent = '';
   form.elements.title.value = post?.title || '';
   form.elements.category.value = post?.category || '';
-  form.elements.cover_image.value = post?.cover_image || '';
+  setCover(post?.cover_image, post?.cover_thumb);
   form.elements.excerpt.value = post?.excerpt || '';
   form.elements.youtube_url.value = post?.youtube_url || '';
   setBodyHtml(post?.body || '');
@@ -173,6 +183,101 @@ async function backToList() {
   await loadPosts();
 }
 $('#backBtn').addEventListener('click', backToList);
+
+// ------------------------------------------------------------- photos ---
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+const coverFile = $('#coverFile');
+const coverPreview = $('#coverPreview');
+const coverRemove = $('#coverRemove');
+const bodyFile = $('#bodyFile');
+let insertAt = 0;
+
+async function uploadImage(file) {
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    throw new Error('Позволени са само JPG, PNG и WebP снимки.');
+  }
+  if (file.size > MAX_PHOTO_BYTES) throw new Error('Снимката е над 10 MB.');
+  const body = new FormData();
+  body.append('image', file);
+  let res, data;
+  try {
+    res = await fetch('/api/admin/uploads', { method: 'POST', body }); // no Content-Type: the browser sets it
+    data = await res.json().catch(() => ({}));
+  } catch (err) {
+    throw new Error('Няма връзка със сървъра. Опитай пак.');
+  }
+  if (!res.ok || !data.ok) throw new Error(data.error || 'Неуспешно качване.');
+  return data;
+}
+
+function setUploading(on, text = '') {
+  [primaryBtn, secondaryBtn, deleteBtn, $('#coverBtn'), $('#imageBtn')].forEach(b => { b.disabled = on; });
+  if (on) {
+    clearTimeout(statusTimer);
+    editorStatus.classList.remove('error', 'saved');
+    editorStatus.textContent = text;
+  }
+}
+
+function setCover(url, thumb) {
+  form.elements.cover_image.value = url || '';
+  coverPreview.hidden = !url;
+  if (url) coverPreview.src = thumb || url;
+  coverRemove.hidden = !url;
+}
+
+$('#coverBtn').addEventListener('click', () => coverFile.click());
+coverRemove.addEventListener('click', () => setCover(''));
+coverFile.addEventListener('change', async () => {
+  const file = coverFile.files[0];
+  coverFile.value = '';
+  if (!file) return;
+  setUploading(true, 'Качване на снимката…');
+  try {
+    const data = await uploadImage(file);
+    setCover(data.url, data.thumb);
+    form.querySelector('[data-error-for="cover_image"]').textContent = '';
+    flash(editorStatus, 'Снимката е качена ✓ (запази статията, за да се приложи)');
+  } catch (err) {
+    flash(editorStatus, err.message, true);
+  } finally {
+    setUploading(false);
+  }
+});
+
+async function insertImages(files, index) {
+  files = files.filter(f => f && f.type && f.type.startsWith('image/'));
+  if (!files.length) return;
+  setUploading(true);
+  let added = 0;
+  try {
+    for (const file of files) {
+      setUploading(true, `Качване на снимка ${added + 1} от ${files.length}…`);
+      const data = await uploadImage(file);
+      quill.insertEmbed(index, 'image', data.url, 'user');
+      index += 1;
+      added += 1;
+    }
+    quill.setSelection(index, 0, 'silent');
+    flash(editorStatus, added === 1 ? 'Снимката е добавена ✓' : `${added} снимки са добавени ✓`);
+  } catch (err) {
+    flash(editorStatus, added ? `Добавени: ${added}. ${err.message}` : err.message, true);
+  } finally {
+    setUploading(false);
+  }
+}
+
+const imageBtn = $('#imageBtn');
+imageBtn.addEventListener('mousedown', (e) => e.preventDefault());
+imageBtn.addEventListener('click', () => {
+  insertAt = quill.getSelection(true).index; // remember where the cursor is
+  bodyFile.click();
+});
+bodyFile.addEventListener('change', () => {
+  const files = [...bodyFile.files];
+  bodyFile.value = '';
+  insertImages(files, insertAt);
+});
 
 function setBusy(busy) {
   [primaryBtn, secondaryBtn, deleteBtn].forEach(b => { b.disabled = busy; });

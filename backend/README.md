@@ -28,6 +28,11 @@ API-то тръгва на `http://127.0.0.1:5000`. При първото ста
 | GET   | /api/news/<slug>       | Една публикувана статия с пълен текст      |
 | GET/POST | /api/admin/news     | Всички статии (с чернови) / нова статия    |
 | GET/PATCH/DELETE | /api/admin/news/<id> | Четене / редакция / изтриване     |
+| POST  | /api/admin/uploads     | Качване на снимка (`image`): смалява се до 1600 px + 800 px версия, записва се като JPEG |
+| GET   | /uploads/<файл>        | Качените снимки (дълъг кеш)                |
+
+Снимките се пазят в `UPLOAD_DIR` (по подразбиране `backend/uploads/`, извън git).
+Тази папка трябва да влиза в бекъпа и да не се трие при deploy.
 
 Новините: `title`, `excerpt`, `body` (HTML от редактора, чисти се на сървъра),
 `category`, `cover_image`, `youtube_url` (само YouTube линк), `status`

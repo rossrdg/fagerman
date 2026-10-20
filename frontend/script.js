@@ -23,7 +23,7 @@ function newsCard(post,i){
   media.href=href;media.setAttribute('aria-label',post.title);
   if(post.cover_image){
     const img=document.createElement('img');
-    img.src=post.cover_image;img.alt='';img.loading='lazy';
+    img.src=post.cover_thumb||post.cover_image;img.alt='';img.loading='lazy';
     media.append(img);
   }else{media.textContent='FA'}
 

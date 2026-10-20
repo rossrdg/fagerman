@@ -39,6 +39,14 @@ class Registration(db.Model):
         }
 
 
+def thumb_url(url):
+    """Photos uploaded through the admin also exist as a smaller <name>-800.jpg
+    version (used on the homepage cards). Other addresses are returned as they are."""
+    if url and url.startswith("/uploads/") and url.endswith(".jpg"):
+        return url[:-4] + "-800.jpg"
+    return url
+
+
 class Post(db.Model):
     """A news / blog article shown in the "Новини" section."""
 
@@ -72,6 +80,7 @@ class Post(db.Model):
             "excerpt": self.excerpt or make_excerpt(self.body),
             "category": self.category,
             "cover_image": self.cover_image,
+            "cover_thumb": thumb_url(self.cover_image),
             "published_at": self.published_at.isoformat() if self.published_at else None,
         }
         if full or admin:

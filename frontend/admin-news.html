@@ -80,19 +80,26 @@
           <div class="field-error" data-error-for="title"></div>
         </div>
 
-        <div class="field-row">
-          <div class="field">
-            <label for="f-category">Категория</label>
-            <input id="f-category" name="category" maxlength="40" list="categoryList" autocomplete="off" placeholder="напр. РАЗВИТИЕ">
-            <datalist id="categoryList"><option value="РАЗВИТИЕ"><option value="ОПИТ"><option value="ОБЩНОСТ"></datalist>
-            <div class="field-error" data-error-for="category"></div>
+        <div class="field narrow">
+          <label for="f-category">Категория</label>
+          <input id="f-category" name="category" maxlength="40" list="categoryList" autocomplete="off" placeholder="напр. РАЗВИТИЕ">
+          <datalist id="categoryList"><option value="РАЗВИТИЕ"><option value="ОПИТ"><option value="ОБЩНОСТ"></datalist>
+          <div class="field-error" data-error-for="category"></div>
+        </div>
+
+        <div class="field">
+          <label for="coverBtn">Заглавна снимка</label>
+          <input type="hidden" name="cover_image">
+          <div class="cover-box">
+            <img id="coverPreview" class="cover-preview" alt="" hidden>
+            <div class="cover-actions">
+              <button id="coverBtn" class="btn btn-outline btn-sm" type="button">Качи снимка</button>
+              <button id="coverRemove" class="btn btn-outline btn-sm" type="button" hidden>Премахни</button>
+            </div>
           </div>
-          <div class="field">
-            <label for="f-cover">Заглавна снимка (адрес)</label>
-            <input id="f-cover" name="cover_image" maxlength="255" autocomplete="off" placeholder="https://…">
-            <div class="field-hint">Качването на снимки от компютъра идва в следващата стъпка.</div>
-            <div class="field-error" data-error-for="cover_image"></div>
-          </div>
+          <input id="coverFile" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+          <div class="field-hint">Показва се в картата и при споделяне във Facebook. Най-добре е широка снимка (поне 1200 px). JPG, PNG или WebP до 10 MB — смалява се автоматично.</div>
+          <div class="field-error" data-error-for="cover_image"></div>
         </div>
 
         <div class="field">
@@ -123,11 +130,13 @@
                 <button class="ql-link" type="button" aria-label="Линк"></button>
               </span>
               <span class="ql-formats">
+                <button id="imageBtn" class="emoji-btn" type="button" aria-label="Добави снимка" title="Добави снимка">🖼️</button>
                 <button id="emojiBtn" class="emoji-btn" type="button" aria-label="Емотикони" title="Емотикони">😀</button>
                 <button class="ql-clean" type="button" aria-label="Изчисти форматирането"></button>
               </span>
             </div>
             <div id="emojiPanel" class="emoji-panel" hidden></div>
+            <input id="bodyFile" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden>
             <div id="editor"></div>
           </div>
           <div class="field-error" data-error-for="body"></div>
