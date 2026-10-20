@@ -7,17 +7,70 @@ menu?.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{menu.clas
 const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:.12});
 document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
 
-const modal=document.querySelector('#newsModal');
-const modalTitle=document.querySelector('#modalTitle');
-const modalText=document.querySelector('#modalText');
-document.querySelectorAll('.news-open').forEach(btn=>btn.addEventListener('click',()=>{
-  modalTitle.textContent=btn.dataset.title; modalText.textContent=btn.dataset.text;
-  modal.classList.add('open'); modal.setAttribute('aria-hidden','false');
-}));
-function closeModal(){modal.classList.remove('open');modal.setAttribute('aria-hidden','true')}
-document.querySelector('.modal-close')?.addEventListener('click',closeModal);
-document.querySelector('.modal-backdrop')?.addEventListener('click',closeModal);
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+// ---- Новини: последните публикувани статии от /api/news ----
+const NEWS_LIMIT=3;
+function newsEl(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e}
+function newsDate(iso){
+  if(!iso)return '';
+  const d=new Date(iso+(iso.endsWith('Z')?'':'Z'));
+  return isNaN(d)?'':d.toLocaleDateString('bg-BG',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function newsCard(post,i){
+  const href=post.url;
+  const card=newsEl('article','news-card reveal');
+
+  const media=newsEl('a','news-img n'+(1+i%3));
+  media.href=href;media.setAttribute('aria-label',post.title);
+  if(post.cover_image){
+    const img=document.createElement('img');
+    img.src=post.cover_image;img.alt='';img.loading='lazy';
+    media.append(img);
+  }else{media.textContent='FA'}
+
+  const body=newsEl('div','news-body');
+  const meta=[post.category,newsDate(post.published_at)].filter(Boolean).join(' · ');
+  body.append(newsEl('span','',meta||'НОВИНИ'));
+  const h3=newsEl('h3');const a=newsEl('a','',post.title);a.href=href;h3.append(a);body.append(h3);
+  if(post.excerpt)body.append(newsEl('p','news-excerpt',post.excerpt));
+
+  const actions=newsEl('div','news-actions');
+  const more=newsEl('a','text-link','Прочети повече ↗');more.href=href;
+  const share=newsEl('a','news-share');
+  share.href='https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(new URL(href,location.origin).href);
+  share.target='_blank';share.rel='noopener noreferrer';
+  share.setAttribute('aria-label','Сподели във Facebook');share.title='Сподели във Facebook';
+  share.dataset.fbShare='';
+  share.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.5 22v-8.2h2.8l.5-3.3h-3.3V8.4c0-.9.4-1.7 1.8-1.7h1.6V3.8s-1.4-.3-2.8-.3c-2.9 0-4.6 1.7-4.6 4.8v2.2H6.7v3.3h2.8V22h4z"/></svg>';
+  actions.append(more,share);
+  body.append(actions);
+
+  card.append(media,body);
+  return card;
+}
+async function loadNews(){
+  const grid=document.querySelector('#newsGrid');
+  if(!grid)return;
+  try{
+    const res=await fetch('/api/news?limit='+NEWS_LIMIT);
+    const data=await res.json();
+    if(!res.ok||!data.ok)throw new Error('api');
+    if(!data.posts.length){
+      grid.append(newsEl('p','news-empty','Скоро тук ще публикуваме новини от академията.'));
+      return;
+    }
+    data.posts.forEach((post,i)=>{const c=newsCard(post,i);grid.append(c);observer.observe(c)});
+  }catch(err){
+    grid.append(newsEl('p','news-empty','Новините не могат да се заредят в момента. Опитайте отново по-късно.'));
+  }
+}
+// Facebook share: small popup; if it is blocked the link opens normally.
+document.addEventListener('click',e=>{
+  const a=e.target.closest('[data-fb-share]');
+  if(!a)return;
+  const w=window.open(a.href,'fbshare','width=640,height=560,noopener');
+  if(w)e.preventDefault();
+});
+loadNews();
 
 const FIELD_LABELS={
   child:'Име на детето', age:'Възраст', parent:'Име на родител', phone:'Телефон', email:'Email'
