@@ -6,7 +6,8 @@ from flask import Blueprint, current_app, jsonify, render_template, request
 
 from app import db
 from app.models import Post
-from app.news_utils import extract_youtube_id, make_excerpt, sanitize_html, slugify
+from app.news_utils import (clean_facebook_url, extract_youtube_id, facebook_embed_src,
+                            make_excerpt, sanitize_html, slugify)
 
 # Public: only published articles. Used by the homepage "Новини" section.
 news_bp = Blueprint("news", __name__)
@@ -80,6 +81,7 @@ def news_page(slug):
         page_url=page_url,
         share_url="https://www.facebook.com/sharer/sharer.php?u=" + quote(page_url, safe=""),
         image_url=_absolute(post.cover_image or DEFAULT_SHARE_IMAGE),
+        fb_embed=facebook_embed_src(post.facebook_url),
         description=post.excerpt or make_excerpt(post.body),
         date_bg=date_bg,
     )
@@ -155,6 +157,15 @@ def _apply(post, data, creating):
             errors["youtube_url"] = "Невалиден YouTube линк."
         else:
             post.youtube_id = yt
+
+    if "facebook_url" in data:
+        url = data["facebook_url"]
+        if url in (None, ""):
+            post.facebook_url = None
+        elif not isinstance(url, str) or not (fb := clean_facebook_url(url)):
+            errors["facebook_url"] = "Невалиден Facebook линк (трябва да започва с https://www.facebook.com/…)."
+        else:
+            post.facebook_url = fb
 
     if "status" in data:
         if data["status"] not in STATUSES:

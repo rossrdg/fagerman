@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from app import db
-from app.news_utils import make_excerpt
+from app.news_utils import facebook_embed_src, make_excerpt
 
 
 class Registration(db.Model):
@@ -54,6 +54,7 @@ class Post(db.Model):
     category = db.Column(db.String(40), nullable=True)
     cover_image = db.Column(db.String(255), nullable=True)
     youtube_id = db.Column(db.String(11), nullable=True)
+    facebook_url = db.Column(db.String(500), nullable=True)  # link to an existing Facebook post
     status = db.Column(db.String(10), nullable=False, default="draft", server_default="draft")
     published_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
@@ -77,6 +78,8 @@ class Post(db.Model):
         if full or admin:
             data["body"] = self.body
             data["youtube_id"] = self.youtube_id
+            data["facebook_url"] = self.facebook_url
+            data["facebook_embed"] = facebook_embed_src(self.facebook_url)
         if admin:
             data.update({
                 "excerpt": self.excerpt,  # raw value, so the editor shows what was typed

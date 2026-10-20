@@ -24,3 +24,7 @@
 .fb-share:hover{background:#0f63d0;transform:translateY(-2px)}
 .article-missing{text-align:left;padding:40px 0}
 @media(max-width:767px){.article-main{padding-top:100px}.article-body{font-size:16px}.nav-wrap .article-nav a{font-size:11px}}
+.article-fb{display:flex;flex-direction:column;align-items:center;gap:12px;margin:32px 0}
+.article-fb iframe{width:100%;max-width:500px;border:0;border-radius:12px;background:#fff}
+.article-fb-link{font-size:13px;font-weight:700;color:var(--green)}
+.article-fb-link:hover{text-decoration:underline}
