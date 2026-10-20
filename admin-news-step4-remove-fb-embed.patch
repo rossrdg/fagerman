@@ -1,0 +1,256 @@
+From 9b49a1f14e47af08b4ed3fe58a362f8ec8018fee Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 20 Oct 2026 07:23:02 +0000
+Subject: [PATCH] Remove Facebook post embedding (dropped idea)
+
+---
+ backend/app/__init__.py              | 13 -------------
+ backend/app/models.py                |  5 +----
+ backend/app/news_utils.py            | 29 ----------------------------
+ backend/app/routes/news.py           | 13 +------------
+ backend/app/templates/news_post.html |  9 ---------
+ frontend/admin-news.html             | 16 ++++-----------
+ frontend/admin-news.js               |  7 +------
+ frontend/news.css                    |  4 ----
+ 8 files changed, 7 insertions(+), 89 deletions(-)
+
+diff --git a/backend/app/__init__.py b/backend/app/__init__.py
+index 7e890c9..9d6fea4 100644
+--- a/backend/app/__init__.py
++++ b/backend/app/__init__.py
+@@ -24,18 +24,6 @@ def _add_missing_registration_columns():
+                 conn.execute(text(f"ALTER TABLE registrations ADD COLUMN {name} {ddl}"))
+ 
+ 
+-def _add_missing_post_columns():
+-    """Same idea as above for the news table (columns added after its first version)."""
+-    from sqlalchemy import inspect, text
+-
+-    existing = {c["name"] for c in inspect(db.engine).get_columns("posts")}
+-    wanted = {"facebook_url": "VARCHAR(500)"}
+-    with db.engine.begin() as conn:
+-        for name, ddl in wanted.items():
+-            if name not in existing:
+-                conn.execute(text(f"ALTER TABLE posts ADD COLUMN {name} {ddl}"))
+-
+-
+ def create_app(config_object="config.Config"):
+     """Application factory. Keeps setup in one place so we can add
+     blueprints (news, teams, auth, ...) here as the project grows."""
+@@ -62,7 +50,6 @@ def create_app(config_object="config.Config"):
+     with app.app_context():
+         db.create_all()
+         _add_missing_registration_columns()
+-        _add_missing_post_columns()
+ 
+     @app.get("/api/health")
+     def health():
+diff --git a/backend/app/models.py b/backend/app/models.py
+index 2f632ae..e9f73f7 100644
+--- a/backend/app/models.py
++++ b/backend/app/models.py
+@@ -1,7 +1,7 @@
+ from datetime import datetime, timezone
+ 
+ from app import db
+-from app.news_utils import facebook_embed_src, make_excerpt
++from app.news_utils import make_excerpt
+ 
+ 
+ class Registration(db.Model):
+@@ -54,7 +54,6 @@ class Post(db.Model):
+     category = db.Column(db.String(40), nullable=True)
+     cover_image = db.Column(db.String(255), nullable=True)
+     youtube_id = db.Column(db.String(11), nullable=True)
+-    facebook_url = db.Column(db.String(500), nullable=True)  # link to an existing Facebook post
+     status = db.Column(db.String(10), nullable=False, default="draft", server_default="draft")
+     published_at = db.Column(db.DateTime, nullable=True)
+     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+@@ -78,8 +77,6 @@ class Post(db.Model):
+         if full or admin:
+             data["body"] = self.body
+             data["youtube_id"] = self.youtube_id
+-            data["facebook_url"] = self.facebook_url
+-            data["facebook_embed"] = facebook_embed_src(self.facebook_url)
+         if admin:
+             data.update({
+                 "excerpt": self.excerpt,  # raw value, so the editor shows what was typed
+diff --git a/backend/app/news_utils.py b/backend/app/news_utils.py
+index ea33c40..eb0bb53 100644
+--- a/backend/app/news_utils.py
++++ b/backend/app/news_utils.py
+@@ -1,7 +1,6 @@
+ """Small helpers for the news (blog) feature: slugs, YouTube links, HTML cleaning."""
+ import html
+ import re
+-from urllib.parse import quote, urlparse
+ 
+ import bleach
+ 
+@@ -42,34 +41,6 @@ def extract_youtube_id(url):
+     return None
+ 
+ 
+-# --- Facebook posts --------------------------------------------------------
+-_FB_HOSTS = {"facebook.com", "www.facebook.com", "m.facebook.com", "web.facebook.com", "fb.watch"}
+-
+-
+-def clean_facebook_url(url):
+-    """Returns the link if it looks like a link to a Facebook post/video, else None."""
+-    url = (url or "").strip()
+-    if not url or len(url) > 500:
+-        return None
+-    try:
+-        parsed = urlparse(url)
+-    except ValueError:
+-        return None
+-    if parsed.scheme != "https" or (parsed.hostname or "").lower() not in _FB_HOSTS:
+-        return None
+-    if not parsed.path.strip("/") and not parsed.query:  # just the homepage
+-        return None
+-    return url
+-
+-
+-def facebook_embed_src(url):
+-    """Address of Facebook's official embed (works only for public posts)."""
+-    if not url:
+-        return None
+-    return ("https://www.facebook.com/plugins/post.php?href=" + quote(url, safe="")
+-            + "&show_text=true&width=500")
+-
+-
+ # --- HTML from the editor --------------------------------------------------
+ ALLOWED_TAGS = [
+     "p", "br", "strong", "b", "em", "i", "u", "s",
+diff --git a/backend/app/routes/news.py b/backend/app/routes/news.py
+index 762f62e..f34fbb3 100644
+--- a/backend/app/routes/news.py
++++ b/backend/app/routes/news.py
+@@ -6,8 +6,7 @@ from flask import Blueprint, current_app, jsonify, render_template, request
+ 
+ from app import db
+ from app.models import Post
+-from app.news_utils import (clean_facebook_url, extract_youtube_id, facebook_embed_src,
+-                            make_excerpt, sanitize_html, slugify)
++from app.news_utils import extract_youtube_id, make_excerpt, sanitize_html, slugify
+ 
+ # Public: only published articles. Used by the homepage "Новини" section.
+ news_bp = Blueprint("news", __name__)
+@@ -81,7 +80,6 @@ def news_page(slug):
+         page_url=page_url,
+         share_url="https://www.facebook.com/sharer/sharer.php?u=" + quote(page_url, safe=""),
+         image_url=_absolute(post.cover_image or DEFAULT_SHARE_IMAGE),
+-        fb_embed=facebook_embed_src(post.facebook_url),
+         description=post.excerpt or make_excerpt(post.body),
+         date_bg=date_bg,
+     )
+@@ -158,15 +156,6 @@ def _apply(post, data, creating):
+         else:
+             post.youtube_id = yt
+ 
+-    if "facebook_url" in data:
+-        url = data["facebook_url"]
+-        if url in (None, ""):
+-            post.facebook_url = None
+-        elif not isinstance(url, str) or not (fb := clean_facebook_url(url)):
+-            errors["facebook_url"] = "Невалиден Facebook линк (трябва да започва с https://www.facebook.com/…)."
+-        else:
+-            post.facebook_url = fb
+-
+     if "status" in data:
+         if data["status"] not in STATUSES:
+             errors["status"] = "Невалиден статус."
+diff --git a/backend/app/templates/news_post.html b/backend/app/templates/news_post.html
+index 3cd37fe..5999478 100644
+--- a/backend/app/templates/news_post.html
++++ b/backend/app/templates/news_post.html
+@@ -66,15 +66,6 @@
+       </div>
+       {% endif %}
+ 
+-      {% if fb_embed %}
+-      <div class="article-fb">
+-        <iframe src="{{ fb_embed }}" width="500" height="640" scrolling="no" loading="lazy"
+-                title="Публикация във Facebook" allowfullscreen="true"
+-                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+-        <a class="article-fb-link" href="{{ post.facebook_url }}" target="_blank" rel="noopener noreferrer">Отвори публикацията във Facebook ↗</a>
+-      </div>
+-      {% endif %}
+-
+       <footer class="article-share">
+         <span>Сподели статията:</span>
+         <a class="fb-share" href="{{ share_url }}" target="_blank" rel="noopener noreferrer"
+diff --git a/frontend/admin-news.html b/frontend/admin-news.html
+index 234f8e8..a16a800 100644
+--- a/frontend/admin-news.html
++++ b/frontend/admin-news.html
+@@ -133,18 +133,10 @@
+           <div class="field-error" data-error-for="body"></div>
+         </div>
+ 
+-        <div class="field-row">
+-          <div class="field">
+-            <label for="f-youtube">YouTube видео (линк)</label>
+-            <input id="f-youtube" name="youtube_url" autocomplete="off" placeholder="https://www.youtube.com/watch?v=…">
+-            <div class="field-error" data-error-for="youtube_url"></div>
+-          </div>
+-          <div class="field">
+-            <label for="f-facebook">Публикация от Facebook (линк)</label>
+-            <input id="f-facebook" name="facebook_url" autocomplete="off" placeholder="https://www.facebook.com/…">
+-            <div class="field-hint">В Facebook: „Сподели“ → „Копирай линк“. Работи само за публични публикации.</div>
+-            <div class="field-error" data-error-for="facebook_url"></div>
+-          </div>
++        <div class="field">
++          <label for="f-youtube">YouTube видео (линк)</label>
++          <input id="f-youtube" name="youtube_url" autocomplete="off" placeholder="https://www.youtube.com/watch?v=…">
++          <div class="field-error" data-error-for="youtube_url"></div>
+         </div>
+ 
+         <div class="form-actions">
+diff --git a/frontend/admin-news.js b/frontend/admin-news.js
+index f171a94..a1ef6d1 100644
+--- a/frontend/admin-news.js
++++ b/frontend/admin-news.js
+@@ -58,10 +58,7 @@ function totalText() {
+ }
+ 
+ function rowHtml(p) {
+-  const badges = [
+-    p.youtube_id ? '<span class="mini-badge">▶ видео</span>' : '',
+-    p.facebook_url ? '<span class="mini-badge">f Facebook</span>' : ''
+-  ].join('');
++  const badges = p.youtube_id ? '<span class="mini-badge">▶ видео</span>' : '';
+   const published = p.status === 'published';
+   return `
+     <tr data-id="${p.id}">
+@@ -161,7 +158,6 @@ function openEditor(post) {
+   form.elements.cover_image.value = post?.cover_image || '';
+   form.elements.excerpt.value = post?.excerpt || '';
+   form.elements.youtube_url.value = post?.youtube_url || '';
+-  form.elements.facebook_url.value = post?.facebook_url || '';
+   setBodyHtml(post?.body || '');
+   refreshButtons();
+   listView.hidden = true;
+@@ -191,7 +187,6 @@ async function save(status) {
+     cover_image: f.cover_image.value,
+     excerpt: f.excerpt.value,
+     youtube_url: f.youtube_url.value,
+-    facebook_url: f.facebook_url.value,
+     body: getBodyHtml(),
+     status
+   };
+diff --git a/frontend/news.css b/frontend/news.css
+index 20b3326..0becd66 100644
+--- a/frontend/news.css
++++ b/frontend/news.css
+@@ -24,7 +24,3 @@
+ .fb-share:hover{background:#0f63d0;transform:translateY(-2px)}
+ .article-missing{text-align:left;padding:40px 0}
+ @media(max-width:767px){.article-main{padding-top:100px}.article-body{font-size:16px}.nav-wrap .article-nav a{font-size:11px}}
+-.article-fb{display:flex;flex-direction:column;align-items:center;gap:12px;margin:32px 0}
+-.article-fb iframe{width:100%;max-width:500px;border:0;border-radius:12px;background:#fff}
+-.article-fb-link{font-size:13px;font-weight:700;color:var(--green)}
+-.article-fb-link:hover{text-decoration:underline}
+-- 
+2.43.0
+

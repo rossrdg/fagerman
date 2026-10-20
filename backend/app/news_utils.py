@@ -1,7 +1,6 @@
 """Small helpers for the news (blog) feature: slugs, YouTube links, HTML cleaning."""
 import html
 import re
-from urllib.parse import quote, urlparse
 
 import bleach
 
@@ -40,34 +39,6 @@ def extract_youtube_id(url):
         if m:
             return m.group(1)
     return None
-
-
-# --- Facebook posts --------------------------------------------------------
-_FB_HOSTS = {"facebook.com", "www.facebook.com", "m.facebook.com", "web.facebook.com", "fb.watch"}
-
-
-def clean_facebook_url(url):
-    """Returns the link if it looks like a link to a Facebook post/video, else None."""
-    url = (url or "").strip()
-    if not url or len(url) > 500:
-        return None
-    try:
-        parsed = urlparse(url)
-    except ValueError:
-        return None
-    if parsed.scheme != "https" or (parsed.hostname or "").lower() not in _FB_HOSTS:
-        return None
-    if not parsed.path.strip("/") and not parsed.query:  # just the homepage
-        return None
-    return url
-
-
-def facebook_embed_src(url):
-    """Address of Facebook's official embed (works only for public posts)."""
-    if not url:
-        return None
-    return ("https://www.facebook.com/plugins/post.php?href=" + quote(url, safe="")
-            + "&show_text=true&width=500")
 
 
 # --- HTML from the editor --------------------------------------------------

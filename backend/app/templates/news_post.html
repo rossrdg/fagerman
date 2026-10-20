@@ -66,15 +66,6 @@
       </div>
       {% endif %}
 
-      {% if fb_embed %}
-      <div class="article-fb">
-        <iframe src="{{ fb_embed }}" width="500" height="640" scrolling="no" loading="lazy"
-                title="Публикация във Facebook" allowfullscreen="true"
-                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
-        <a class="article-fb-link" href="{{ post.facebook_url }}" target="_blank" rel="noopener noreferrer">Отвори публикацията във Facebook ↗</a>
-      </div>
-      {% endif %}
-
       <footer class="article-share">
         <span>Сподели статията:</span>
         <a class="fb-share" href="{{ share_url }}" target="_blank" rel="noopener noreferrer"

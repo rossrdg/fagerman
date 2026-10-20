@@ -58,10 +58,7 @@ function totalText() {
 }
 
 function rowHtml(p) {
-  const badges = [
-    p.youtube_id ? '<span class="mini-badge">▶ видео</span>' : '',
-    p.facebook_url ? '<span class="mini-badge">f Facebook</span>' : ''
-  ].join('');
+  const badges = p.youtube_id ? '<span class="mini-badge">▶ видео</span>' : '';
   const published = p.status === 'published';
   return `
     <tr data-id="${p.id}">
@@ -161,7 +158,6 @@ function openEditor(post) {
   form.elements.cover_image.value = post?.cover_image || '';
   form.elements.excerpt.value = post?.excerpt || '';
   form.elements.youtube_url.value = post?.youtube_url || '';
-  form.elements.facebook_url.value = post?.facebook_url || '';
   setBodyHtml(post?.body || '');
   refreshButtons();
   listView.hidden = true;
@@ -191,7 +187,6 @@ async function save(status) {
     cover_image: f.cover_image.value,
     excerpt: f.excerpt.value,
     youtube_url: f.youtube_url.value,
-    facebook_url: f.facebook_url.value,
     body: getBodyHtml(),
     status
   };

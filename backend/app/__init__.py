@@ -24,18 +24,6 @@ def _add_missing_registration_columns():
                 conn.execute(text(f"ALTER TABLE registrations ADD COLUMN {name} {ddl}"))
 
 
-def _add_missing_post_columns():
-    """Same idea as above for the news table (columns added after its first version)."""
-    from sqlalchemy import inspect, text
-
-    existing = {c["name"] for c in inspect(db.engine).get_columns("posts")}
-    wanted = {"facebook_url": "VARCHAR(500)"}
-    with db.engine.begin() as conn:
-        for name, ddl in wanted.items():
-            if name not in existing:
-                conn.execute(text(f"ALTER TABLE posts ADD COLUMN {name} {ddl}"))
-
-
 def create_app(config_object="config.Config"):
     """Application factory. Keeps setup in one place so we can add
     blueprints (news, teams, auth, ...) here as the project grows."""
@@ -62,7 +50,6 @@ def create_app(config_object="config.Config"):
     with app.app_context():
         db.create_all()
         _add_missing_registration_columns()
-        _add_missing_post_columns()
 
     @app.get("/api/health")
     def health():
