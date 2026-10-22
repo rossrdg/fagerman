@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+{% block head %}{% endblock %}
+  <meta name="theme-color" content="#07110D">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/news.css">
+</head>
+<body class="article-page">
+  <header class="site-header scrolled">
+    <div class="container nav-wrap">
+      <a class="brand" href="/" aria-label="Футболна Академия Герман">
+        <img src="/assets/cropped-logo-german-scaled-1.png" alt="Футболна Академия Герман" width="60" height="60">
+      </a>
+      <nav class="article-nav" aria-label="Навигация">
+        <a href="/news">← Всички новини</a>
+      </nav>
+      <a class="btn btn-primary nav-cta" href="/#registration">Запиши се <span>↗</span></a>
+    </div>
+  </header>
+
+  <main class="article-main">
+{% block main %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-bottom" style="margin-top:0;border-top:0;padding-top:0">
+      <span>© 2026 Футболна Академия Герман. Всички права запазени.</span>
+      <span><a href="/">Към началната страница</a></span>
+    </div>
+  </footer>
+
+  <script>
+    // Отваря Facebook в малко прозорче; ако е блокирано, линкът работи нормално.
+    document.querySelectorAll('[data-fb-share]').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        var w = window.open(a.href, 'fbshare', 'width=640,height=560,noopener');
+        if (w) e.preventDefault();
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,8 +1,5 @@
-<!doctype html>
-<html lang="bg">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+{% extends "news_base.html" %}
+{% block head %}
 {% if post %}
   <title>{{ post.title }} | Футболна Академия Герман</title>
   <meta name="description" content="{{ description }}">
@@ -22,27 +19,8 @@
   <title>Статията не е намерена | Футболна Академия Герман</title>
   <meta name="robots" content="noindex">
 {% endif %}
-  <meta name="theme-color" content="#07110D">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css">
-  <link rel="stylesheet" href="/news.css">
-</head>
-<body class="article-page">
-  <header class="site-header scrolled">
-    <div class="container nav-wrap">
-      <a class="brand" href="/" aria-label="Футболна Академия Герман">
-        <img src="/assets/cropped-logo-german-scaled-1.png" alt="Футболна Академия Герман" width="60" height="60">
-      </a>
-      <nav class="article-nav" aria-label="Навигация">
-        <a href="/#news">← Всички новини</a>
-      </nav>
-      <a class="btn btn-primary nav-cta" href="/#registration">Запиши се <span>↗</span></a>
-    </div>
-  </header>
-
-  <main class="article-main">
+{% endblock %}
+{% block main %}
 {% if post %}
     <article class="article container">
       <header class="article-head">
@@ -70,7 +48,7 @@
         <span>Сподели статията:</span>
         <a class="fb-share" href="{{ share_url }}" target="_blank" rel="noopener noreferrer"
            aria-label="Сподели във Facebook" data-fb-share>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.5 22v-8.2h2.8l.5-3.3h-3.3V8.4c0-.9.4-1.7 1.8-1.7h1.6V3.8s-1.4-.3-2.8-.3c-2.9 0-4.6 1.7-4.6 4.8v2.2H6.7v3.3h2.8V22h4z"/></svg>
+          {% include "_fb_icon.html" %}
           Facebook
         </a>
       </footer>
@@ -80,26 +58,7 @@
       <div class="eyebrow green">404</div>
       <h1>Статията не е намерена.</h1>
       <p>Възможно е да е преместена или вече да не е публикувана.</p>
-      <a class="btn btn-primary" href="/#news">Към новините</a>
+      <a class="btn btn-primary" href="/news">Към новините</a>
     </section>
 {% endif %}
-  </main>
-
-  <footer class="footer">
-    <div class="container footer-bottom" style="margin-top:0;border-top:0;padding-top:0">
-      <span>© 2026 Футболна Академия Герман. Всички права запазени.</span>
-      <span><a href="/">Към началната страница</a></span>
-    </div>
-  </footer>
-
-  <script>
-    // Отваря Facebook в малко прозорче; ако е блокирано, линкът работи нормално.
-    document.querySelectorAll('[data-fb-share]').forEach(function (a) {
-      a.addEventListener('click', function (e) {
-        var w = window.open(a.href, 'fbshare', 'width=640,height=560,noopener');
-        if (w) e.preventDefault();
-      });
-    });
-  </script>
-</body>
-</html>
+{% endblock %}

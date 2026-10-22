@@ -1,0 +1,51 @@
+{% extends "news_base.html" %}
+{% block head %}
+  <title>Новини{% if page > 1 %} — страница {{ page }}{% endif %} | Футболна Академия Герман</title>
+  <meta name="description" content="Всички новини и активности на Футболна Академия Герман — тренировки, турнири, развитие и общност.">
+  <link rel="canonical" href="{{ page_url }}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Футболна Академия Герман">
+  <meta property="og:locale" content="bg_BG">
+  <meta property="og:title" content="Новини | Футболна Академия Герман">
+  <meta property="og:description" content="Всички новини и активности на Футболна Академия Герман.">
+  <meta property="og:url" content="{{ page_url }}">
+  <meta property="og:image" content="{{ image_url }}">
+{% endblock %}
+{% block main %}
+    <section class="container news-list">
+      <header class="news-list-head">
+        <div class="eyebrow green">НОВИНИ & АКТИВНОСТ</div>
+        <h1>Академията <em>в действие.</em></h1>
+      </header>
+
+      {% if posts %}
+      <div class="news-grid">
+        {% for p in posts %}
+        <article class="news-card">
+          <a class="news-img n{{ (loop.index0 % 3) + 1 }}" href="{{ p.url }}" aria-label="{{ p.title }}">{% if p.cover_thumb %}<img src="{{ p.cover_thumb }}" alt="" loading="lazy">{% else %}FA{% endif %}</a>
+          <div class="news-body">
+            <span>{{ [p.category, p.date]|select|join(' · ') or 'НОВИНИ' }}</span>
+            <h3><a href="{{ p.url }}">{{ p.title }}</a></h3>
+            {% if p.excerpt %}<p class="news-excerpt">{{ p.excerpt }}</p>{% endif %}
+            <div class="news-actions">
+              <a class="text-link" href="{{ p.url }}">Прочети повече ↗</a>
+              <a class="news-share" href="{{ p.share_url }}" target="_blank" rel="noopener noreferrer"
+                 aria-label="Сподели във Facebook" title="Сподели във Facebook" data-fb-share>{% include "_fb_icon.html" %}</a>
+            </div>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+
+      {% if pages > 1 %}
+      <nav class="pager" aria-label="Страници">
+        {% if page > 1 %}<a class="text-link" href="{{ '/news' if page == 2 else '/news?page=' ~ (page - 1) }}" rel="prev">← По-нови</a>{% else %}<span></span>{% endif %}
+        <span class="pager-info">Страница {{ page }} от {{ pages }}</span>
+        {% if page < pages %}<a class="text-link" href="/news?page={{ page + 1 }}" rel="next">По-стари →</a>{% else %}<span></span>{% endif %}
+      </nav>
+      {% endif %}
+      {% else %}
+      <p class="news-empty">Все още няма публикувани новини. Заповядайте отново скоро!</p>
+      {% endif %}
+    </section>
+{% endblock %}

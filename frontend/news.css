@@ -24,3 +24,10 @@
 .fb-share:hover{background:#0f63d0;transform:translateY(-2px)}
 .article-missing{text-align:left;padding:40px 0}
 @media(max-width:767px){.article-main{padding-top:100px}.article-body{font-size:16px}.nav-wrap .article-nav a{font-size:11px}}
+
+/* Страница „Всички новини“ (/news) */
+.news-list-head h1{font-size:clamp(34px,4.6vw,56px);margin-bottom:36px}
+.news-list .news-empty{font-size:17px}
+.pager{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:44px;padding-top:24px;border-top:1px solid var(--line)}
+.pager-info{font-size:13px;font-weight:700;color:var(--muted)}
+.pager .text-link:hover{text-decoration:underline}

@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from urllib.parse import quote
 
-from flask import Blueprint, current_app, jsonify, render_template, request
+from flask import Blueprint, current_app, jsonify, redirect, render_template, request
 
 from app import db
 from app.models import Post
@@ -22,6 +22,7 @@ STATUSES = ("draft", "published")
 MONTHS_BG = ["януари", "февруари", "март", "април", "май", "юни", "юли",
              "август", "септември", "октомври", "ноември", "декември"]
 DEFAULT_SHARE_IMAGE = "/assets/fa-german-fb-cover.jpg"
+PER_PAGE = 12  # articles per page on /news
 MAX_BODY = 100_000
 
 
@@ -60,6 +61,47 @@ def _absolute(path):
     if path.startswith("http://") or path.startswith("https://"):
         return path
     return base + path
+
+
+@page_bp.get("/news")
+def news_list():
+    """All published articles, newest first, 12 per page (?page=2, ...)."""
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+    except ValueError:
+        page = 1
+
+    query = Post.query.filter_by(status="published")
+    pages = max(1, -(-query.count() // PER_PAGE))
+    page = min(page, pages)
+    posts = (
+        query.order_by(Post.published_at.desc(), Post.id.desc())
+        .offset((page - 1) * PER_PAGE)
+        .limit(PER_PAGE)
+        .all()
+    )
+
+    items = []
+    for post in posts:
+        item = post.to_dict()
+        item["date"] = post.published_at.strftime("%d.%m.%Y") if post.published_at else ""
+        item["share_url"] = ("https://www.facebook.com/sharer/sharer.php?u="
+                             + quote(_absolute(item["url"]), safe=""))
+        items.append(item)
+
+    return render_template(
+        "news_list.html",
+        posts=items,
+        page=page,
+        pages=pages,
+        page_url=_absolute("/news" + (f"?page={page}" if page > 1 else "")),
+        image_url=_absolute(DEFAULT_SHARE_IMAGE),
+    )
+
+
+@page_bp.get("/news/")
+def news_list_slash():
+    return redirect("/news", code=301)
 
 
 @page_bp.get("/news/<slug>")

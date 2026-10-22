@@ -59,6 +59,7 @@ async function loadNews(){
       return;
     }
     data.posts.forEach((post,i)=>{const c=newsCard(post,i);grid.append(c);observer.observe(c)});
+    document.querySelector('#newsMore')?.removeAttribute('hidden');
   }catch(err){
     grid.append(newsEl('p','news-empty','Новините не могат да се заредят в момента. Опитайте отново по-късно.'));
   }

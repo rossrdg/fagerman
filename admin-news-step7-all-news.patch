@@ -1,0 +1,358 @@
+From 25ffbf6146568aee1c3c4637fab3ec8af8532c41 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Thu, 22 Oct 2026 18:32:39 +0000
+Subject: [PATCH] All news page (/news) with pagination; link under the
+ homepage cards; shared news layout
+
+---
+ backend/README.md                    |  2 +
+ backend/app/routes/news.py           | 44 +++++++++++++++++++++-
+ backend/app/templates/_fb_icon.html  |  1 +
+ backend/app/templates/news_base.html | 48 ++++++++++++++++++++++++
+ backend/app/templates/news_list.html | 51 ++++++++++++++++++++++++++
+ backend/app/templates/news_post.html | 55 ++++------------------------
+ frontend/index.html                  |  1 +
+ frontend/news.css                    |  7 ++++
+ frontend/script.js                   |  1 +
+ frontend/styles.css                  |  2 +
+ 10 files changed, 163 insertions(+), 49 deletions(-)
+ create mode 100644 backend/app/templates/_fb_icon.html
+ create mode 100644 backend/app/templates/news_base.html
+ create mode 100644 backend/app/templates/news_list.html
+
+diff --git a/backend/README.md b/backend/README.md
+index f007979..fed344d 100644
+--- a/backend/README.md
++++ b/backend/README.md
+@@ -28,6 +28,8 @@ API-то тръгва на `http://127.0.0.1:5000`. При първото ста
+ | GET   | /api/news/<slug>       | Една публикувана статия с пълен текст      |
+ | GET/POST | /api/admin/news     | Всички статии (с чернови) / нова статия    |
+ | GET/PATCH/DELETE | /api/admin/news/<id> | Четене / редакция / изтриване     |
++| GET   | /news, /news?page=2    | Страница „Всички новини“ (12 на страница)  |
++| GET   | /news/<slug>           | Страница на статията (с Open Graph тагове) |
+ | POST  | /api/admin/uploads     | Качване на снимка (`image`): смалява се до 1600 px + 800 px версия, записва се като JPEG |
+ | GET   | /uploads/<файл>        | Качените снимки (дълъг кеш)                |
+ 
+diff --git a/backend/app/routes/news.py b/backend/app/routes/news.py
+index f34fbb3..b982764 100644
+--- a/backend/app/routes/news.py
++++ b/backend/app/routes/news.py
+@@ -2,7 +2,7 @@ from datetime import datetime, timezone
+ 
+ from urllib.parse import quote
+ 
+-from flask import Blueprint, current_app, jsonify, render_template, request
++from flask import Blueprint, current_app, jsonify, redirect, render_template, request
+ 
+ from app import db
+ from app.models import Post
+@@ -22,6 +22,7 @@ STATUSES = ("draft", "published")
+ MONTHS_BG = ["януари", "февруари", "март", "април", "май", "юни", "юли",
+              "август", "септември", "октомври", "ноември", "декември"]
+ DEFAULT_SHARE_IMAGE = "/assets/fa-german-fb-cover.jpg"
++PER_PAGE = 12  # articles per page on /news
+ MAX_BODY = 100_000
+ 
+ 
+@@ -62,6 +63,47 @@ def _absolute(path):
+     return base + path
+ 
+ 
++@page_bp.get("/news")
++def news_list():
++    """All published articles, newest first, 12 per page (?page=2, ...)."""
++    try:
++        page = max(1, int(request.args.get("page", 1)))
++    except ValueError:
++        page = 1
++
++    query = Post.query.filter_by(status="published")
++    pages = max(1, -(-query.count() // PER_PAGE))
++    page = min(page, pages)
++    posts = (
++        query.order_by(Post.published_at.desc(), Post.id.desc())
++        .offset((page - 1) * PER_PAGE)
++        .limit(PER_PAGE)
++        .all()
++    )
++
++    items = []
++    for post in posts:
++        item = post.to_dict()
++        item["date"] = post.published_at.strftime("%d.%m.%Y") if post.published_at else ""
++        item["share_url"] = ("https://www.facebook.com/sharer/sharer.php?u="
++                             + quote(_absolute(item["url"]), safe=""))
++        items.append(item)
++
++    return render_template(
++        "news_list.html",
++        posts=items,
++        page=page,
++        pages=pages,
++        page_url=_absolute("/news" + (f"?page={page}" if page > 1 else "")),
++        image_url=_absolute(DEFAULT_SHARE_IMAGE),
++    )
++
++
++@page_bp.get("/news/")
++def news_list_slash():
++    return redirect("/news", code=301)
++
++
+ @page_bp.get("/news/<slug>")
+ def news_page(slug):
+     post = Post.query.filter_by(slug=slug, status="published").first()
+diff --git a/backend/app/templates/_fb_icon.html b/backend/app/templates/_fb_icon.html
+new file mode 100644
+index 0000000..9f10da5
+--- /dev/null
++++ b/backend/app/templates/_fb_icon.html
+@@ -0,0 +1 @@
++<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.5 22v-8.2h2.8l.5-3.3h-3.3V8.4c0-.9.4-1.7 1.8-1.7h1.6V3.8s-1.4-.3-2.8-.3c-2.9 0-4.6 1.7-4.6 4.8v2.2H6.7v3.3h2.8V22h4z"/></svg>
+\ No newline at end of file
+diff --git a/backend/app/templates/news_base.html b/backend/app/templates/news_base.html
+new file mode 100644
+index 0000000..55fddf0
+--- /dev/null
++++ b/backend/app/templates/news_base.html
+@@ -0,0 +1,48 @@
++<!doctype html>
++<html lang="bg">
++<head>
++  <meta charset="utf-8">
++  <meta name="viewport" content="width=device-width, initial-scale=1">
++{% block head %}{% endblock %}
++  <meta name="theme-color" content="#07110D">
++  <link rel="preconnect" href="https://fonts.googleapis.com">
++  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
++  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
++  <link rel="stylesheet" href="/styles.css">
++  <link rel="stylesheet" href="/news.css">
++</head>
++<body class="article-page">
++  <header class="site-header scrolled">
++    <div class="container nav-wrap">
++      <a class="brand" href="/" aria-label="Футболна Академия Герман">
++        <img src="/assets/cropped-logo-german-scaled-1.png" alt="Футболна Академия Герман" width="60" height="60">
++      </a>
++      <nav class="article-nav" aria-label="Навигация">
++        <a href="/news">← Всички новини</a>
++      </nav>
++      <a class="btn btn-primary nav-cta" href="/#registration">Запиши се <span>↗</span></a>
++    </div>
++  </header>
++
++  <main class="article-main">
++{% block main %}{% endblock %}
++  </main>
++
++  <footer class="footer">
++    <div class="container footer-bottom" style="margin-top:0;border-top:0;padding-top:0">
++      <span>© 2026 Футболна Академия Герман. Всички права запазени.</span>
++      <span><a href="/">Към началната страница</a></span>
++    </div>
++  </footer>
++
++  <script>
++    // Отваря Facebook в малко прозорче; ако е блокирано, линкът работи нормално.
++    document.querySelectorAll('[data-fb-share]').forEach(function (a) {
++      a.addEventListener('click', function (e) {
++        var w = window.open(a.href, 'fbshare', 'width=640,height=560,noopener');
++        if (w) e.preventDefault();
++      });
++    });
++  </script>
++</body>
++</html>
+diff --git a/backend/app/templates/news_list.html b/backend/app/templates/news_list.html
+new file mode 100644
+index 0000000..cddeeef
+--- /dev/null
++++ b/backend/app/templates/news_list.html
+@@ -0,0 +1,51 @@
++{% extends "news_base.html" %}
++{% block head %}
++  <title>Новини{% if page > 1 %} — страница {{ page }}{% endif %} | Футболна Академия Герман</title>
++  <meta name="description" content="Всички новини и активности на Футболна Академия Герман — тренировки, турнири, развитие и общност.">
++  <link rel="canonical" href="{{ page_url }}">
++  <meta property="og:type" content="website">
++  <meta property="og:site_name" content="Футболна Академия Герман">
++  <meta property="og:locale" content="bg_BG">
++  <meta property="og:title" content="Новини | Футболна Академия Герман">
++  <meta property="og:description" content="Всички новини и активности на Футболна Академия Герман.">
++  <meta property="og:url" content="{{ page_url }}">
++  <meta property="og:image" content="{{ image_url }}">
++{% endblock %}
++{% block main %}
++    <section class="container news-list">
++      <header class="news-list-head">
++        <div class="eyebrow green">НОВИНИ & АКТИВНОСТ</div>
++        <h1>Академията <em>в действие.</em></h1>
++      </header>
++
++      {% if posts %}
++      <div class="news-grid">
++        {% for p in posts %}
++        <article class="news-card">
++          <a class="news-img n{{ (loop.index0 % 3) + 1 }}" href="{{ p.url }}" aria-label="{{ p.title }}">{% if p.cover_thumb %}<img src="{{ p.cover_thumb }}" alt="" loading="lazy">{% else %}FA{% endif %}</a>
++          <div class="news-body">
++            <span>{{ [p.category, p.date]|select|join(' · ') or 'НОВИНИ' }}</span>
++            <h3><a href="{{ p.url }}">{{ p.title }}</a></h3>
++            {% if p.excerpt %}<p class="news-excerpt">{{ p.excerpt }}</p>{% endif %}
++            <div class="news-actions">
++              <a class="text-link" href="{{ p.url }}">Прочети повече ↗</a>
++              <a class="news-share" href="{{ p.share_url }}" target="_blank" rel="noopener noreferrer"
++                 aria-label="Сподели във Facebook" title="Сподели във Facebook" data-fb-share>{% include "_fb_icon.html" %}</a>
++            </div>
++          </div>
++        </article>
++        {% endfor %}
++      </div>
++
++      {% if pages > 1 %}
++      <nav class="pager" aria-label="Страници">
++        {% if page > 1 %}<a class="text-link" href="{{ '/news' if page == 2 else '/news?page=' ~ (page - 1) }}" rel="prev">← По-нови</a>{% else %}<span></span>{% endif %}
++        <span class="pager-info">Страница {{ page }} от {{ pages }}</span>
++        {% if page < pages %}<a class="text-link" href="/news?page={{ page + 1 }}" rel="next">По-стари →</a>{% else %}<span></span>{% endif %}
++      </nav>
++      {% endif %}
++      {% else %}
++      <p class="news-empty">Все още няма публикувани новини. Заповядайте отново скоро!</p>
++      {% endif %}
++    </section>
++{% endblock %}
+diff --git a/backend/app/templates/news_post.html b/backend/app/templates/news_post.html
+index 5999478..836f7b1 100644
+--- a/backend/app/templates/news_post.html
++++ b/backend/app/templates/news_post.html
+@@ -1,8 +1,5 @@
+-<!doctype html>
+-<html lang="bg">
+-<head>
+-  <meta charset="utf-8">
+-  <meta name="viewport" content="width=device-width, initial-scale=1">
++{% extends "news_base.html" %}
++{% block head %}
+ {% if post %}
+   <title>{{ post.title }} | Футболна Академия Герман</title>
+   <meta name="description" content="{{ description }}">
+@@ -22,27 +19,8 @@
+   <title>Статията не е намерена | Футболна Академия Герман</title>
+   <meta name="robots" content="noindex">
+ {% endif %}
+-  <meta name="theme-color" content="#07110D">
+-  <link rel="preconnect" href="https://fonts.googleapis.com">
+-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+-  <link rel="stylesheet" href="/styles.css">
+-  <link rel="stylesheet" href="/news.css">
+-</head>
+-<body class="article-page">
+-  <header class="site-header scrolled">
+-    <div class="container nav-wrap">
+-      <a class="brand" href="/" aria-label="Футболна Академия Герман">
+-        <img src="/assets/cropped-logo-german-scaled-1.png" alt="Футболна Академия Герман" width="60" height="60">
+-      </a>
+-      <nav class="article-nav" aria-label="Навигация">
+-        <a href="/#news">← Всички новини</a>
+-      </nav>
+-      <a class="btn btn-primary nav-cta" href="/#registration">Запиши се <span>↗</span></a>
+-    </div>
+-  </header>
+-
+-  <main class="article-main">
++{% endblock %}
++{% block main %}
+ {% if post %}
+     <article class="article container">
+       <header class="article-head">
+@@ -70,7 +48,7 @@
+         <span>Сподели статията:</span>
+         <a class="fb-share" href="{{ share_url }}" target="_blank" rel="noopener noreferrer"
+            aria-label="Сподели във Facebook" data-fb-share>
+-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.5 22v-8.2h2.8l.5-3.3h-3.3V8.4c0-.9.4-1.7 1.8-1.7h1.6V3.8s-1.4-.3-2.8-.3c-2.9 0-4.6 1.7-4.6 4.8v2.2H6.7v3.3h2.8V22h4z"/></svg>
++          {% include "_fb_icon.html" %}
+           Facebook
+         </a>
+       </footer>
+@@ -80,26 +58,7 @@
+       <div class="eyebrow green">404</div>
+       <h1>Статията не е намерена.</h1>
+       <p>Възможно е да е преместена или вече да не е публикувана.</p>
+-      <a class="btn btn-primary" href="/#news">Към новините</a>
++      <a class="btn btn-primary" href="/news">Към новините</a>
+     </section>
+ {% endif %}
+-  </main>
+-
+-  <footer class="footer">
+-    <div class="container footer-bottom" style="margin-top:0;border-top:0;padding-top:0">
+-      <span>© 2026 Футболна Академия Герман. Всички права запазени.</span>
+-      <span><a href="/">Към началната страница</a></span>
+-    </div>
+-  </footer>
+-
+-  <script>
+-    // Отваря Facebook в малко прозорче; ако е блокирано, линкът работи нормално.
+-    document.querySelectorAll('[data-fb-share]').forEach(function (a) {
+-      a.addEventListener('click', function (e) {
+-        var w = window.open(a.href, 'fbshare', 'width=640,height=560,noopener');
+-        if (w) e.preventDefault();
+-      });
+-    });
+-  </script>
+-</body>
+-</html>
++{% endblock %}
+diff --git a/frontend/index.html b/frontend/index.html
+index 026a132..2f89e79 100644
+--- a/frontend/index.html
++++ b/frontend/index.html
+@@ -101,6 +101,7 @@
+       <div class="container">
+         <div class="section-heading reveal"><div><div class="eyebrow green">НОВИНИ & АКТИВНОСТ</div><h2>Академията <em>в действие.</em></h2></div></div>
+         <div class="news-grid" id="newsGrid" aria-live="polite"></div>
++        <p class="news-more" id="newsMore" hidden><a class="text-link" href="/news">Всички новини →</a></p>
+       </div>
+     </section>
+ 
+diff --git a/frontend/news.css b/frontend/news.css
+index 0becd66..d883a7a 100644
+--- a/frontend/news.css
++++ b/frontend/news.css
+@@ -24,3 +24,10 @@
+ .fb-share:hover{background:#0f63d0;transform:translateY(-2px)}
+ .article-missing{text-align:left;padding:40px 0}
+ @media(max-width:767px){.article-main{padding-top:100px}.article-body{font-size:16px}.nav-wrap .article-nav a{font-size:11px}}
++
++/* Страница „Всички новини“ (/news) */
++.news-list-head h1{font-size:clamp(34px,4.6vw,56px);margin-bottom:36px}
++.news-list .news-empty{font-size:17px}
++.pager{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:44px;padding-top:24px;border-top:1px solid var(--line)}
++.pager-info{font-size:13px;font-weight:700;color:var(--muted)}
++.pager .text-link:hover{text-decoration:underline}
+diff --git a/frontend/script.js b/frontend/script.js
+index bfd32c8..c50bf72 100644
+--- a/frontend/script.js
++++ b/frontend/script.js
+@@ -59,6 +59,7 @@ async function loadNews(){
+       return;
+     }
+     data.posts.forEach((post,i)=>{const c=newsCard(post,i);grid.append(c);observer.observe(c)});
++    document.querySelector('#newsMore')?.removeAttribute('hidden');
+   }catch(err){
+     grid.append(newsEl('p','news-empty','Новините не могат да се заредят в момента. Опитайте отново по-късно.'));
+   }
+diff --git a/frontend/styles.css b/frontend/styles.css
+index b79f2d1..07e48ae 100644
+--- a/frontend/styles.css
++++ b/frontend/styles.css
+@@ -16,3 +16,5 @@
+ .news-share{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);color:#1877f2;transition:.25s}
+ .news-share:hover{background:#1877f2;border-color:#1877f2;color:#fff;transform:translateY(-2px)}
+ .news-empty{grid-column:1/-1;color:var(--muted);font-size:16px}
++.news-more{text-align:center;margin:34px 0 0}
++.news-more .text-link:hover{text-decoration:underline}
+-- 
+2.43.0
+

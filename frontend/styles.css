@@ -16,3 +16,5 @@
 .news-share{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);color:#1877f2;transition:.25s}
 .news-share:hover{background:#1877f2;border-color:#1877f2;color:#fff;transform:translateY(-2px)}
 .news-empty{grid-column:1/-1;color:var(--muted);font-size:16px}
+.news-more{text-align:center;margin:34px 0 0}
+.news-more .text-link:hover{text-decoration:underline}
