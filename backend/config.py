@@ -26,6 +26,15 @@ class Config:
 
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-change-me")
 
+    # Public address of the site, used for absolute links in Facebook share
+    # tags (og:url, og:image). Production: https://fa-german.eu
+    SITE_URL = os.environ.get("SITE_URL", "")
+
+    # Photos uploaded from the admin (resized JPEGs). Keep this folder out of git
+    # and include it in backups. Production: ideally outside the project folder.
+    UPLOAD_DIR = os.environ.get("UPLOAD_DIR", str(BASE_DIR / "uploads"))
+    MAX_CONTENT_LENGTH = 12 * 1024 * 1024  # largest request body (one photo up to 10 MB)
+
     CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "*").split(",")
 
     # Where the static site (index.html, styles.css, script.js, assets/)

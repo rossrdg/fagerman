@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Новини — Админ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <span class="brand-mark">FA</span>
+      <div>
+        <strong>ФА Герман — Админ</strong>
+        <small>Временен preview изглед — ще стане част от истинския admin panel</small>
+      </div>
+    </div>
+  </header>
+
+  <nav class="admin-nav" aria-label="Админ навигация">
+    <a href="admin-registrations.html">Записани за пробна тренировка</a>
+    <a href="admin-news.html" class="active">Новини</a>
+  </nav>
+
+  <main class="admin-main">
+    <div class="admin-notice">
+      ⚠️ Тази страница няма вход/парола — не я качвайте на публичен сървър, преди да добавим автентикация.
+    </div>
+
+    <!-- ===== Списък със статии ===== -->
+    <section id="listView">
+      <div class="admin-toolbar">
+        <div>
+          <h1>Новини</h1>
+          <div id="listStatus" class="admin-status">Зареждане...</div>
+        </div>
+        <div class="toolbar-actions">
+          <button id="refreshBtn" class="btn btn-outline" type="button">Опресни ↻</button>
+          <button id="newBtn" class="btn btn-primary" type="button">+ Нова статия</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table id="postsTable" class="admin-table" hidden>
+          <thead>
+            <tr>
+              <th>Заглавие</th>
+              <th>Категория</th>
+              <th>Статус</th>
+              <th>Публикувана</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="postsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== Редактор ===== -->
+    <section id="editorView" hidden>
+      <div class="admin-toolbar">
+        <div>
+          <h1 id="editorTitle">Нова статия</h1>
+          <div id="editorStatus" class="admin-status" aria-live="polite"></div>
+        </div>
+        <div class="toolbar-actions">
+          <a id="viewLink" class="btn btn-outline" href="#" target="_blank" rel="noopener" hidden>Виж страницата ↗</a>
+          <button id="backBtn" class="btn btn-outline" type="button">← Към списъка</button>
+        </div>
+      </div>
+
+      <form id="newsForm" class="news-form" novalidate>
+        <div class="field">
+          <label for="f-title">Заглавие *</label>
+          <input id="f-title" name="title" maxlength="200" autocomplete="off">
+          <div class="field-error" data-error-for="title"></div>
+        </div>
+
+        <div class="field narrow">
+          <label for="f-category">Категория</label>
+          <input id="f-category" name="category" maxlength="40" list="categoryList" autocomplete="off" placeholder="напр. РАЗВИТИЕ">
+          <datalist id="categoryList"><option value="РАЗВИТИЕ"><option value="ОПИТ"><option value="ОБЩНОСТ"></datalist>
+          <div class="field-error" data-error-for="category"></div>
+        </div>
+
+        <div class="field">
+          <label for="coverBtn">Заглавна снимка</label>
+          <input type="hidden" name="cover_image">
+          <div class="cover-box">
+            <img id="coverPreview" class="cover-preview" alt="" hidden>
+            <div class="cover-actions">
+              <button id="coverBtn" class="btn btn-outline btn-sm" type="button">Качи снимка</button>
+              <button id="coverRemove" class="btn btn-outline btn-sm" type="button" hidden>Премахни</button>
+            </div>
+          </div>
+          <input id="coverFile" type="file" accept="image/*" hidden>
+          <div class="field-hint">Показва се в картата и при споделяне във Facebook. Най-добре е широка снимка (поне 1200 px). Снимка до 10 MB — смалява се автоматично.</div>
+          <div class="field-error" data-error-for="cover_image"></div>
+        </div>
+
+        <div class="field">
+          <label for="f-excerpt">Кратко описание</label>
+          <textarea id="f-excerpt" name="excerpt" rows="2" maxlength="300"></textarea>
+          <div class="field-hint">Показва се в картата и при споделяне във Facebook. Ако е празно, взема се началото на текста.</div>
+          <div class="field-error" data-error-for="excerpt"></div>
+        </div>
+
+        <div class="field">
+          <label>Текст</label>
+          <div class="editor-box">
+            <div id="toolbar">
+              <span class="ql-formats">
+                <button class="ql-header" value="2" type="button" aria-label="Заглавие"></button>
+                <button class="ql-header" value="3" type="button" aria-label="Подзаглавие"></button>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-bold" type="button" aria-label="Удебелен"></button>
+                <button class="ql-italic" type="button" aria-label="Курсив"></button>
+                <button class="ql-underline" type="button" aria-label="Подчертан"></button>
+                <button class="ql-strike" type="button" aria-label="Зачертан"></button>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-list" value="bullet" type="button" aria-label="Списък"></button>
+                <button class="ql-list" value="ordered" type="button" aria-label="Номериран списък"></button>
+                <button class="ql-blockquote" type="button" aria-label="Цитат"></button>
+                <button class="ql-link" type="button" aria-label="Линк"></button>
+              </span>
+              <span class="ql-formats">
+                <button id="imageBtn" class="emoji-btn" type="button" aria-label="Добави снимка" title="Добави снимка">🖼️</button>
+                <button id="emojiBtn" class="emoji-btn" type="button" aria-label="Емотикони" title="Емотикони">😀</button>
+                <button class="ql-clean" type="button" aria-label="Изчисти форматирането"></button>
+              </span>
+            </div>
+            <div id="emojiPanel" class="emoji-panel" hidden></div>
+            <input id="bodyFile" type="file" accept="image/*" multiple hidden>
+            <div id="editor"></div>
+          </div>
+          <div class="field-error" data-error-for="body"></div>
+        </div>
+
+        <div class="field">
+          <label for="f-youtube">YouTube видео (линк)</label>
+          <input id="f-youtube" name="youtube_url" autocomplete="off" placeholder="https://www.youtube.com/watch?v=…">
+          <div class="field-error" data-error-for="youtube_url"></div>
+        </div>
+
+        <div class="form-actions">
+          <button id="primaryBtn" class="btn btn-primary" type="button">Публикувай</button>
+          <button id="secondaryBtn" class="btn btn-outline" type="button">Запази като чернова</button>
+          <button id="deleteBtn" class="btn btn-danger" type="button" hidden>Изтрий</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+  <script src="admin-news.js"></script>
+</body>
+</html>

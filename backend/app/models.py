@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from app import db
+from app.news_utils import make_excerpt
 
 
 class Registration(db.Model):
@@ -36,3 +37,61 @@ class Registration(db.Model):
             "processed": bool(self.processed),
             "notified_at": self.notified_at.isoformat() if self.notified_at else None,
         }
+
+
+def thumb_url(url):
+    """Photos uploaded through the admin also exist as a smaller <name>-800.jpg
+    version (used on the homepage cards). Other addresses are returned as they are."""
+    if url and url.startswith("/uploads/") and url.endswith(".jpg"):
+        return url[:-4] + "-800.jpg"
+    return url
+
+
+class Post(db.Model):
+    """A news / blog article shown in the "Новини" section."""
+
+    __tablename__ = "posts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    # Part of the public URL (/news/<slug>). Created once and never changed, so
+    # links that were already shared on Facebook keep working after an edit.
+    slug = db.Column(db.String(100), nullable=False, unique=True, index=True)
+    excerpt = db.Column(db.String(300), nullable=False, default="")
+    body = db.Column(db.Text, nullable=False, default="")  # sanitized HTML
+    category = db.Column(db.String(40), nullable=True)
+    cover_image = db.Column(db.String(255), nullable=True)
+    youtube_id = db.Column(db.String(11), nullable=True)
+    status = db.Column(db.String(10), nullable=False, default="draft", server_default="draft")
+    published_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    def to_dict(self, full=False, admin=False):
+        data = {
+            "id": self.id,
+            "title": self.title,
+            "slug": self.slug,
+            "url": f"/news/{self.slug}",
+            "excerpt": self.excerpt or make_excerpt(self.body),
+            "category": self.category,
+            "cover_image": self.cover_image,
+            "cover_thumb": thumb_url(self.cover_image),
+            "published_at": self.published_at.isoformat() if self.published_at else None,
+        }
+        if full or admin:
+            data["body"] = self.body
+            data["youtube_id"] = self.youtube_id
+        if admin:
+            data.update({
+                "excerpt": self.excerpt,  # raw value, so the editor shows what was typed
+                "status": self.status,
+                "youtube_url": f"https://www.youtube.com/watch?v={self.youtube_id}" if self.youtube_id else "",
+                "created_at": self.created_at.isoformat() if self.created_at else None,
+                "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            })
+        return data
