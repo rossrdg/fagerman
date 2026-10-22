@@ -10,7 +10,7 @@ uploads_bp = Blueprint("uploads", __name__)
 # Public: GET /uploads/<file>
 files_bp = Blueprint("upload_files", __name__)
 
-ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}   # no SVG (can carry scripts), no GIF
+ALLOWED_FORMATS = {"JPEG", "JPG", "PNG", "WEBP"}   # no SVG (can carry scripts), no GIF
 MAIN_SIZE = 1600      # longest side of the photo used in articles / Facebook
 THUMB_SIZE = 800      # longest side of the card version
 MAX_PIXELS = 50_000_000
