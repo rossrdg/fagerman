@@ -10,7 +10,12 @@ uploads_bp = Blueprint("uploads", __name__)
 # Public: GET /uploads/<file>
 files_bp = Blueprint("upload_files", __name__)
 
-ALLOWED_FORMATS = {"JPEG", "JPG", "PNG", "WEBP"}   # no SVG (can carry scripts), no GIF
+# Any ordinary photo/picture format is accepted — every upload is decoded and re-saved
+# as a plain JPEG, so the original file is never served. The list only keeps out the
+# exotic formats Pillow can open (e.g. EPS, which runs Ghostscript). SVG is not an
+# image Pillow can read, so it is refused too.
+Image.init()  # load every format plugin, so the names below exist
+READABLE_FORMATS = [f for f in ("JPEG", "PNG", "WEBP", "GIF", "BMP", "DIB", "TIFF", "ICO") if f in Image.OPEN]
 MAIN_SIZE = 1600      # longest side of the photo used in articles / Facebook
 THUMB_SIZE = 800      # longest side of the card version
 MAX_PIXELS = 50_000_000
@@ -46,15 +51,13 @@ def upload_image():
         return _error("Не е избран файл.")
 
     try:
-        img = Image.open(file.stream)
-        if img.format not in ALLOWED_FORMATS:
-            return _error("Позволени са само JPG, PNG и WebP снимки.")
+        img = Image.open(file.stream, formats=READABLE_FORMATS)
         if img.width * img.height > MAX_PIXELS:
             return _error("Снимката е с твърде голяма резолюция.")
         img.load()
         rgb = _to_rgb(img)
     except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError):
-        return _error("Файлът не е валидна снимка.")
+        return _error("Файлът не е снимка или форматът му не се поддържа. Опитайте с JPG или PNG.")
 
     upload_dir = current_app.config["UPLOAD_DIR"]
     os.makedirs(upload_dir, exist_ok=True)

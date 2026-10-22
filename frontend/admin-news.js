@@ -118,7 +118,9 @@ const quill = new Quill('#editor', {
     // Photos dropped or pasted into the text are uploaded (and resized) instead of
     // being embedded as huge inline data.
     uploader: {
-      mimetypes: ['image/jpeg', 'image/png', 'image/webp'],
+      // Quill filters dropped/pasted files by exact type, so list the usual ones;
+      // the server makes the final decision.
+      mimetypes: ['image/jpeg', 'image/jpg', 'image/pjpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp', 'image/tiff', 'image/x-icon', 'image/avif', 'image/heic', 'image/heif'],
       handler: (range, files) => insertImages([...files], range.index)
     }
   },
@@ -193,9 +195,6 @@ const bodyFile = $('#bodyFile');
 let insertAt = 0;
 
 async function uploadImage(file) {
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-    throw new Error('Позволени са само JPG, PNG и WebP снимки.');
-  }
   if (file.size > MAX_PHOTO_BYTES) throw new Error('Снимката е над 10 MB.');
   const body = new FormData();
   body.append('image', file);
@@ -246,7 +245,7 @@ coverFile.addEventListener('change', async () => {
 });
 
 async function insertImages(files, index) {
-  files = files.filter(f => f && f.type && f.type.startsWith('image/'));
+  files = files.filter(f => f && (!f.type || f.type.startsWith('image/'))); // the server checks the real format
   if (!files.length) return;
   setUploading(true);
   let added = 0;
