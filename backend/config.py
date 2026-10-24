@@ -26,6 +26,14 @@ class Config:
 
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-change-me")
 
+    # Admin login session (cookie). In production (https) set
+    # SESSION_COOKIE_SECURE=1 and a long random SECRET_KEY in backend/.env.
+    SESSION_COOKIE_NAME = "fa_admin"
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SECURE = _env_bool("SESSION_COOKIE_SECURE", False)
+    PERMANENT_SESSION_LIFETIME = int(os.environ.get("SESSION_HOURS", "12")) * 3600
+
     # Public address of the site, used for absolute links in Facebook share
     # tags (og:url, og:image). Production: https://fa-german.eu
     SITE_URL = os.environ.get("SITE_URL", "")

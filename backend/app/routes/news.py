@@ -5,6 +5,7 @@ from urllib.parse import quote
 from flask import Blueprint, current_app, jsonify, redirect, render_template, request
 
 from app import db
+from app.auth import check_admin
 from app.models import Post
 from app.news_utils import extract_youtube_id, make_excerpt, sanitize_html, slugify
 
@@ -17,6 +18,9 @@ admin_news_bp = Blueprint("admin_news", __name__)
 
 # Public HTML page of one article (not under /api): /news/<slug>
 page_bp = Blueprint("news_page", __name__)
+
+# Every /api/admin/news* route requires a logged-in admin/coach.
+admin_news_bp.before_request(check_admin)
 
 STATUSES = ("draft", "published")
 MONTHS_BG = ["януари", "февруари", "март", "април", "май", "юни", "юли",

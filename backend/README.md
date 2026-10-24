@@ -23,7 +23,7 @@ API-то тръгва на `http://127.0.0.1:5000`. При първото ста
 |-------|----------------------|---------------------------------------------|
 | GET   | /api/health           | Проверка дали API-то работи                |
 | POST  | /api/registration      | Записва заявка от регистрационната форма   |
-| GET   | /api/registration      | Списък с всички заявки (временно, без auth)|
+| GET   | /api/registration      | Списък с всички заявки (изисква вход)      |
 | GET   | /api/news              | Публикувани статии (`?limit=`, `?offset=`) |
 | GET   | /api/news/<slug>       | Една публикувана статия с пълен текст      |
 | GET/POST | /api/admin/news     | Всички статии (с чернови) / нова статия    |
@@ -40,7 +40,6 @@ API-то тръгва на `http://127.0.0.1:5000`. При първото ста
 `category`, `cover_image`, `youtube_url` (само YouTube линк), `status`
 (`draft` / `published`). Адресът (`slug`) се създава от заглавието при
 създаване и не се променя, за да не се чупят вече споделени линкове.
-`/api/admin/*` е без вход — трябва да се защити преди production.
 
 ### POST /api/registration — очаквани полета
 
@@ -49,6 +48,39 @@ API-то тръгва на `http://127.0.0.1:5000`. При първото ста
 
 Приема `application/json` или стандартен form submit
 (`application/x-www-form-urlencoded`).
+
+## Вход и акаунти (админ панел)
+
+Роли: **owner** (главен администратор) и **coach** (треньор). Треньорите
+работят само с инструментите (записвания, новини); само главният
+администратор вижда страница „Потребители“ и създава/изключва/трие акаунти
+и задава пароли (няма възстановяване по имейл).
+
+Първи старт (или нов сървър) — създаване на главния администратор:
+
+```bash
+cd backend
+flask --app run create-owner rosen --name "Росен"   # пита за парола
+flask --app run reset-password rosen                 # забравена парола
+flask --app run list-users
+```
+
+| Метод | Път | Кой |
+|-------|-----|-----|
+| POST | /api/auth/login, /api/auth/logout | всеки / логнат |
+| GET | /api/auth/me | логнат |
+| GET/POST | /api/admin/users | само owner |
+| PATCH/DELETE | /api/admin/users/<id> | само owner (само треньори) |
+
+Защитено с вход: `/api/registration` (GET/PATCH/notify), `/api/admin/*`,
+`/api/admin/uploads` и всички `admin*.html` страници (без `admin-login.html`).
+Публични остават `POST /api/registration`, новините и `/uploads/`.
+
+Сигурност: хеширани пароли, сесийна cookie (HttpOnly, SameSite=Lax), CSRF
+токен за всяка променяща заявка, заключване на акаунт за 15 мин. след 5
+грешни паролата, спиране/смяна на парола прекратява отворените сесии.
+**Production (.env):** `SECRET_KEY=<дълъг случаен низ>` и
+`SESSION_COOKIE_SECURE=1` (само https; без SECRET_KEY приложението не стартира).
 
 ## Следва
 

@@ -90,3 +90,29 @@
 .cover-preview{width:200px;height:112px;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:#eef3f0}
 .cover-actions{display:flex;gap:8px;flex-wrap:wrap}
 .editor-box .ql-editor img{max-width:100%;height:auto;border-radius:8px}
+
+/* Login + user management */
+.admin-header .admin-user{display:flex;align-items:center;gap:12px;margin-left:auto;font-size:13px;color:#d7e0db}
+.admin-header .admin-user .btn{padding:8px 14px;font-size:11px}
+.login-body{display:grid;place-items:center;padding:20px}
+.login-card{width:min(420px,100%);background:#fff;border:1px solid var(--line);border-radius:20px;padding:36px;box-shadow:0 25px 70px #07110d14}
+.login-card .brand-mark{display:grid;place-items:center;width:42px;height:42px;border:2px solid var(--green);border-radius:9px;font:800 14px Manrope;color:var(--green);transform:skew(-8deg);margin-bottom:18px}
+.login-card h1{font-size:26px;margin-bottom:22px}
+.login-card label{display:block;font-size:12px;font-weight:800;margin-bottom:16px;color:#334039}
+.login-card input{width:100%;margin-top:7px;border:1px solid #d8e0db;border-radius:10px;padding:13px 14px;font:inherit;background:#fbfcfb}
+.login-card input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px #0779ea22}
+.login-card .btn{width:100%}
+.form-status.error{color:#d93025}
+.user-form{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:22px}
+.user-form h2{font-size:18px;margin-bottom:14px}
+.user-form-row{display:grid;grid-template-columns:1fr 1fr 1.4fr auto;gap:14px;align-items:end}
+.user-form label{font-size:12px;font-weight:800;color:#334039}
+.user-form input{width:100%;margin-top:7px;border:1px solid #d8e0db;border-radius:10px;padding:11px 12px;font:inherit;background:#fbfcfb}
+.pw-row{display:flex;gap:8px}
+.btn-ghost-dark{border-color:#cbd6d0;color:#132019;padding:10px 14px;font-size:11px}
+.btn-ghost-dark:hover{background:#f0f3f1}
+.user-hint{font-size:12px;margin:12px 0 0}
+.row-btn{font:inherit;font-size:12px;font-weight:700;padding:6px 10px;margin-right:6px;border:1px solid #cbd6d0;border-radius:8px;background:#fff;cursor:pointer}
+.row-btn:hover{background:#f0f3f1}
+.row-btn.danger{color:#d93025;border-color:#f0b9b4}
+@media(max-width:900px){.user-form-row{grid-template-columns:1fr}.admin-header{flex-wrap:wrap}}
