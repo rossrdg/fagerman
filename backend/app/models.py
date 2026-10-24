@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 
+from werkzeug.security import check_password_hash, generate_password_hash
+
 from app import db
 from app.news_utils import make_excerpt
 
@@ -95,3 +97,57 @@ class Post(db.Model):
                 "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             })
         return data
+
+
+ROLE_OWNER = "owner"  # главен администратор: всичко + управление на акаунти
+ROLE_COACH = "coach"  # треньор: само инструментите на админ страниците
+
+_HASH_METHOD = "pbkdf2:sha256"  # работи навсякъде (scrypt не е наличен на всеки хостинг)
+
+
+def utcnow():
+    """Naive UTC time (SQLite does not keep time zones)."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+class AdminUser(db.Model):
+    """Account with access to the admin pages. Only the owner can create,
+    disable or delete the others (see routes/auth.py)."""
+
+    __tablename__ = "admin_users"
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(40), nullable=False, unique=True, index=True)
+    display_name = db.Column(db.String(80), nullable=False, default="")
+    password_hash = db.Column(db.String(255), nullable=False)
+    role = db.Column(db.String(10), nullable=False, default=ROLE_COACH)
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    # Raised on every password change / deactivation: open sessions of the
+    # user stop working immediately.
+    token_version = db.Column(db.Integer, nullable=False, default=1)
+    failed_attempts = db.Column(db.Integer, nullable=False, default=0)
+    locked_until = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=utcnow)
+    last_login_at = db.Column(db.DateTime, nullable=True)
+
+    @property
+    def is_owner(self):
+        return self.role == ROLE_OWNER
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password, method=_HASH_METHOD)
+        self.token_version = (self.token_version or 0) + 1
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "username": self.username,
+            "display_name": self.display_name or self.username,
+            "role": self.role,
+            "is_active": bool(self.is_active),
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "last_login_at": self.last_login_at.isoformat() if self.last_login_at else None,
+        }

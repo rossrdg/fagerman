@@ -5,6 +5,7 @@ from flask import Blueprint, current_app, request, jsonify
 
 from app import db
 from app.mailer import MailError, build_trial_training_email, send_email
+from app.auth import admin_required
 from app.models import Registration
 
 registration_bp = Blueprint("registration", __name__)
@@ -60,17 +61,17 @@ def create_registration():
 
 
 @registration_bp.get("/registration")
+@admin_required
 def list_registrations():
-    """Simple listing for now (no auth yet) so you can verify data
-    is being saved. Lock this down before it ever goes to production."""
+    """Listing for the admin table (personal data of children/parents: login required)."""
     registrations = Registration.query.order_by(Registration.created_at.desc()).all()
     return jsonify({"ok": True, "registrations": [r.to_dict() for r in registrations]})
 
 
 @registration_bp.patch("/registration/<int:registration_id>")
+@admin_required
 def update_registration(registration_id):
-    """Admin-only fields: training day, training time, processed flag.
-    No auth yet — must be protected before production."""
+    """Admin-only fields: training day, training time, processed flag."""
     registration = db.session.get(Registration, registration_id)
     if registration is None:
         return jsonify({"ok": False, "error": "Записът не е намерен."}), 404
@@ -117,6 +118,7 @@ def update_registration(registration_id):
 
 
 @registration_bp.post("/registration/<int:registration_id>/notify")
+@admin_required
 def notify_parent(registration_id):
     """Emails the parent the trial-training day/time. Admin-only (no auth yet)."""
     registration = db.session.get(Registration, registration_id)

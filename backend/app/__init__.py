@@ -1,4 +1,6 @@
-from flask import Flask, send_from_directory
+import os
+
+from flask import Flask, redirect, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
@@ -33,11 +35,20 @@ def create_app(config_object="config.Config"):
     )
     app.config.from_object(config_object)
 
+    if app.config["SESSION_COOKIE_SECURE"] and app.config["SECRET_KEY"] == "dev-only-change-me":
+        raise RuntimeError("Задайте дълъг случаен SECRET_KEY в backend/.env преди production.")
+
     db.init_app(app)
 
     # Allow the static frontend to call the API even if it's ever served
     # from a different origin/port than this Flask app.
     CORS(app, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}})
+
+    from app.routes.auth import auth_bp
+    app.register_blueprint(auth_bp, url_prefix="/api")  # login, /api/admin/users
+
+    from app.cli import register_cli
+    register_cli(app)
 
     from app.routes.registration import registration_bp
     app.register_blueprint(registration_bp, url_prefix="/api")
@@ -73,6 +84,15 @@ def create_app(config_object="config.Config"):
 
     @app.get("/<path:filename>")
     def serve_frontend_file(filename):
+        # Admin pages are only handed out to logged-in users.
+        name = os.path.basename(filename).lower()
+        if name.startswith("admin") and name.endswith(".html") and name != "admin-login.html":
+            from app.auth import current_user
+            user = current_user()
+            if user is None:
+                return redirect("/admin-login.html")
+            if name == "admin-users.html" and not user.is_owner:
+                return redirect("/admin-registrations.html")
         # Lets /styles.css, /script.js, /hero-background.css,
         # /assets/... resolve directly, same as on a normal static host.
         return send_from_directory(frontend_dir, filename)

@@ -1,12 +1,13 @@
 import os
 import uuid
 
+from app.auth import check_admin
 from flask import Blueprint, current_app, jsonify, request, send_from_directory
 from PIL import Image, ImageOps, UnidentifiedImageError
 
-# Admin: POST /api/admin/uploads  (no auth yet — protect together with the rest
-# of /api/admin/* before production).
+# Admin: POST /api/admin/uploads (login required).
 uploads_bp = Blueprint("uploads", __name__)
+uploads_bp.before_request(check_admin)
 # Public: GET /uploads/<file>
 files_bp = Blueprint("upload_files", __name__)
 
