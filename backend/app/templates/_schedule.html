@@ -1,0 +1,42 @@
+{# Таблица (компютър) + списък по дни (телефон). Слотовете с mine=True са в синьо и bold. #}
+{% macro chip(slot) -%}
+<span class="chip{% if slot.mine %} mine{% endif %}{% if slot.other %} other{% endif %}"{% if slot.mine %} title="Тренировка на този отбор"{% endif %}>{{ slot.label }}{% if slot.mine %}<span class="visually-hidden"> (този отбор)</span>{% endif %}</span>
+{%- endmacro %}
+
+{% macro schedule_view(schedule) %}
+<div class="schedule">
+  <div class="schedule-scroll">
+    <table class="schedule-table">
+      <thead>
+        <tr>
+          <th scope="col" class="time-col">Час</th>
+          {% for name in schedule.day_names %}<th scope="col">{{ name }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in schedule.rows %}
+        <tr>
+          <th scope="row" class="time-col">{{ row.time }}</th>
+          {% for cell in row.cells %}
+          <td>{% for slot in cell %}{{ chip(slot) }}{% endfor %}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="schedule-days">
+    {% for day in schedule.days if day.slots %}
+    <section class="schedule-day">
+      <h3>{{ day.name }}</h3>
+      <ul>
+        {% for slot in day.slots %}
+        <li><span class="slot-time">{{ slot.time }}</span>{{ chip(slot) }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endfor %}
+  </div>
+</div>
+{% endmacro %}

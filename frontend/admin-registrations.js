@@ -48,24 +48,28 @@ function notifiedBadge(r) {
 }
 
 function rowHtml(r) {
+  const age = r.child_age != null ? `${r.child_age} г.` : '—';
   return `
     <tr data-id="${r.id}" class="${r.processed ? 'is-processed' : ''}">
-      <td>${r.id}</td>
-      <td>${escapeHtml(r.child_name)}</td>
-      <td>${r.child_age ?? '—'}</td>
-      <td>${escapeHtml(r.parent_name)}</td>
-      <td>${escapeHtml(r.phone)}</td>
-      <td>${escapeHtml(r.email)}</td>
-      <td>${formatCreatedAt(r.created_at)}</td>
-      <td class="admin-edit"><input type="date" class="js-date" value="${r.training_date || ''}" aria-label="Ден на тренировката"></td>
-      <td class="admin-edit"><input type="time" class="js-time" step="900" value="${r.training_time || ''}" aria-label="Час на тренировката"></td>
-      <td class="check-cell"><input type="checkbox" class="js-processed" ${r.processed ? 'checked' : ''} aria-label="Записан">${notifiedBadge(r)}</td>
+      <td class="col-id" data-label="№">${r.id}</td>
+      <td data-label="Дете"><span class="reg-name">${escapeHtml(r.child_name)}</span><span class="reg-sub">${age}</span></td>
+      <td data-label="Родител и контакти">
+        <span class="reg-parent">${escapeHtml(r.parent_name)}</span>
+        <span class="reg-line">${escapeHtml(r.phone)}</span>
+        <span class="reg-line reg-email">${escapeHtml(r.email)}</span>
+      </td>
+      <td class="reg-created" data-label="Подадено на">${formatCreatedAt(r.created_at)}</td>
+      <td class="admin-edit reg-when" data-label="Тренировка (ден и час)">
+        <input type="date" class="js-date" value="${r.training_date || ''}" aria-label="Ден на тренировката">
+        <input type="time" class="js-time" step="900" value="${r.training_time || ''}" aria-label="Час на тренировката">
+      </td>
+      <td class="check-cell" data-label="Записан"><input type="checkbox" class="js-processed" ${r.processed ? 'checked' : ''} aria-label="Записан">${notifiedBadge(r)}</td>
     </tr>`;
 }
 
 function renderRows() {
   if (registrations.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="10" class="empty-state">Все още няма подадени записвания.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Все още няма подадени записвания.</td></tr>';
   } else {
     tbody.innerHTML = registrations.map(rowHtml).join('');
   }

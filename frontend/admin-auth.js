@@ -34,11 +34,95 @@
     return res;
   };
 
+  // Падащо меню „Отбори“: връзка към управлението + всички активни отбори.
+  // Изборът на отбор отваря панела му (admin-teams.html?team=<id>).
+  function buildTeamsMenu(nav) {
+    const wrap = document.createElement('div');
+    wrap.className = 'nav-dropdown';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'nav-dropdown-btn';
+    btn.textContent = 'Отбори ▾';
+    btn.setAttribute('aria-haspopup', 'true');
+    btn.setAttribute('aria-expanded', 'false');
+    if (location.pathname.endsWith('admin-teams.html')) btn.classList.add('active');
+    const menu = document.createElement('div');
+    menu.className = 'nav-menu';
+    menu.hidden = true;
+    wrap.append(btn, menu);
+    nav.appendChild(wrap);
+
+    const currentId = new URLSearchParams(location.search).get('team');
+
+    function link(href, text, isCurrent) {
+      const a = document.createElement('a');
+      a.href = href;
+      a.textContent = text;
+      if (isCurrent) a.classList.add('current');
+      return a;
+    }
+
+    function render(teams) {
+      menu.textContent = '';
+      menu.append(link('admin-teams.html', 'Всички отбори (управление)', location.pathname.endsWith('admin-teams.html') && !currentId));
+      menu.append(document.createElement('hr'));
+      if (!teams.length) {
+        const empty = document.createElement('div');
+        empty.className = 'nav-empty';
+        empty.textContent = 'Още няма активни отбори.';
+        menu.append(empty);
+      }
+      teams.forEach(t => {
+        const text = t.kind === 'men' ? 'MEN' : t.u_label + ' · набор ' + t.cohort;
+        menu.append(link('admin-teams.html?team=' + t.id, text, String(t.id) === currentId));
+      });
+    }
+
+    async function load() {
+      try {
+        const res = await window.fetch('/api/admin/teams');
+        const data = await res.json();
+        render((data.teams || []).filter(t => t.status === 'active'));
+      } catch (err) {
+        render([]);
+      }
+    }
+    window.refreshTeamsMenu = load; // викат го страниците, след като сменят отбор
+
+    function close() {
+      menu.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+    }
+    btn.addEventListener('click', () => {
+      if (!menu.hidden) { close(); return; }
+      const r = btn.getBoundingClientRect();
+      menu.hidden = false;
+      menu.style.top = r.bottom + 'px';
+      menu.style.left = Math.max(8, Math.min(r.left, window.innerWidth - menu.offsetWidth - 8)) + 'px';
+      btn.setAttribute('aria-expanded', 'true');
+    });
+    document.addEventListener('click', (e) => { if (!wrap.contains(e.target)) close(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+    window.addEventListener('resize', close);
+    nav.addEventListener('scroll', close, { passive: true });
+
+    render([]);
+    load();
+  }
+
   document.addEventListener('DOMContentLoaded', async () => {
     const user = await ready;
     document.querySelectorAll('.admin-notice').forEach(el => el.remove());
 
     const nav = document.querySelector('.admin-nav');
+    if (nav) buildTeamsMenu(nav);
+    if (nav) {
+      const sched = document.createElement('a');
+      sched.href = 'admin-schedule.html';
+      sched.textContent = 'График';
+      if (location.pathname.endsWith('admin-schedule.html')) sched.classList.add('active');
+      nav.appendChild(sched);
+    }
     if (nav && user.role === 'owner') {
       const a = document.createElement('a');
       a.href = 'admin-users.html';

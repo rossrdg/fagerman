@@ -71,7 +71,37 @@ document.addEventListener('click',e=>{
   const w=window.open(a.href,'fbshare','width=640,height=560,noopener');
   if(w)e.preventDefault();
 });
+// ---- Отбори: от /api/teams (U етикет + набор), подредени от най-малките към мъжете ----
+async function loadTeams(){
+  const grid=document.querySelector('#teamGrid');
+  if(!grid)return;
+  try{
+    const res=await fetch('/api/teams');
+    const data=await res.json();
+    if(!res.ok||!data.ok)throw new Error('api');
+    if(!data.teams.length){
+      grid.append(newsEl('p','team-empty','Отборите ще бъдат публикувани скоро.'));
+      return;
+    }
+    data.teams.forEach((t,i)=>{
+      const card=newsEl('article','team-card reveal'+(t.kind==='men'?' accent':''));
+      card.append(newsEl('div','team-no',String(i+1).padStart(2,'0')));
+      const info=newsEl('div');
+      info.append(newsEl('span','',t.cohort_label.toUpperCase()));
+      const h3=newsEl('h3');
+      const a=newsEl('a','',t.u_label);a.href=t.url;a.setAttribute('aria-label',t.u_label+' — '+t.cohort_label);
+      h3.append(a);info.append(h3);
+      if(t.description)info.append(newsEl('p','',t.description));
+      const arrow=newsEl('a','','→');arrow.href=t.url;arrow.setAttribute('aria-hidden','true');arrow.tabIndex=-1;
+      card.append(info,arrow);
+      grid.append(card);observer.observe(card);
+    });
+  }catch(err){
+    grid.append(newsEl('p','team-empty','Отборите не могат да се заредят в момента. Опитайте отново по-късно.'));
+  }
+}
 loadNews();
+loadTeams();
 
 const FIELD_LABELS={
   child:'Име на детето', age:'Възраст', parent:'Име на родител', phone:'Телефон', email:'Email'

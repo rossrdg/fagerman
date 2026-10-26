@@ -1,0 +1,32 @@
+{% extends "news_base.html" %}
+{% from "_schedule.html" import schedule_view %}
+{% block head %}
+  <title>График на тренировките | Футболна Академия Герман</title>
+  <meta name="description" content="Седмичен график на тренировките във Футболна Академия Герман — по набори, всеки ден от седмицата.">
+  <link rel="canonical" href="{{ page_url }}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Футболна Академия Герман">
+  <meta property="og:locale" content="bg_BG">
+  <meta property="og:title" content="График на тренировките | Футболна Академия Герман">
+  <meta property="og:description" content="Седмичен график на тренировките по набори.">
+  <meta property="og:url" content="{{ page_url }}">
+  <meta property="og:image" content="{{ image_url }}">
+{% endblock %}
+{% block styles %}  <link rel="stylesheet" href="/teams.css">
+  <link rel="stylesheet" href="/schedule.css">{% endblock %}
+{% block nav %}<a href="/#teams">← Към отборите</a>{% endblock %}
+{% block main %}
+    <section class="container schedule-head">
+      <div class="eyebrow green">ФУТБОЛНА АКАДЕМИЯ ГЕРМАН</div>
+      <h1>График на тренировките</h1>
+      <p class="team-lead">Седмичният график по набори. Часовете са начало на тренировката.</p>
+    </section>
+    <section class="container schedule-wrap">
+      {% if schedule.has_slots %}
+        {{ schedule_view(schedule) }}
+      {% else %}
+        <p class="schedule-empty">Графикът ще бъде публикуван скоро.</p>
+      {% endif %}
+      <p class="schedule-note"><a class="btn btn-primary" href="/#registration">Запиши се за тренировка <span>↗</span></a></p>
+    </section>
+{% endblock %}
