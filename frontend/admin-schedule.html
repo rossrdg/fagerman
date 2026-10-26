@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>График — Админ — ФА Герман</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin.css">
+  <script src="admin-auth.js"></script>
+</head>
+<body class="admin-body">
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <span class="brand-mark">FA</span>
+      <div><strong>ФА Герман — Админ</strong><small>Тренировъчен график</small></div>
+    </div>
+  </header>
+
+  <nav class="admin-nav" aria-label="Админ навигация">
+    <a href="admin-registrations.html">Записани за пробна тренировка</a>
+    <a href="admin-news.html">Новини</a>
+    <!-- „Отбори“, „График“ и „Потребители“ се добавят от admin-auth.js -->
+  </nav>
+
+  <main class="admin-main">
+    <div class="admin-toolbar">
+      <div>
+        <h1>График на тренировките</h1>
+        <div id="status" class="admin-status" aria-live="polite">Зареждане...</div>
+      </div>
+      <div class="toolbar-actions">
+        <a class="btn btn-outline" href="/schedule" target="_blank" rel="noopener">Виж публичния график ↗</a>
+      </div>
+    </div>
+
+    <!-- Добавяне / редакция на слот -->
+    <form id="slotForm" class="news-form slot-form" novalidate>
+      <h2 id="formTitle" class="slot-form-title">Нов слот</h2>
+
+      <div id="daysMulti" class="field">
+        <label>Дни * <span class="field-hint-inline">(можете да изберете няколко — ще се създаде по един слот за ден)</span></label>
+        <div id="dayChecks" class="check-grid"></div>
+        <div class="field-error" data-error-for="days"></div>
+      </div>
+      <div id="daySingle" class="field narrow" hidden>
+        <label for="f-day">Ден *</label>
+        <select id="f-day"></select>
+      </div>
+
+      <div class="field narrow">
+        <label for="f-time">Час на начало *</label>
+        <input id="f-time" type="time" step="300">
+        <div class="field-error" data-error-for="time"></div>
+      </div>
+
+      <div class="field">
+        <label>Кой тренира</label>
+        <div id="teamChecks" class="check-grid"></div>
+        <div class="field-hint">Можете да изберете няколко отбора (напр. U8 и U9 тренират заедно). На сайта се показва наборът им, напр. „2018/19“.</div>
+        <div class="field-error" data-error-for="team_ids"></div>
+      </div>
+
+      <div class="field">
+        <label for="f-label">Или свободен текст (без отбор)</label>
+        <input id="f-label" maxlength="40" autocomplete="off" placeholder="напр. Вратари — големи">
+        <div class="field-hint">Ползва се само ако не е избран отбор (напр. вратарски тренировки).</div>
+        <div class="field-error" data-error-for="label"></div>
+      </div>
+
+      <div class="form-actions">
+        <button id="saveBtn" class="btn btn-primary" type="button">Добави</button>
+        <button id="cancelBtn" class="btn btn-outline" type="button" hidden>Отказ</button>
+      </div>
+    </form>
+
+    <!-- Всички слотове, по дни -->
+    <div id="slotList"></div>
+  </main>
+
+  <script src="admin-schedule.js"></script>
+</body>
+</html>

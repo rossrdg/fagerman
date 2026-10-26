@@ -116,6 +116,13 @@
 
     const nav = document.querySelector('.admin-nav');
     if (nav) buildTeamsMenu(nav);
+    if (nav) {
+      const sched = document.createElement('a');
+      sched.href = 'admin-schedule.html';
+      sched.textContent = 'График';
+      if (location.pathname.endsWith('admin-schedule.html')) sched.classList.add('active');
+      nav.appendChild(sched);
+    }
     if (nav && user.role === 'owner') {
       const a = document.createElement('a');
       a.href = 'admin-users.html';

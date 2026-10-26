@@ -137,3 +137,58 @@
 .nav-menu a.current,.nav-menu a.current:hover{background:#e6f0fb;color:#0558b0}
 .nav-menu hr{border:0;border-top:1px solid var(--line);margin:6px 4px}
 .nav-menu .nav-empty{padding:9px 12px;font-size:12px;color:var(--muted)}
+
+/* Schedule admin */
+.slot-form{margin-bottom:28px}
+.slot-form-title{font-size:20px;margin:0 0 18px}
+.field-hint-inline{font-weight:500;color:var(--muted)}
+.check-grid{display:flex;flex-wrap:wrap;gap:8px}
+.check-item{display:inline-flex!important;align-items:center;gap:7px;margin:0!important;padding:8px 12px;border:1px solid #d8e0db;border-radius:10px;background:#fbfcfb;font-size:13px!important;font-weight:600!important;cursor:pointer}
+.check-item input{width:auto!important;margin:0!important}
+.check-item:has(input:checked){border-color:var(--green);background:#e6f0fb;color:#0558b0}
+.day-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:14px;max-width:960px}
+.day-card h2{font-size:18px;margin:0 0 8px}
+.slot-table td{padding:10px 8px;border-top:1px solid #edf1ee}
+.slot-table tr:first-child td{border-top:0}
+.slot-time-cell{width:70px;font:800 15px Manrope,Inter,sans-serif}
+.slot-teams{color:var(--muted);font-size:13px}
+.btn-danger-text{color:#c0392b}
+@media(max-width:700px){.slot-table .row-actions{flex-wrap:wrap}}
+
+/* Скрит елемент = винаги скрит (иначе .field/.btn с display го показват въпреки hidden) */
+[hidden]{display:none!important}
+
+/* Записани за пробна тренировка: без хоризонтален скрол */
+.reg-table{white-space:normal}
+.reg-table th,.reg-table td{padding:12px 12px;vertical-align:middle}
+.reg-table th.col-id,.reg-table td.col-id{width:44px;padding-right:4px;color:var(--muted)}
+.reg-name{display:block;font-size:14px;font-weight:700;color:#132019}
+.reg-sub{display:block;font-size:12px;font-weight:500;color:var(--muted)}
+.reg-parent{display:block;font-weight:600}
+.reg-line{display:block;font-size:12px;color:#4a5a52}
+.reg-email{overflow-wrap:anywhere}
+.reg-created{white-space:nowrap;width:1%}
+.reg-when{min-width:150px}
+.reg-when input{width:100%;max-width:170px;box-sizing:border-box}
+.reg-when input+input{margin-top:6px}
+.reg-table td.check-cell{width:1%;white-space:nowrap}
+.reg-table .notified-badge{display:block;margin-top:6px;white-space:normal}
+.admin-table.reg-table tr.is-processed td:nth-child(2) .reg-sub{font-weight:500}
+
+@media(min-width:1100px){
+  /* на широк екран датата и часът са един до друг */
+  .reg-when{display:flex;gap:8px;align-items:center;min-width:300px}
+  .reg-when input{width:auto;flex:1 1 0;min-width:0}
+  .reg-when input+input{margin-top:0}
+}
+
+/* Таблет и телефон: всеки запис е карта */
+@media(max-width:899px){
+  .reg-table,.reg-table tbody,.reg-table tr,.reg-table td{display:block}
+  .reg-table thead{display:none}
+  .reg-table tr{padding:14px 16px;border-bottom:1px solid var(--line)}
+  .reg-table td{padding:5px 0;border:0;text-align:left!important;width:auto!important}
+  .reg-table td[data-label]::before{content:attr(data-label);display:block;margin-bottom:2px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .reg-table td.col-id{display:none}
+  .reg-when input{max-width:none}
+}

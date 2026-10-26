@@ -1,0 +1,41 @@
+/* Тренировъчен график: таблица на компютър, списък по дни на телефон */
+.visually-hidden{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+.schedule-head{max-width:1100px;margin:0 auto 36px;padding:0}
+.schedule-head h1{font-size:clamp(38px,6vw,64px)}
+.schedule-wrap,.team-schedule{max-width:1100px;margin-left:auto;margin-right:auto;padding:0}
+.team-schedule{margin-bottom:56px}
+.team-schedule h2{font-size:clamp(26px,3vw,34px)}
+.schedule-note-text{font-size:16px;color:#34443c;max-width:760px}
+.schedule-empty{color:var(--muted)}
+.schedule-link{margin:18px 0 0}
+.schedule-note{margin:28px 0 0}
+
+/* Слот */
+.chip{display:inline-block;margin:2px 4px 2px 0;padding:6px 11px;border-radius:9px;border:1px solid #d5dfd9;background:#eef3f0;color:#2a3a31;font-size:13px;font-weight:600;line-height:1.25}
+.chip.other{background:#fff;border-style:dashed}
+.chip.mine{background:var(--green);border-color:var(--green);color:#fff;font-weight:800}
+
+/* Таблица (компютър / таблет в ландшафт) */
+.schedule-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:#fff}
+.schedule-table{width:100%;border-collapse:collapse;min-width:900px}
+.schedule-table th,.schedule-table td{padding:10px 8px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);text-align:center;vertical-align:middle}
+.schedule-table th:last-child,.schedule-table td:last-child{border-right:0}
+.schedule-table tbody tr:last-child th,.schedule-table tbody tr:last-child td{border-bottom:0}
+.schedule-table thead th{background:#f3f6f4;font:800 11px Manrope,Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#4a5a52}
+.schedule-table .time-col{width:72px;font:800 14px Manrope,Inter,sans-serif;color:#132019;background:#f8faf9}
+.schedule-table td .chip{display:block;margin:4px 0;text-align:center}
+
+/* Списък по дни (телефон) */
+.schedule-days{display:none}
+.schedule-day{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px}
+.schedule-day h3{font-size:18px;margin:0 0 10px}
+.schedule-day ul{list-style:none;margin:0;padding:0}
+.schedule-day li{display:flex;align-items:center;gap:12px;padding:6px 0;border-top:1px solid #edf1ee}
+.schedule-day li:first-child{border-top:0}
+.slot-time{min-width:52px;font:800 15px Manrope,Inter,sans-serif;color:#132019}
+
+@media(max-width:899px){
+  .schedule-scroll{display:none}
+  .schedule-days{display:block}
+}
