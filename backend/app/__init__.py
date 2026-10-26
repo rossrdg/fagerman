@@ -58,6 +58,11 @@ def create_app(config_object="config.Config"):
     app.register_blueprint(admin_news_bp, url_prefix="/api")
     app.register_blueprint(page_bp)  # /news/<slug>
 
+    from app.routes.teams import admin_teams_bp, page_bp as team_page_bp, teams_bp
+    app.register_blueprint(teams_bp, url_prefix="/api")  # GET /api/teams
+    app.register_blueprint(admin_teams_bp, url_prefix="/api")  # /api/admin/teams
+    app.register_blueprint(team_page_bp)  # /teams/<slug>
+
     from app.routes.uploads import files_bp, uploads_bp
     app.register_blueprint(uploads_bp, url_prefix="/api")  # POST /api/admin/uploads
     app.register_blueprint(files_bp)  # GET /uploads/<file>

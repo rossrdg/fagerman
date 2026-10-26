@@ -1,0 +1,43 @@
+{% extends "news_base.html" %}
+{% block head %}
+{% if team %}
+  <title>{{ title }} | Футболна Академия Герман</title>
+  <meta name="description" content="{{ description }}">
+  <link rel="canonical" href="{{ page_url }}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Футболна Академия Герман">
+  <meta property="og:locale" content="bg_BG">
+  <meta property="og:title" content="{{ title }} | Футболна Академия Герман">
+  <meta property="og:description" content="{{ description }}">
+  <meta property="og:url" content="{{ page_url }}">
+  <meta property="og:image" content="{{ image_url }}">
+{% else %}
+  <title>Отборът не е намерен | Футболна Академия Герман</title>
+  <meta name="robots" content="noindex">
+{% endif %}
+{% endblock %}
+{% block styles %}  <link rel="stylesheet" href="/teams.css">{% endblock %}
+{% block nav %}<a href="/#teams">← Всички отбори</a>{% endblock %}
+{% block main %}
+{% if team %}
+    <section class="container team-hero">
+      <div class="eyebrow green">{{ team.cohort_label|upper }}</div>
+      <h1>{{ team.u_label }}</h1>
+      {% if team.description %}<p class="team-lead">{{ team.description }}</p>{% endif %}
+      <a class="btn btn-primary btn-large" href="/#registration">Запиши се за тренировка <span>↗</span></a>
+    </section>
+
+    <section class="container team-soon" aria-label="Скоро на тази страница">
+      <article><h2>Тренировки</h2><p>Програмата на отбора ще се появи тук.</p></article>
+      <article><h2>Мачове</h2><p>Предстоящи и изиграни мачове от първенството.</p></article>
+      <article><h2>Класиране</h2><p>Актуалното класиране в първенството.</p></article>
+      <article><h2>Галерия</h2><p>Снимки и клипове на отбора.</p></article>
+    </section>
+{% else %}
+    <section class="container article-missing">
+      <h1>Отборът не е намерен</h1>
+      <p>Тази страница не съществува или вече не е публична.</p>
+      <a class="btn btn-primary" href="/#teams">Към отборите</a>
+    </section>
+{% endif %}
+{% endblock %}

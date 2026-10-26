@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/news.css">
+{% block styles %}{% endblock %}
 </head>
 <body class="article-page">
   <header class="site-header scrolled">
@@ -18,7 +19,7 @@
         <img src="/assets/cropped-logo-german-scaled-1.png" alt="Футболна Академия Герман" width="60" height="60">
       </a>
       <nav class="article-nav" aria-label="Навигация">
-        <a href="/news">← Всички новини</a>
+        {% block nav %}<a href="/news">← Всички новини</a>{% endblock %}
       </nav>
       <a class="btn btn-primary nav-cta" href="/#registration">Запиши се <span>↗</span></a>
     </div>

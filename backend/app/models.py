@@ -151,3 +151,42 @@ class AdminUser(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "last_login_at": self.last_login_at.isoformat() if self.last_login_at else None,
         }
+
+
+# ------------------------------------------------------------------ teams ---
+TEAM_ACTIVE = "active"      # виден на сайта
+TEAM_ARCHIVED = "archived"  # скрит от сайта, данните се пазят
+KIND_YOUTH = "youth"        # възрастов отбор (U6, U7 ... по набор)
+KIND_MEN = "men"            # мъжки отбор
+
+
+class Setting(db.Model):
+    """Малки настройки на сайта (key -> value). Засега: текущият сезон."""
+
+    __tablename__ = "settings"
+
+    key = db.Column(db.String(40), primary_key=True)
+    value = db.Column(db.String(200), nullable=False, default="")
+
+
+class Team(db.Model):
+    """Отбор на академията. Идентификатор е НАБОРЪТ (годината на раждане), а
+    етикетът U6/U7/... се изчислява според сезона (виж app/team_utils.py)."""
+
+    __tablename__ = "teams"
+
+    id = db.Column(db.Integer, primary_key=True)
+    # Част от публичния адрес (/teams/<slug>): "2020", "2014-2015", "men".
+    # Създава се веднъж и не се променя, за да не се чупят споделени линкове.
+    slug = db.Column(db.String(30), nullable=False, unique=True, index=True)
+    kind = db.Column(db.String(10), nullable=False, default=KIND_YOUTH)
+    # Набор: една година (to = NULL) или две (напр. 2014 и 2015). "from" е
+    # по-старата година — от нея се смята U етикетът. Мъжкият отбор няма набор.
+    birth_year_from = db.Column(db.Integer, nullable=True)
+    birth_year_to = db.Column(db.Integer, nullable=True)
+    # Ръчно зададен етикет; ако е празен, етикетът се изчислява автоматично.
+    u_override = db.Column(db.String(12), nullable=True)
+    description = db.Column(db.String(160), nullable=False, default="")
+    status = db.Column(db.String(10), nullable=False, default=TEAM_ACTIVE, server_default=TEAM_ACTIVE)
+    created_at = db.Column(db.DateTime, default=utcnow)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)

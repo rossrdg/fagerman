@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Отбори — Админ — ФА Герман</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin.css">
+  <script src="admin-auth.js"></script>
+</head>
+<body class="admin-body">
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <span class="brand-mark">FA</span>
+      <div><strong>ФА Герман — Админ</strong><small>Отбори</small></div>
+    </div>
+  </header>
+
+  <nav class="admin-nav" aria-label="Админ навигация">
+    <a href="admin-registrations.html">Записани за пробна тренировка</a>
+    <a href="admin-news.html">Новини</a>
+    <!-- „Отбори“ (падащо меню) и „Потребители“ се добавят от admin-auth.js -->
+  </nav>
+
+  <main class="admin-main">
+
+    <!-- ===== Списък с отбори ===== -->
+    <section id="listView">
+      <div class="admin-toolbar">
+        <div>
+          <h1>Отбори</h1>
+          <div id="listStatus" class="admin-status">Зареждане...</div>
+        </div>
+        <div class="toolbar-actions">
+          <button id="refreshBtn" class="btn btn-outline" type="button">Опресни ↻</button>
+          <a class="btn btn-primary" href="admin-teams.html?team=new">+ Нов отбор</a>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table id="teamsTable" class="admin-table" hidden>
+          <thead>
+            <tr>
+              <th>Отбор</th>
+              <th>Набор</th>
+              <th>Кратко описание</th>
+              <th>Статус</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="teamsBody"></tbody>
+        </table>
+      </div>
+      <p class="user-hint">U етикетът се изчислява автоматично според сезона. Архивираният отбор изчезва от сайта, но данните му се пазят.</p>
+    </section>
+
+    <!-- ===== Панел на отбор (нов или съществуващ) ===== -->
+    <section id="panelView" hidden>
+      <div class="admin-toolbar">
+        <div>
+          <h1 id="panelTitle">Нов отбор</h1>
+          <div id="panelStatus" class="admin-status" aria-live="polite"></div>
+        </div>
+        <div class="toolbar-actions">
+          <a id="viewLink" class="btn btn-outline" href="#" target="_blank" rel="noopener" hidden>Виж страницата ↗</a>
+          <a class="btn btn-outline" href="admin-teams.html">← Всички отбори</a>
+        </div>
+      </div>
+
+      <form id="teamForm" class="news-form" novalidate>
+        <div class="field narrow">
+          <label for="f-kind">Вид отбор</label>
+          <select id="f-kind" name="kind">
+            <option value="youth">Възрастов отбор (по набор)</option>
+            <option value="men">Мъжки отбор (MEN)</option>
+          </select>
+          <div class="field-error" data-error-for="kind"></div>
+        </div>
+
+        <div id="yearsRow" class="field-row">
+          <div class="field">
+            <label for="f-from">Набор (година на раждане) *</label>
+            <input id="f-from" name="birth_year_from" type="number" inputmode="numeric" min="1990" max="2100" placeholder="напр. 2020">
+            <div class="field-error" data-error-for="birth_year_from"></div>
+          </div>
+          <div class="field">
+            <label for="f-to">Втора година (по избор)</label>
+            <input id="f-to" name="birth_year_to" type="number" inputmode="numeric" min="1990" max="2100" placeholder="напр. 2015">
+            <div class="field-hint">Само за двугодишни набори като 2014/15 — тук се пише по-късната година.</div>
+            <div class="field-error" data-error-for="birth_year_to"></div>
+          </div>
+        </div>
+
+        <div class="field narrow">
+          <label for="f-label">U етикет (ръчна корекция)</label>
+          <input id="f-label" name="u_override" maxlength="12" autocomplete="off" placeholder="оставете празно за автоматичен">
+          <div id="labelHint" class="field-hint"></div>
+          <div class="field-error" data-error-for="u_override"></div>
+        </div>
+
+        <div class="field">
+          <label for="f-desc">Кратко описание</label>
+          <textarea id="f-desc" name="description" rows="2" maxlength="160"></textarea>
+          <div class="field-hint">Показва се на картата на отбора и на страницата му. <span id="descCount">0</span>/160</div>
+          <div class="field-error" data-error-for="description"></div>
+        </div>
+
+        <div id="statusRow" class="field" hidden>
+          <label>Статус</label>
+          <div><span id="statusPill" class="status-pill"></span></div>
+        </div>
+
+        <div class="form-actions">
+          <button id="saveBtn" class="btn btn-primary" type="button">Запази</button>
+          <button id="archiveBtn" class="btn btn-outline" type="button" hidden>Архивирай</button>
+          <button id="deleteBtn" class="btn btn-danger" type="button" hidden>Изтрий завинаги</button>
+        </div>
+      </form>
+
+      <div id="soonBox" class="soon-box" hidden>
+        <strong>Следва в този панел:</strong> тренировки, мачове и класиране, галерия, новини на отбора.
+      </div>
+    </section>
+  </main>
+
+  <script src="admin-teams.js"></script>
+</body>
+</html>

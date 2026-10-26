@@ -1,0 +1,19 @@
+/* Отбори: карти на началната страница + страница на отбор (/teams/<адрес>) */
+
+/* Цялата карта е кликаема през връзката в заглавието */
+.team-card h3 a::after{content:"";position:absolute;inset:0;border-radius:17px}
+.team-card h3 a:focus-visible{outline:none}
+.team-card h3 a:focus-visible::after{outline:3px solid var(--bright)}
+.team-card>a{pointer-events:none}
+.team-empty{grid-column:1/-1;color:#9eaaa4;font-size:15px}
+
+/* Страница на отбор */
+.team-hero{max-width:820px;margin:0 auto 56px;padding:0}
+.team-hero h1{font-size:clamp(56px,10vw,110px);margin-bottom:18px}
+.team-lead{font-size:20px;color:#34443c;max-width:620px;margin-bottom:28px}
+.team-soon{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;max-width:1100px}
+.team-soon article{border:1px dashed #cbd6d0;border-radius:16px;padding:24px;background:#fbfcfb}
+.team-soon h2{font-size:20px;margin-bottom:8px}
+.team-soon p{font-size:14px;margin:0}
+@media(max-width:1023px){.team-soon{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:767px){.team-soon{grid-template-columns:1fr}.team-lead{font-size:17px}}
