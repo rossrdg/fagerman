@@ -190,3 +190,29 @@ class Team(db.Model):
     status = db.Column(db.String(10), nullable=False, default=TEAM_ACTIVE, server_default=TEAM_ACTIVE)
     created_at = db.Column(db.DateTime, default=utcnow)
     updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
+
+
+# --------------------------------------------------------------- schedule ---
+# Връзка „слот <-> отбор“: един слот може да е за няколко отбора (напр. обща
+# тренировъчна група 2018/19 за U8 и U9).
+slot_teams = db.Table(
+    "training_slot_teams",
+    db.Column("slot_id", db.Integer, db.ForeignKey("training_slots.id", ondelete="CASCADE"), primary_key=True),
+    db.Column("team_id", db.Integer, db.ForeignKey("teams.id", ondelete="CASCADE"), primary_key=True),
+)
+
+
+class TrainingSlot(db.Model):
+    """Един ред от седмичния тренировъчен график: ден + час + кой тренира."""
+
+    __tablename__ = "training_slots"
+
+    id = db.Column(db.Integer, primary_key=True)
+    weekday = db.Column(db.Integer, nullable=False)     # 1 = понеделник ... 7 = неделя
+    start_time = db.Column(db.String(5), nullable=False)  # "18:30"
+    # Свободен текст (напр. „Вратари — големи“). Ползва се само ако няма отбори.
+    label = db.Column(db.String(40), nullable=False, default="")
+    created_at = db.Column(db.DateTime, default=utcnow)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
+
+    teams = db.relationship("Team", secondary=slot_teams, backref=db.backref("training_slots", lazy="select"))

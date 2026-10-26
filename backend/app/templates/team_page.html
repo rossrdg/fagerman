@@ -1,4 +1,5 @@
 {% extends "news_base.html" %}
+{% from "_schedule.html" import schedule_view %}
 {% block head %}
 {% if team %}
   <title>{{ title }} | Футболна Академия Герман</title>
@@ -16,7 +17,8 @@
   <meta name="robots" content="noindex">
 {% endif %}
 {% endblock %}
-{% block styles %}  <link rel="stylesheet" href="/teams.css">{% endblock %}
+{% block styles %}  <link rel="stylesheet" href="/teams.css">
+  <link rel="stylesheet" href="/schedule.css">{% endblock %}
 {% block nav %}<a href="/#teams">← Всички отбори</a>{% endblock %}
 {% block main %}
 {% if team %}
@@ -27,8 +29,24 @@
       <a class="btn btn-primary btn-large" href="/#registration">Запиши се за тренировка <span>↗</span></a>
     </section>
 
+    <section class="container team-schedule" id="schedule" aria-labelledby="scheduleTitle">
+      <h2 id="scheduleTitle">Тренировъчен график</h2>
+      {% if team.kind == 'men' and not schedule.mine %}
+        <p class="schedule-note-text">Мъжкият отбор не тренира по фиксиран график.</p>
+      {% elif schedule.has_slots %}
+        {% if schedule.mine %}
+          <p class="schedule-note-text">Тренировките на <strong>{{ team.u_label }}</strong> са отбелязани в синьо: {{ schedule.mine_text }}.</p>
+        {% else %}
+          <p class="schedule-note-text">За този отбор още няма въведени тренировки. Ето общия график на академията.</p>
+        {% endif %}
+        {{ schedule_view(schedule) }}
+        <p class="schedule-link"><a class="text-link" href="/schedule">Пълен график ↗</a></p>
+      {% else %}
+        <p class="schedule-note-text">Графикът ще бъде публикуван скоро.</p>
+      {% endif %}
+    </section>
+
     <section class="container team-soon" aria-label="Скоро на тази страница">
-      <article><h2>Тренировки</h2><p>Програмата на отбора ще се появи тук.</p></article>
       <article><h2>Мачове</h2><p>Предстоящи и изиграни мачове от първенството.</p></article>
       <article><h2>Класиране</h2><p>Актуалното класиране в първенството.</p></article>
       <article><h2>Галерия</h2><p>Снимки и клипове на отбора.</p></article>

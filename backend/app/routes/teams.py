@@ -12,6 +12,7 @@ from app import db
 from app.auth import check_admin
 from app.models import KIND_MEN, KIND_YOUTH, TEAM_ACTIVE, TEAM_ARCHIVED, Team
 from app.routes.news import DEFAULT_SHARE_IMAGE, _absolute
+from app.schedule_utils import build_public_schedule
 from app.team_utils import (
     auto_label, cohort_label, cohort_slug, cohort_text, get_season_end_year,
     season_text, sort_key, u_label,
@@ -204,6 +205,7 @@ def team_page(slug):
         page_url=page_url,
         image_url=_absolute(DEFAULT_SHARE_IMAGE),
         season=season_text(season_end),
+        schedule=build_public_schedule(highlight_slug=team.slug),
     )
 
 
