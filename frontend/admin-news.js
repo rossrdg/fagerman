@@ -187,7 +187,7 @@ async function backToList() {
 $('#backBtn').addEventListener('click', backToList);
 
 // ------------------------------------------------------------- photos ---
-const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+const MAX_PHOTO_BYTES = 20 * 1024 * 1024;
 const coverFile = $('#coverFile');
 const coverPreview = $('#coverPreview');
 const coverRemove = $('#coverRemove');
@@ -195,7 +195,7 @@ const bodyFile = $('#bodyFile');
 let insertAt = 0;
 
 async function uploadImage(file) {
-  if (file.size > MAX_PHOTO_BYTES) throw new Error('Снимката е над 10 MB.');
+  if (file.size > MAX_PHOTO_BYTES) throw new Error('Снимката е над 20 MB.');
   const body = new FormData();
   body.append('image', file);
   let res, data;

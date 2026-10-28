@@ -67,6 +67,10 @@ def create_app(config_object="config.Config"):
     app.register_blueprint(admin_schedule_bp, url_prefix="/api")  # /api/admin/schedule
     app.register_blueprint(schedule_page_bp)  # /schedule
 
+    from app.routes.gallery import admin_gallery_bp, page_bp as gallery_page_bp
+    app.register_blueprint(admin_gallery_bp, url_prefix="/api")  # /api/admin/albums, /photos, /videos
+    app.register_blueprint(gallery_page_bp)  # /teams/<slug>/albums/<id>
+
     from app.routes.uploads import files_bp, uploads_bp
     app.register_blueprint(uploads_bp, url_prefix="/api")  # POST /api/admin/uploads
     app.register_blueprint(files_bp)  # GET /uploads/<file>
@@ -74,7 +78,7 @@ def create_app(config_object="config.Config"):
     @app.errorhandler(413)
     def too_large(_err):
         from flask import jsonify
-        return jsonify({"ok": False, "error": "Файлът е твърде голям (до 10 MB)."}), 413
+        return jsonify({"ok": False, "error": "Файлът е твърде голям (до 20 MB)."}), 413
 
     with app.app_context():
         db.create_all()
@@ -82,7 +86,10 @@ def create_app(config_object="config.Config"):
 
     @app.get("/api/health")
     def health():
-        return {"status": "ok"}
+        from app.routes.uploads import HEIC_SUPPORTED
+
+        # "heic": true значи, че pillow-heif е инсталиран и снимките от iPhone се приемат.
+        return {"status": "ok", "heic": HEIC_SUPPORTED}
 
     # --- Serve the static site (index.html, styles.css, script.js, ...) ---
     frontend_dir = app.config["FRONTEND_DIR"]

@@ -1,0 +1,48 @@
+{% extends "news_base.html" %}
+{% block head %}
+  <title>Галерия{% if page > 1 %} — страница {{ page }}{% endif %} | Футболна Академия Герман</title>
+  <meta name="description" content="Снимки от тренировки, мачове и турнири на всички отбори във Футболна Академия Герман.">
+  <link rel="canonical" href="{{ page_url }}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Футболна Академия Герман">
+  <meta property="og:locale" content="bg_BG">
+  <meta property="og:title" content="Галерия | Футболна Академия Герман">
+  <meta property="og:description" content="Снимки от тренировки, мачове и турнири на всички отбори.">
+  <meta property="og:url" content="{{ page_url }}">
+  <meta property="og:image" content="{{ image_url }}">
+{% endblock %}
+{% block styles %}  <link rel="stylesheet" href="/teams.css">
+  <link rel="stylesheet" href="/gallery.css">{% endblock %}
+{% block nav %}<a href="/#gallery">← Начало</a>{% endblock %}
+{% block main %}
+    <section class="container album-head">
+      <div class="eyebrow green">ГАЛЕРИЯ</div>
+      <h1>Футболът в действие</h1>
+      <p class="team-lead">Снимки от тренировки, мачове и турнири на всички отбори.</p>
+    </section>
+
+    <section class="container team-gallery all-albums" aria-label="Всички албуми">
+      {% if albums %}
+      <div class="album-grid">
+        {% for album in albums %}
+        <a class="album-card" href="{{ album.url }}">
+          <img src="{{ album.cover }}" alt="" loading="lazy" decoding="async">
+          <span class="album-info">
+            <strong>{{ album.title }}</strong>
+            <small>{{ album.team_label }} · {{ album.date_text }} · {{ album.count }} {{ 'снимка' if album.count == 1 else 'снимки' }}</small>
+          </span>
+        </a>
+        {% endfor %}
+      </div>
+      {% if pages > 1 %}
+      <nav class="pager" aria-label="Страници">
+        {% if page > 1 %}<a class="btn btn-outline" href="/gallery{% if page > 2 %}?page={{ page - 1 }}{% endif %}">← Предишна</a>{% endif %}
+        <span>Страница {{ page }} от {{ pages }}</span>
+        {% if page < pages %}<a class="btn btn-outline" href="/gallery?page={{ page + 1 }}">Следваща →</a>{% endif %}
+      </nav>
+      {% endif %}
+      {% else %}
+      <p class="schedule-empty">Албумите ще бъдат публикувани скоро.</p>
+      {% endif %}
+    </section>
+{% endblock %}

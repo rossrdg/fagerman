@@ -95,8 +95,8 @@
               <button id="coverRemove" class="btn btn-outline btn-sm" type="button" hidden>Премахни</button>
             </div>
           </div>
-          <input id="coverFile" type="file" accept="image/*" hidden>
-          <div class="field-hint">Показва се в картата и при споделяне във Facebook. Най-добре е широка снимка (поне 1200 px). Снимка до 10 MB — смалява се автоматично.</div>
+          <input id="coverFile" type="file" accept="image/*,.heic,.heif,.avif" hidden>
+          <div class="field-hint">Показва се в картата и при споделяне във Facebook. Най-добре е широка снимка (поне 1200 px). Снимка до 20 MB (JPG, PNG, HEIC и др.) — смалява се автоматично.</div>
           <div class="field-error" data-error-for="cover_image"></div>
         </div>
 
@@ -134,7 +134,7 @@
               </span>
             </div>
             <div id="emojiPanel" class="emoji-panel" hidden></div>
-            <input id="bodyFile" type="file" accept="image/*" multiple hidden>
+            <input id="bodyFile" type="file" accept="image/*,.heic,.heif,.avif" multiple hidden>
             <div id="editor"></div>
           </div>
           <div class="field-error" data-error-for="body"></div>

@@ -1,0 +1,59 @@
+/* Галерия на отбор: албуми, снимки (lightbox) и клипове от YouTube */
+.team-gallery,.team-videos,.album-head,.album-photos{max-width:1100px;margin-left:auto;margin-right:auto;padding:0}
+.team-gallery,.team-videos{margin-bottom:56px}
+.team-gallery h2,.team-videos h2{font-size:clamp(26px,3vw,34px)}
+.album-head{margin-bottom:28px}
+.album-head h1{font-size:clamp(34px,5vw,56px)}
+
+/* Корици на албуми */
+.album-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.album-card{position:relative;display:block;aspect-ratio:4/3;border-radius:16px;overflow:hidden;background:#173b28;color:#fff}
+.album-card img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s ease}
+.album-card:hover img{transform:scale(1.05)}
+.album-card::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#07110dcc,transparent 55%)}
+.album-info{position:absolute;left:16px;right:16px;bottom:14px;z-index:1;display:block}
+.album-info strong{display:block;font:800 18px Manrope,Inter,sans-serif;line-height:1.2}
+.album-info small{display:block;margin-top:2px;font-size:12px;color:#d5e0da}
+
+/* Снимки в албум */
+.photo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.photo-tile{padding:0;border:0;border-radius:12px;overflow:hidden;background:#1b2e25;cursor:zoom-in;aspect-ratio:1/1}
+.photo-tile img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s ease}
+.photo-tile:hover img{transform:scale(1.05)}
+.photo-tile:focus-visible{outline:3px solid var(--bright);outline-offset:2px}
+
+/* Lightbox */
+.lightbox{position:fixed;inset:0;z-index:200;display:grid;grid-template-columns:64px 1fr 64px;align-items:center;background:#07110df2}
+.lightbox[hidden]{display:none}
+.lightbox figure{margin:0;display:grid;justify-items:center;gap:10px;min-width:0}
+.lightbox img{max-width:100%;max-height:84vh;object-fit:contain;border-radius:10px;background:#0d1913}
+.lightbox figcaption{color:#9fb3a8;font-size:12px;letter-spacing:.06em}
+.lightbox button{border:0;background:#ffffff1f;color:#fff;cursor:pointer;font-size:34px;line-height:1;width:48px;height:48px;border-radius:50%;justify-self:center}
+.lightbox button:hover{background:#ffffff38}
+.lightbox .lb-close{position:absolute;top:14px;right:14px;font-size:30px}
+
+/* Клипове */
+.video-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.video-card{display:grid;align-content:center;justify-items:start;gap:6px;aspect-ratio:16/9;padding:20px;border-radius:16px;background:linear-gradient(135deg,#0d1913,#173b28);color:#fff;position:relative;overflow:hidden}
+.video-card:hover{background:linear-gradient(135deg,#112219,#1d4a32)}
+.video-play{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--green);font-size:20px;padding-left:3px}
+.video-title{font:800 17px Manrope,Inter,sans-serif;line-height:1.2}
+.video-card small{font-size:12px;color:#9fb3a8}
+.video-box{aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#000}
+.video-frame{width:100%;height:100%;border:0;display:block}
+
+@media(max-width:1023px){.album-grid,.video-grid{grid-template-columns:repeat(2,1fr)}.photo-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:767px){
+  .album-grid,.video-grid{grid-template-columns:1fr}
+  .photo-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+  .lightbox{grid-template-columns:1fr}
+  .lightbox .lb-prev,.lightbox .lb-next{position:absolute;bottom:18px;width:44px;height:44px}
+  .lightbox .lb-prev{left:18px}.lightbox .lb-next{right:18px}
+  .lightbox img{max-height:76vh}
+}
+
+/* Обща галерия: страници */
+.all-albums{margin-bottom:64px}
+.pager{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:32px;font-size:14px;color:var(--muted)}
+.pager .btn-outline{border:1px solid #cbd6d0;color:#132019;background:#fff}
+@media(max-width:767px){.pager{flex-wrap:wrap}}

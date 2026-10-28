@@ -18,7 +18,8 @@
 {% endif %}
 {% endblock %}
 {% block styles %}  <link rel="stylesheet" href="/teams.css">
-  <link rel="stylesheet" href="/schedule.css">{% endblock %}
+  <link rel="stylesheet" href="/schedule.css">
+  <link rel="stylesheet" href="/gallery.css">{% endblock %}
 {% block nav %}<a href="/#teams">← Всички отбори</a>{% endblock %}
 {% block main %}
 {% if team %}
@@ -46,10 +47,42 @@
       {% endif %}
     </section>
 
+    {% if albums %}
+    <section class="container team-gallery" id="gallery" aria-labelledby="galleryTitle">
+      <h2 id="galleryTitle">Галерия</h2>
+      <div class="album-grid">
+        {% for album in albums %}
+        <a class="album-card" href="{{ album.url }}">
+          <img src="{{ album.cover }}" alt="" loading="lazy" decoding="async">
+          <span class="album-info">
+            <strong>{{ album.title }}</strong>
+            <small>{{ album.date_text }} · {{ album.count }} {{ 'снимка' if album.count == 1 else 'снимки' }}</small>
+          </span>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if videos %}
+    <section class="container team-videos" id="videos" aria-labelledby="videosTitle">
+      <h2 id="videosTitle">Клипове</h2>
+      <div class="video-grid">
+        {% for video in videos %}
+        <a class="video-card" href="{{ video.watch_url }}" data-youtube="{{ video.id }}" data-title="{{ video.title }}" target="_blank" rel="noopener">
+          <span class="video-play" aria-hidden="true">▶</span>
+          <span class="video-title">{{ video.title }}</span>
+          <small>Натиснете, за да пуснете клипа от YouTube</small>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
     <section class="container team-soon" aria-label="Скоро на тази страница">
       <article><h2>Мачове</h2><p>Предстоящи и изиграни мачове от първенството.</p></article>
       <article><h2>Класиране</h2><p>Актуалното класиране в първенството.</p></article>
-      <article><h2>Галерия</h2><p>Снимки и клипове на отбора.</p></article>
+      {% if not albums and not videos %}<article><h2>Галерия</h2><p>Снимки и клипове на отбора.</p></article>{% endif %}
     </section>
 {% else %}
     <section class="container article-missing">
@@ -59,3 +92,4 @@
     </section>
 {% endif %}
 {% endblock %}
+{% block scripts %}{% if team and videos %}  <script src="/gallery.js" defer></script>{% endif %}{% endblock %}

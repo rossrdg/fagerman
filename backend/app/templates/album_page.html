@@ -1,0 +1,49 @@
+{% extends "news_base.html" %}
+{% block head %}
+{% if album %}
+  <title>{{ album.title }} — {{ team.u_label }} | Футболна Академия Герман</title>
+  {# Снимките на деца не се индексират от търсачките #}
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="canonical" href="{{ page_url }}">
+{% else %}
+  <title>Албумът не е намерен | Футболна Академия Герман</title>
+  <meta name="robots" content="noindex">
+{% endif %}
+{% endblock %}
+{% block styles %}  <link rel="stylesheet" href="/teams.css">
+  <link rel="stylesheet" href="/gallery.css">{% endblock %}
+{% block nav %}{% if team %}<a href="/teams/{{ team.slug }}#gallery">← {{ team.u_label }}</a>{% else %}<a href="/#teams">← Всички отбори</a>{% endif %}{% endblock %}
+{% block main %}
+{% if album %}
+    <section class="container album-head">
+      <div class="eyebrow green">{{ team.u_label }} · {{ album.date_text }}</div>
+      <h1>{{ album.title }}</h1>
+    </section>
+    <section class="container album-photos">
+      <div class="photo-grid" id="photoGrid">
+        {% for photo in album.photos %}
+        <button class="photo-tile" type="button" data-full="{{ photo.url }}" data-code="{{ photo.code }}" aria-label="Отвори снимка № {{ photo.code }}">
+          <img src="{{ photo.thumb }}" alt="Снимка № {{ photo.code }}" loading="lazy" decoding="async">
+        </button>
+        {% endfor %}
+      </div>
+    </section>
+
+    <div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Преглед на снимка">
+      <button class="lb-close" type="button" aria-label="Затвори">×</button>
+      <button class="lb-prev" type="button" aria-label="Предишна">‹</button>
+      <figure>
+        <img id="lbImg" src="" alt="">
+        <figcaption id="lbCode"></figcaption>
+      </figure>
+      <button class="lb-next" type="button" aria-label="Следваща">›</button>
+    </div>
+{% else %}
+    <section class="container article-missing">
+      <h1>Албумът не е намерен</h1>
+      <p>Тази страница не съществува или вече не е публична.</p>
+      <a class="btn btn-primary" href="/#teams">Към отборите</a>
+    </section>
+{% endif %}
+{% endblock %}
+{% block scripts %}{% if album %}  <script src="/gallery.js" defer></script>{% endif %}{% endblock %}

@@ -216,3 +216,54 @@ class TrainingSlot(db.Model):
     updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
 
     teams = db.relationship("Team", secondary=slot_teams, backref=db.backref("training_slots", lazy="select"))
+
+
+# ---------------------------------------------------------------- gallery ---
+class Album(db.Model):
+    """Албум със снимки от събитие (турнир, мач, тренировка) на един отбор."""
+
+    __tablename__ = "albums"
+
+    id = db.Column(db.Integer, primary_key=True)
+    team_id = db.Column(db.Integer, db.ForeignKey("teams.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = db.Column(db.String(80), nullable=False)
+    event_date = db.Column(db.Date, nullable=False)
+    is_hidden = db.Column(db.Boolean, nullable=False, default=False, server_default="0")
+    # Избрана корица; ако е празно (или снимката е изтрита), корица е най-новата снимка.
+    cover_photo_id = db.Column(db.Integer, nullable=True)
+    created_at = db.Column(db.DateTime, default=utcnow)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
+
+    team = db.relationship("Team", backref=db.backref("albums", cascade="all, delete-orphan"))
+    photos = db.relationship("Photo", backref="album", cascade="all, delete-orphan",
+                             order_by="Photo.id.desc()")
+
+
+class Photo(db.Model):
+    """Снимка в албум. Качването й от треньор означава, че има съгласие на родителите."""
+
+    __tablename__ = "photos"
+
+    id = db.Column(db.Integer, primary_key=True)
+    album_id = db.Column(db.Integer, db.ForeignKey("albums.id", ondelete="CASCADE"), nullable=False, index=True)
+    # Случайно име на файла (без разширение): /uploads/<name>.jpg и <name>-800.jpg
+    name = db.Column(db.String(20), nullable=False, unique=True)
+    # Номер за справка ДДММГГ + 3 случайни цифри, напр. 271026482. Без имена на деца.
+    code = db.Column(db.String(9), nullable=False, unique=True, index=True)
+    uploaded_by = db.Column(db.String(80), nullable=False, default="")  # кой е качил (не се показва публично)
+    created_at = db.Column(db.DateTime, default=utcnow)
+
+
+class Video(db.Model):
+    """Клип от YouTube към отбор (само линк, нищо не се качва)."""
+
+    __tablename__ = "videos"
+
+    id = db.Column(db.Integer, primary_key=True)
+    team_id = db.Column(db.Integer, db.ForeignKey("teams.id", ondelete="CASCADE"), nullable=False, index=True)
+    youtube_id = db.Column(db.String(11), nullable=False)
+    title = db.Column(db.String(80), nullable=False, default="")
+    added_by = db.Column(db.String(80), nullable=False, default="")
+    created_at = db.Column(db.DateTime, default=utcnow)
+
+    team = db.relationship("Team", backref=db.backref("videos", cascade="all, delete-orphan"))
