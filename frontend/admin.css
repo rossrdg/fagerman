@@ -176,8 +176,10 @@
 .admin-table.reg-table tr.is-processed td:nth-child(2) .reg-sub{font-weight:500}
 
 @media(min-width:1100px){
-  /* на широк екран датата и часът са един до друг */
-  .reg-when{display:flex;gap:8px;align-items:center;min-width:300px}
+  /* на широк екран датата и часът са един до друг (flex е на вътрешния контейнер, не на td —
+     иначе клетката не запълва височината на реда и остава бяла лента) */
+  .reg-when{min-width:300px}
+  .reg-when-inner{display:flex;gap:8px;align-items:center}
   .reg-when input{width:auto;flex:1 1 0;min-width:0}
   .reg-when input+input{margin-top:0}
 }
@@ -192,3 +194,41 @@
   .reg-table td.col-id{display:none}
   .reg-when input{max-width:none}
 }
+
+/* Галерия в панела на отбор */
+.gallery-admin{max-width:960px;margin-top:28px}
+.gallery-admin>h2{font-size:24px;margin:0 0 6px}
+.gal-block{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-top:16px}
+.gal-block h3{font-size:18px;margin:0 0 14px}
+.gal-form{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;margin-bottom:16px}
+.gal-form .field{margin:0;min-width:180px}
+.gal-form .field.grow{flex:1 1 240px}
+.gal-form .btn{margin-top:26px}
+.album-item{border:1px solid var(--line);border-radius:14px;margin-top:10px;overflow:hidden}
+.album-row{display:flex;align-items:center;gap:14px;padding:10px 12px}
+.album-thumb{width:72px;height:54px;border-radius:8px;object-fit:cover;background:#e3ebe6;flex:none}
+.album-meta{flex:1;min-width:0}
+.album-meta strong{display:block;font-size:15px}
+.album-meta small{color:var(--muted);font-size:12px}
+.album-editor{border-top:1px solid var(--line);padding:16px;background:#fafcfb}
+.album-edit-fields{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:12px}
+.album-edit-fields .field{margin:0}
+.upload-box{margin:14px 0;padding:14px;border:1px dashed #b9c8c0;border-radius:12px;background:#fff}
+.upload-box p{margin:0 0 10px;font-size:13px;color:#4a5a52}
+.upload-progress{margin-top:10px;font-size:13px;color:#4a5a52}
+.upload-progress .err{color:#c0392b}
+.photo-admin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:12px}
+.photo-admin{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+.photo-admin img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#e3ebe6}
+.photo-admin .info{padding:8px 10px 4px;font-size:12px}
+.photo-admin .code{font:800 13px Manrope,Inter,sans-serif;color:#132019}
+.photo-admin .who{color:var(--muted)}
+.photo-admin .actions{display:flex;gap:6px;padding:6px 10px 10px;flex-wrap:wrap}
+.photo-admin .btn-sm{padding:6px 9px;font-size:10px}
+.cover-badge{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:#e6f0fb;color:#0558b0;font-size:10px;font-weight:800}
+.video-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #edf1ee}
+.video-row:first-child{border-top:0}
+.video-row .grow{flex:1;min-width:0}
+.video-row a{color:var(--green);font-size:12px;word-break:break-all}
+.album-edit-fields .field.grow{flex:1 1 220px}
+.album-edit-fields input[type=date],.album-edit-fields input:not([type]){width:100%}

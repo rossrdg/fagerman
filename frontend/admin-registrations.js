@@ -60,8 +60,10 @@ function rowHtml(r) {
       </td>
       <td class="reg-created" data-label="Подадено на">${formatCreatedAt(r.created_at)}</td>
       <td class="admin-edit reg-when" data-label="Тренировка (ден и час)">
-        <input type="date" class="js-date" value="${r.training_date || ''}" aria-label="Ден на тренировката">
-        <input type="time" class="js-time" step="900" value="${r.training_time || ''}" aria-label="Час на тренировката">
+        <div class="reg-when-inner">
+          <input type="date" class="js-date" value="${r.training_date || ''}" aria-label="Ден на тренировката">
+          <input type="time" class="js-time" step="900" value="${r.training_time || ''}" aria-label="Час на тренировката">
+        </div>
       </td>
       <td class="check-cell" data-label="Записан"><input type="checkbox" class="js-processed" ${r.processed ? 'checked' : ''} aria-label="Записан">${notifiedBadge(r)}</td>
     </tr>`;

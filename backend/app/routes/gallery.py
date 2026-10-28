@@ -24,7 +24,9 @@ from app.gallery_utils import album_cover, bg_date, new_code, parse_youtube, pho
 from app.models import TEAM_ACTIVE, Album, Photo, Team, Video
 # Същата обработка като при снимките на новините (завъртане, JPEG, 1600px + 800px).
 from app.routes.news import DEFAULT_SHARE_IMAGE, _absolute
-from app.routes.uploads import MAIN_SIZE, MAX_PIXELS, READABLE_FORMATS, THUMB_SIZE, _save_jpeg, _to_rgb
+from app.routes.uploads import (
+    MAIN_SIZE, MAX_PIXELS, READABLE_FORMATS, THUMB_SIZE, UNSUPPORTED_MESSAGE, _save_jpeg, _to_rgb,
+)
 from app.team_utils import get_season_end_year, u_label
 
 page_bp = Blueprint("gallery_page", __name__)
@@ -32,6 +34,7 @@ admin_gallery_bp = Blueprint("admin_gallery", __name__)
 admin_gallery_bp.before_request(check_admin)  # собственик или треньор
 
 MAX_TITLE = 80
+MAX_PHOTOS_PER_ALBUM = 28
 MIN_YEAR = 2020
 
 
@@ -67,7 +70,7 @@ def album_dict(album, with_photos=False):
     data = {
         "id": album.id, "team_id": album.team_id, "title": album.title,
         "event_date": album.event_date.isoformat(), "date_text": bg_date(album.event_date),
-        "is_hidden": album.is_hidden, "photo_count": len(album.photos),
+        "is_hidden": album.is_hidden, "photo_count": len(album.photos), "max_photos": MAX_PHOTOS_PER_ALBUM,
         "cover_thumb": photo_urls(cover)[1] if cover else None,
     }
     if with_photos:
@@ -211,6 +214,8 @@ def admin_add_photo(album_id):
     album = db.session.get(Album, album_id)
     if album is None:
         return _error("Албумът не е намерен.", 404)
+    if len(album.photos) >= MAX_PHOTOS_PER_ALBUM:
+        return _error(f"Албумът е пълен — максимум {MAX_PHOTOS_PER_ALBUM} снимки. Създайте нов албум.", 409)
     file = request.files.get("image")
     if file is None or not file.filename:
         return _error("Не е избран файл.")
@@ -222,7 +227,7 @@ def admin_add_photo(album_id):
         img.load()
         rgb = _to_rgb(img)
     except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError):
-        return _error("Файлът не е снимка или форматът му не се поддържа. Опитайте с JPG или PNG.")
+        return _error(UNSUPPORTED_MESSAGE)
 
     code = new_code()
     if code is None:

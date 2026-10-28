@@ -16,7 +16,23 @@ files_bp = Blueprint("upload_files", __name__)
 # exotic formats Pillow can open (e.g. EPS, which runs Ghostscript). SVG is not an
 # image Pillow can read, so it is refused too.
 Image.init()  # load every format plugin, so the names below exist
-READABLE_FORMATS = [f for f in ("JPEG", "PNG", "WEBP", "GIF", "BMP", "DIB", "TIFF", "ICO") if f in Image.OPEN]
+# iPhone photos (HEIC/HEIF) and AVIF need the optional pillow-heif package. Without it the
+# app still works — those files are just refused with an explanation (HEIC_SUPPORTED=False).
+try:
+    import pillow_heif
+
+    pillow_heif.register_heif_opener()
+    HEIC_SUPPORTED = True
+except ImportError:  # pragma: no cover - depends on the server's installed packages
+    HEIC_SUPPORTED = False
+READABLE_FORMATS = [
+    f for f in ("JPEG", "PNG", "WEBP", "GIF", "BMP", "DIB", "TIFF", "ICO", "HEIF", "AVIF") if f in Image.OPEN
+]
+UNSUPPORTED_MESSAGE = (
+    "Файлът не е снимка или форматът му не се поддържа. Опитайте с JPG, PNG или HEIC."
+    if HEIC_SUPPORTED
+    else "Файлът не е снимка или форматът му не се поддържа. HEIC на този сървър още не е включен — опитайте с JPG или PNG."
+)
 MAIN_SIZE = 1600      # longest side of the photo used in articles / Facebook
 THUMB_SIZE = 800      # longest side of the card version
 MAX_PIXELS = 50_000_000
@@ -58,7 +74,7 @@ def upload_image():
         img.load()
         rgb = _to_rgb(img)
     except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError):
-        return _error("Файлът не е снимка или форматът му не се поддържа. Опитайте с JPG или PNG.")
+        return _error(UNSUPPORTED_MESSAGE)
 
     upload_dir = current_app.config["UPLOAD_DIR"]
     os.makedirs(upload_dir, exist_ok=True)

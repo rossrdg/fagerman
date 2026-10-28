@@ -120,11 +120,55 @@
       </form>
 
       <div id="soonBox" class="soon-box" hidden>
-        <strong>Следва в този панел:</strong> тренировки, мачове и класиране, галерия, новини на отбора.
+        <strong>Следва в този панел:</strong> мачове и класиране, новини на отбора. Тренировките се въвеждат в „График“.
       </div>
+
+      <!-- ===== Галерия на отбора (показва се само за съществуващ отбор) ===== -->
+      <section id="gallerySection" class="gallery-admin" hidden>
+        <h2>Галерия</h2>
+        <div id="galStatus" class="admin-status" aria-live="polite"></div>
+
+        <div class="gal-block">
+          <h3>Албуми със снимки</h3>
+          <form id="albumForm" class="gal-form" novalidate>
+            <div class="field grow">
+              <label for="al-title">Нов албум — заглавие *</label>
+              <input id="al-title" maxlength="80" autocomplete="off" placeholder="напр. Турнир Ботев">
+              <div class="field-error" data-error-for="title"></div>
+            </div>
+            <div class="field">
+              <label for="al-date">Дата на събитието</label>
+              <input id="al-date" type="date">
+              <div class="field-error" data-error-for="event_date"></div>
+            </div>
+            <button id="albumCreateBtn" class="btn btn-primary" type="button">Създай албум</button>
+          </form>
+          <div id="albumList" class="album-list"></div>
+        </div>
+
+        <div class="gal-block">
+          <h3>Клипове (YouTube)</h3>
+          <form id="videoForm" class="gal-form" novalidate>
+            <div class="field grow">
+              <label for="vd-url">Линк към клип *</label>
+              <input id="vd-url" autocomplete="off" placeholder="https://www.youtube.com/watch?v=…">
+              <div class="field-error" data-error-for="url"></div>
+            </div>
+            <div class="field grow">
+              <label for="vd-title">Заглавие (по избор)</label>
+              <input id="vd-title" maxlength="80" autocomplete="off" placeholder="напр. Голове от турнира">
+              <div class="field-error" data-error-for="title"></div>
+            </div>
+            <button id="videoAddBtn" class="btn btn-primary" type="button">Добави клип</button>
+          </form>
+          <div id="videoList" class="video-list"></div>
+        </div>
+      </section>
+
     </section>
   </main>
 
   <script src="admin-teams.js"></script>
+  <script src="admin-gallery.js"></script>
 </body>
 </html>

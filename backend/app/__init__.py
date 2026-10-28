@@ -78,7 +78,7 @@ def create_app(config_object="config.Config"):
     @app.errorhandler(413)
     def too_large(_err):
         from flask import jsonify
-        return jsonify({"ok": False, "error": "Файлът е твърде голям (до 10 MB)."}), 413
+        return jsonify({"ok": False, "error": "Файлът е твърде голям (до 20 MB)."}), 413
 
     with app.app_context():
         db.create_all()
@@ -86,7 +86,10 @@ def create_app(config_object="config.Config"):
 
     @app.get("/api/health")
     def health():
-        return {"status": "ok"}
+        from app.routes.uploads import HEIC_SUPPORTED
+
+        # "heic": true значи, че pillow-heif е инсталиран и снимките от iPhone се приемат.
+        return {"status": "ok", "heic": HEIC_SUPPORTED}
 
     # --- Serve the static site (index.html, styles.css, script.js, ...) ---
     frontend_dir = app.config["FRONTEND_DIR"]

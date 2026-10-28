@@ -41,7 +41,7 @@ class Config:
     # Photos uploaded from the admin (resized JPEGs). Keep this folder out of git
     # and include it in backups. Production: ideally outside the project folder.
     UPLOAD_DIR = os.environ.get("UPLOAD_DIR", str(BASE_DIR / "uploads"))
-    MAX_CONTENT_LENGTH = 12 * 1024 * 1024  # largest request body (one photo up to 10 MB)
+    MAX_CONTENT_LENGTH = 21 * 1024 * 1024  # largest request body (one photo up to 20 MB + form overhead)
 
     CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "*").split(",")
 
