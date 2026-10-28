@@ -51,3 +51,9 @@
   .lightbox .lb-prev{left:18px}.lightbox .lb-next{right:18px}
   .lightbox img{max-height:76vh}
 }
+
+/* Обща галерия: страници */
+.all-albums{margin-bottom:64px}
+.pager{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:32px;font-size:14px;color:var(--muted)}
+.pager .btn-outline{border:1px solid #cbd6d0;color:#132019;background:#fff}
+@media(max-width:767px){.pager{flex-wrap:wrap}}

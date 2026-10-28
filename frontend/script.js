@@ -152,26 +152,6 @@ document.querySelector('#registrationForm')?.addEventListener('submit',async e=>
   }
 });
 
-const galleryModal=document.querySelector('#galleryModal');
-const lightboxImg=document.querySelector('#lightboxImg');
-const lightboxLabel=document.querySelector('#lightboxLabel');
-function openLightbox(btn){
-  lightboxImg.src=btn.dataset.full||btn.querySelector('img')?.src||'';
-  lightboxImg.alt=btn.dataset.label||'';
-  lightboxLabel.textContent=btn.dataset.label||'';
-  galleryModal.classList.add('open');
-  galleryModal.setAttribute('aria-hidden','false');
-}
-function closeLightbox(){
-  galleryModal.classList.remove('open');
-  galleryModal.setAttribute('aria-hidden','true');
-  lightboxImg.src='';
-}
-document.querySelectorAll('.gallery-item').forEach(btn=>btn.addEventListener('click',()=>openLightbox(btn)));
-galleryModal?.querySelector('.lightbox-close')?.addEventListener('click',closeLightbox);
-galleryModal?.querySelector('.modal-backdrop')?.addEventListener('click',closeLightbox);
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox()});
-
 // QR code -> opens this page straight on the registration form on a phone.
 const qrEl=document.querySelector('#registrationQr');
 if(qrEl && window.QRCode){

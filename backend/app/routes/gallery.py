@@ -17,6 +17,7 @@ from datetime import date
 
 from flask import Blueprint, current_app, jsonify, render_template, request
 from PIL import Image, UnidentifiedImageError
+from sqlalchemy.orm import joinedload, selectinload
 
 from app import db
 from app.auth import check_admin, current_user
@@ -300,3 +301,44 @@ def admin_delete_video(video_id):
     db.session.delete(video)
     db.session.commit()
     return jsonify({"ok": True})
+
+
+# --------------------------------------------------- общата галерия (/gallery) ---
+ALBUMS_PER_PAGE = 24
+
+
+@page_bp.get("/gallery")
+@page_bp.get("/gallery/")
+def gallery_index():
+    """Всички видими албуми на всички активни отбори — най-новите събития първи."""
+    season_end = get_season_end_year()
+    query = (
+        Album.query.join(Team, Album.team_id == Team.id)
+        .filter(Team.status == TEAM_ACTIVE, Album.is_hidden.is_(False), Album.photos.any())
+        .order_by(Album.event_date.desc(), Album.id.desc())
+    )
+    total = query.count()
+    pages = max(1, -(-total // ALBUMS_PER_PAGE))
+    page = min(max(request.args.get("page", 1, type=int), 1), pages)
+    albums = (
+        query.options(selectinload(Album.photos), joinedload(Album.team))
+        .offset((page - 1) * ALBUMS_PER_PAGE).limit(ALBUMS_PER_PAGE).all()
+    )
+
+    cards = []
+    for album in albums:
+        cover = album_cover(album)
+        cards.append({
+            "title": album.title,
+            "team_label": u_label(album.team, season_end),
+            "date_text": bg_date(album.event_date),
+            "count": len(album.photos),
+            "cover": photo_urls(cover)[1],
+            "url": f"/teams/{album.team.slug}/albums/{album.id}",
+        })
+    return render_template(
+        "gallery_page.html",
+        albums=cards, page=page, pages=pages,
+        page_url=_absolute("/gallery" if page == 1 else f"/gallery?page={page}"),
+        image_url=_absolute(DEFAULT_SHARE_IMAGE),
+    )
