@@ -67,6 +67,10 @@ def create_app(config_object="config.Config"):
     app.register_blueprint(admin_schedule_bp, url_prefix="/api")  # /api/admin/schedule
     app.register_blueprint(schedule_page_bp)  # /schedule
 
+    from app.routes.gallery import admin_gallery_bp, page_bp as gallery_page_bp
+    app.register_blueprint(admin_gallery_bp, url_prefix="/api")  # /api/admin/albums, /photos, /videos
+    app.register_blueprint(gallery_page_bp)  # /teams/<slug>/albums/<id>
+
     from app.routes.uploads import files_bp, uploads_bp
     app.register_blueprint(uploads_bp, url_prefix="/api")  # POST /api/admin/uploads
     app.register_blueprint(files_bp)  # GET /uploads/<file>

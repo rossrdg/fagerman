@@ -10,8 +10,9 @@ from flask import Blueprint, jsonify, redirect, render_template, request
 
 from app import db
 from app.auth import check_admin
-from app.models import KIND_MEN, KIND_YOUTH, TEAM_ACTIVE, TEAM_ARCHIVED, Team
+from app.models import KIND_MEN, KIND_YOUTH, TEAM_ACTIVE, TEAM_ARCHIVED, Album, Team, Video
 from app.routes.news import DEFAULT_SHARE_IMAGE, _absolute
+from app.gallery_utils import album_cover, bg_date, photo_urls, remove_files
 from app.schedule_utils import build_public_schedule
 from app.team_utils import (
     auto_label, cohort_label, cohort_slug, cohort_text, get_season_end_year,
@@ -182,6 +183,31 @@ def teams_index():
     return redirect("/#teams")
 
 
+def _public_albums(team):
+    """Албуми за страницата на отбора: видими и с поне една снимка."""
+    albums = (Album.query.filter_by(team_id=team.id, is_hidden=False)
+              .order_by(Album.event_date.desc(), Album.id.desc()).all())
+    result = []
+    for album in albums:
+        cover = album_cover(album)
+        if cover is None:
+            continue
+        result.append({
+            "title": album.title,
+            "date_text": bg_date(album.event_date),
+            "count": len(album.photos),
+            "cover": photo_urls(cover)[1],
+            "url": f"/teams/{team.slug}/albums/{album.id}",
+        })
+    return result
+
+
+def _public_videos(team):
+    videos = Video.query.filter_by(team_id=team.id).order_by(Video.id.desc()).all()
+    return [{"id": v.youtube_id, "title": v.title or "Клип от отбора",
+             "watch_url": f"https://www.youtube.com/watch?v={v.youtube_id}"} for v in videos]
+
+
 @page_bp.get("/teams/<slug>")
 def team_page(slug):
     team = Team.query.filter_by(slug=slug, status=TEAM_ACTIVE).first()
@@ -206,6 +232,8 @@ def team_page(slug):
         image_url=_absolute(DEFAULT_SHARE_IMAGE),
         season=season_text(season_end),
         schedule=build_public_schedule(highlight_slug=team.slug),
+        albums=_public_albums(team),
+        videos=_public_videos(team),
     )
 
 
@@ -280,6 +308,8 @@ def admin_delete(team_id):
         return _error("Отборът не е намерен.", 404)
     if team.status != TEAM_ARCHIVED:
         return _error("Първо архивирайте отбора.", 409)
-    db.session.delete(team)
+    names = [photo.name for album in team.albums for photo in album.photos]
+    db.session.delete(team)  # албумите, снимките и клиповете се трият заедно с отбора
     db.session.commit()
+    remove_files(names)
     return jsonify({"ok": True})
