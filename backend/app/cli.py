@@ -5,12 +5,17 @@
     flask --app run list-users
     flask --app run seed-teams                # първоначално попълване на отборите
     flask --app run seed-schedule             # първоначален тренировъчен график
+    flask --app run set-season 2027           # ръчно задава сезона (2027 = 2026/27) и чисти историята
 """
 import click
 
 from app import db
-from app.models import KIND_MEN, KIND_YOUTH, ROLE_OWNER, AdminUser, Team, TrainingSlot
-from app.team_utils import cohort_slug, get_season_end_year
+from app.models import (
+    KIND_MEN, KIND_YOUTH, ROLE_OWNER, AdminUser, SeasonSwitch, Team, TrainingGroup, TrainingSlot,
+)
+from app.team_utils import (
+    YOUTH_MIN_U, cohort_label, cohort_slug, get_season_end_year, season_text, set_season_end_year,
+)
 
 # (вид, набор от, набор до, кратко описание). Текстовете на U7, U9, U11, U13, U15
 # и MEN са взети от досегашната начална страница; тези на U6, U8 и U10 са ЧЕРНОВИ
@@ -113,9 +118,42 @@ def register_cli(app):
         if missing:
             click.echo(f"Липсват отбори: {', '.join(sorted(missing))}. Първо пуснете seed-teams.")
             return
-        for day, time, slugs, label in SEED_SCHEDULE:
-            slot = TrainingSlot(weekday=day, start_time=time, label=label)
+        groups = {}
+        for day, time, slugs, group_name in SEED_SCHEDULE:
+            slot = TrainingSlot(weekday=day, start_time=time, label="")
             slot.teams = [teams[s] for s in slugs]
+            if group_name:  # вратарите са група без отбор
+                if group_name not in groups:
+                    groups[group_name] = (TrainingGroup.query.filter_by(name=group_name).first()
+                                          or TrainingGroup(name=group_name))
+                slot.groups = [groups[group_name]]
             db.session.add(slot)
         db.session.commit()
         click.echo(f"Създадени слотове: {TrainingSlot.query.count()}.")
+
+    @app.cli.command("set-season")
+    @click.argument("end_year", type=int)
+    def set_season(end_year):
+        """Ръчно задава текущия сезон (крайната му година: 2027 за 2026/27).
+
+        Нужно е само при оправяне на тестови данни. ЧИСТИ историята на смените
+        (после „Върни към…“ в админа започва отначало) и НЕ променя отборите —
+        само показва кои трябва да проверите на ръка."""
+        if not 2000 <= end_year <= 2100:
+            raise click.BadParameter("Въведете крайна година на сезона, напр. 2027.")
+        removed = SeasonSwitch.query.delete()
+        set_season_end_year(end_year)
+        db.session.commit()
+        click.echo(f"Сезон: {season_text(end_year)}. Изчистена история на смените: {removed}.")
+
+        archived = [t for t in Team.query.filter_by(status="archived").all()]
+        too_young = [
+            t for t in Team.query.filter_by(kind=KIND_YOUTH).all()
+            if t.birth_year_from is not None and end_year - t.birth_year_from < YOUTH_MIN_U
+        ]
+        if archived:
+            click.echo("Архивирани отбори (възстановете в админа ако трябва): "
+                       + ", ".join(cohort_label(t) for t in archived))
+        if too_young:
+            click.echo("Набори, по-малки от U6 за този сезон (вероятно тестови — архивирайте и изтрийте): "
+                       + ", ".join(cohort_label(t) for t in too_young))

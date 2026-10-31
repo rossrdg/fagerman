@@ -101,7 +101,23 @@ async function loadTeams(){
   }
 }
 loadNews();
+// ---- Снимка на главния треньор (от профила му в админа); без снимка остава placeholder-ът ----
+async function loadHeadCoach(){
+  const box=document.querySelector('#headCoachPhoto');
+  if(!box)return;
+  try{
+    const res=await fetch('/api/coaches/head');
+    const data=await res.json();
+    if(!res.ok||!data.ok||!data.photo)return;
+    const img=document.createElement('img');
+    img.src=data.photo;img.alt=data.name||'Главен треньор';img.loading='lazy';
+    img.className='coach-photo-img';
+    const placeholder=box.querySelector('.image-placeholder');
+    if(placeholder)placeholder.replaceWith(img);else box.prepend(img);
+  }catch(err){/* остава placeholder-ът */}
+}
 loadTeams();
+loadHeadCoach();
 
 const FIELD_LABELS={
   child:'Име на детето', age:'Възраст', parent:'Име на родител', phone:'Телефон', email:'Email'

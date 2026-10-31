@@ -232,3 +232,38 @@
 .video-row a{color:var(--green);font-size:12px;word-break:break-all}
 .album-edit-fields .field.grow{flex:1 1 220px}
 .album-edit-fields input[type=date],.album-edit-fields input:not([type]){width:100%}
+
+/* Смяна на сезона */
+.season-panel{max-width:960px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-bottom:20px}
+.season-panel h2{font-size:20px;margin:0 0 8px}
+.season-help{color:#4a5a52;font-size:14px;margin:0 0 14px}
+.season-table th,.season-table td{padding:9px 12px;white-space:normal}
+.season-after{font-weight:800;color:#0558b0}
+.season-row.manual .season-after{color:var(--muted);font-weight:600}
+.season-row.archive td{background:#fff6f5}
+.season-row.archive .season-after{color:#c0392b}
+.season-note{font-size:12px;color:var(--muted)}
+.season-row.archive .season-note{color:#c0392b}
+.season-warn{color:#c0392b;font-size:13px;margin:12px 0 0}
+.season-panel .check-item{margin-top:14px!important}
+.season-undo{margin-top:4px;font-size:13px;color:#4a5a52}
+.link-btn{border:0;background:none;padding:0;color:var(--green);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
+.season-undo{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.season-undo select{border:1px solid #d8e0db;border-radius:8px;padding:6px 10px;font:inherit;font-size:13px;background:#fbfcfb}
+
+/* Треньори */
+.coach-form{margin-bottom:24px}
+.pw-row{display:flex;gap:8px;align-items:center}
+.pw-row input{flex:1}
+.photo-row{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.coach-thumb{width:72px;height:90px;border-radius:10px;object-fit:cover;background:#e3ebe6;flex:none}
+.coach-cell{display:flex;align-items:center;gap:12px}
+.coach-user{color:var(--muted);font-size:12px}
+.coach-table .coach-thumb{width:44px;height:55px;border-radius:8px}
+
+/* Групи без отбор (вратари) в „График“ */
+.groups-block{max-width:960px;margin-bottom:24px}
+.group-list .group-row{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid #edf1ee}
+.group-list .group-row:first-child{border-top:0}
+.group-row .grow{flex:1;min-width:0}
+.group-row small{color:var(--muted)}

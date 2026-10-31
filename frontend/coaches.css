@@ -1,0 +1,20 @@
+/* Страница „Треньори“ */
+.coaches-head,.coaches-wrap{max-width:1100px;margin-left:auto;margin-right:auto;padding:0}
+.coaches-head{margin-bottom:32px}
+.coaches-head h1{font-size:clamp(38px,6vw,64px)}
+.coaches-wrap{margin-bottom:64px}
+/* Една карта под друга: еднаква ширина, снимка вляво, текст вдясно (на телефон снимката е отгоре) */
+.coach-grid-list{display:flex;flex-direction:column;gap:18px}
+.coach-card{display:flex;align-items:stretch;background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.coach-card.head{border-color:var(--green);box-shadow:0 0 0 1px var(--green)}
+.coach-img{flex:0 0 260px;width:260px;aspect-ratio:4/5;object-fit:cover;background:#dbe5df;display:block}
+.coach-body{flex:1;min-width:0;padding:22px 26px 24px;align-self:center}
+.coach-body h2{font-size:26px;margin:6px 0 8px}
+.coach-body p{font-size:15px;margin:0 0 10px;color:#34443c}
+.coach-body .coach-teams{font-weight:700;color:var(--green)}
+.coach-badge{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--green);color:#fff;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+@media(max-width:767px){
+  .coach-card{flex-direction:column}
+  .coach-img{flex:none;width:100%;aspect-ratio:4/5}
+  .coach-body{padding:18px 18px 20px;align-self:stretch}
+}

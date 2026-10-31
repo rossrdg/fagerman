@@ -53,7 +53,7 @@ function render(users) {
     const cells = [
       u.username,
       u.display_name,
-      owner ? 'Главен админ' : 'Треньор',
+      owner ? 'Главен админ' : (u.role === 'head_coach' ? 'Главен треньор' : 'Треньор'),
       u.is_active ? 'Активен' : 'Изключен',
       fmt(u.last_login_at)
     ];
@@ -67,6 +67,7 @@ function render(users) {
       actions.textContent = '—';
     } else {
       actions.append(
+        button(u.role === 'head_coach' ? 'Направи треньор' : 'Направи главен треньор', () => changeRole(u)),
         button(u.is_active ? 'Изключи' : 'Включи', () => toggle(u)),
         button('Нова парола', () => resetPassword(u)),
         button('Изтрий', () => remove(u), true)
@@ -86,6 +87,17 @@ function button(label, onClick, danger) {
   b.textContent = label;
   b.addEventListener('click', onClick);
   return b;
+}
+
+async function changeRole(u) {
+  const toHead = u.role !== 'head_coach';
+  const text = toHead
+    ? `Да направя ли „${u.display_name}“ главен треньор? Той ще управлява треньорите; досегашният главен треньор (ако има) става обикновен треньор.`
+    : `Да направя ли „${u.display_name}“ обикновен треньор? Ще загуби достъпа до менюто „Треньори“.`;
+  if (!confirm(text)) return;
+  const { ok, data } = await api(`/api/admin/users/${u.id}`, 'PATCH', { role: toHead ? 'head_coach' : 'coach' });
+  if (!ok) return setStatus(statusEl, firstError(data), 'error');
+  load();
 }
 
 async function toggle(u) {

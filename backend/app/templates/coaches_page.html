@@ -1,0 +1,43 @@
+{% extends "news_base.html" %}
+{% block head %}
+  <title>Треньори | Футболна Академия Герман</title>
+  <meta name="description" content="Треньорският екип на Футболна Академия Герман — Герман, район Панчарево, София.">
+  <link rel="canonical" href="{{ page_url }}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Футболна Академия Герман">
+  <meta property="og:locale" content="bg_BG">
+  <meta property="og:title" content="Треньори | Футболна Академия Герман">
+  <meta property="og:description" content="Треньорският екип на Футболна Академия Герман.">
+  <meta property="og:url" content="{{ page_url }}">
+  <meta property="og:image" content="{{ image_url }}">
+{% endblock %}
+{% block styles %}  <link rel="stylesheet" href="/teams.css">
+  <link rel="stylesheet" href="/coaches.css">{% endblock %}
+{% block nav %}<a href="/#coach">← Начало</a>{% endblock %}
+{% block main %}
+    <section class="container coaches-head">
+      <div class="eyebrow green">ЕКИП</div>
+      <h1>Нашите треньори</h1>
+      <p class="team-lead">Хората, които работят с децата и юношите във ФА Герман.</p>
+    </section>
+
+    <section class="container coaches-wrap" aria-label="Треньори">
+      {% if coaches %}
+      <div class="coach-grid-list">
+        {% for coach in coaches %}
+        <article class="coach-card{% if coach.is_head %} head{% endif %}">
+          {% if coach.photo %}<img class="coach-img" src="{{ coach.photo }}" alt="{{ coach.name }}" loading="lazy" decoding="async">{% endif %}
+          <div class="coach-body">
+            {% if coach.is_head %}<span class="coach-badge">Главен треньор</span>{% endif %}
+            <h2>{{ coach.name }}</h2>
+            {% if coach.teams %}<p class="coach-teams">Води: {{ coach.teams|join(', ') }}</p>{% endif %}
+            {% for paragraph in coach.bio %}<p>{{ paragraph }}</p>{% endfor %}
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="schedule-empty">Треньорският екип ще бъде представен скоро.</p>
+      {% endif %}
+    </section>
+{% endblock %}

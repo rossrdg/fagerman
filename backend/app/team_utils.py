@@ -4,6 +4,7 @@
 набора. За сезон 2026/27 (крайна година 2027): набор 2020 -> U7, 2016 -> U11,
 2014/15 -> U13, 2012/13 -> U15.
 """
+import json
 from datetime import date
 
 from sqlalchemy.exc import IntegrityError
@@ -81,3 +82,44 @@ def sort_key(team):
     if team.kind == KIND_MEN or team.birth_year_from is None:
         return (1, 0)
     return (0, -team.birth_year_from)
+
+
+# ------------------------------------------------------- смяна на сезон ---
+YOUTH_MIN_U = 6    # най-малката възрастова група
+YOUTH_MAX_U = 18   # най-голямата; след нея набор преминава в MEN (отборът се архивира)
+LAST_SWITCH_KEY = "last_season_switch"
+
+
+def set_season_end_year(year):
+    """Записва текущия сезон. Извикващият прави commit."""
+    row = db.session.get(Setting, SEASON_KEY)
+    if row is None:
+        db.session.add(Setting(key=SEASON_KEY, value=str(year)))
+    else:
+        row.value = str(year)
+
+
+def get_last_switch():
+    """Данни за последната смяна на сезона (за „Върни“), или None."""
+    row = db.session.get(Setting, LAST_SWITCH_KEY)
+    if row is None or not row.value:
+        return None
+    try:
+        data = json.loads(row.value)
+    except ValueError:
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def set_last_switch(data):
+    """Записва (или с None изтрива) данните за последната смяна. Извикващият прави commit."""
+    row = db.session.get(Setting, LAST_SWITCH_KEY)
+    if data is None:
+        if row is not None:
+            db.session.delete(row)
+        return
+    value = json.dumps(data, separators=(",", ":"))
+    if row is None:
+        db.session.add(Setting(key=LAST_SWITCH_KEY, value=value))
+    else:
+        row.value = value
