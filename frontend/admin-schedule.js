@@ -8,12 +8,12 @@ const dayChecks = $('#dayChecks');
 const teamChecks = $('#teamChecks');
 const daySelect = $('#f-day');
 const timeInput = $('#f-time');
-const labelInput = $('#f-label');
 const saveBtn = $('#saveBtn');
 const cancelBtn = $('#cancelBtn');
 
 let days = [];
 let teams = [];
+let groups = [];
 let slots = [];
 let editingId = null;
 let statusTimer = null;
@@ -79,11 +79,19 @@ function buildForm() {
     opt.value = d.number;
     daySelect.append(opt);
   });
+  buildTeamChecks();
+}
+
+// Отбори + групи без отбор (вратари). Извиква се и когато групите се променят.
+function buildTeamChecks() {
+  const selTeams = checkedValues('team');
+  const selGroups = checkedValues('group');
   teamChecks.textContent = '';
   teams.filter(t => t.status === 'active').forEach(t => {
     const text = t.kind === 'men' ? 'MEN' : `${t.u_label} · ${t.cohort}`;
-    teamChecks.append(checkItem('team', t.id, text));
+    teamChecks.append(checkItem('team', t.id, text, selTeams.includes(t.id)));
   });
+  groups.forEach(g => teamChecks.append(checkItem('group', g.id, g.name, selGroups.includes(g.id))));
 }
 
 function checkedValues(name) {
@@ -94,7 +102,6 @@ function resetForm() {
   editingId = null;
   document.querySelectorAll('#slotForm input[type="checkbox"]').forEach(i => { i.checked = false; });
   timeInput.value = '';
-  labelInput.value = '';
   clearErrors();
   $('#formTitle').textContent = 'Нов слот';
   $('#daysMulti').hidden = false;
@@ -111,9 +118,11 @@ function startEdit(slot) {
   $('#daySingle').hidden = false;
   daySelect.value = slot.day;
   timeInput.value = slot.time;
-  labelInput.value = slot.label || '';
   document.querySelectorAll('input[name="team"]').forEach(i => {
     i.checked = slot.team_ids.includes(Number(i.value));
+  });
+  document.querySelectorAll('input[name="group"]').forEach(i => {
+    i.checked = slot.group_ids.includes(Number(i.value));
   });
   saveBtn.textContent = 'Запази';
   cancelBtn.hidden = false;
@@ -125,7 +134,7 @@ async function save() {
   const body = {
     time: timeInput.value,
     team_ids: checkedValues('team'),
-    label: labelInput.value.trim()
+    group_ids: checkedValues('group')
   };
   if (editingId) body.day = Number(daySelect.value);
   else body.days = checkedValues('day');
@@ -215,10 +224,12 @@ async function load() {
   if (!res.ok || !data.ok) throw new Error('api');
   days = data.days;
   teams = data.teams;
+  groups = data.groups || [];
   slots = data.slots;
   // Формата се прави само първия път, за да не се губят отметките при презареждане.
-  if (!dayChecks.children.length) buildForm();
+  if (!dayChecks.children.length) buildForm(); else buildTeamChecks();
   renderList();
+  renderGroups();
   statusEl.classList.remove('error', 'saved');
   statusEl.textContent = summary();
 }
@@ -231,3 +242,60 @@ load().catch(() => {
   statusEl.classList.add('error');
   statusEl.textContent = 'Неуспешно зареждане. Провери дали backend-ът работи.';
 });
+
+
+// ------------------------------------------------ групи без отбор (вратари) ---
+const groupList = $('#groupList');
+
+function renderGroups() {
+  groupList.textContent = '';
+  if (!groups.length) {
+    groupList.append(el('p', 'user-hint', 'Още няма групи. Добавете напр. „Вратари — големи“.'));
+    return;
+  }
+  groups.forEach(g => {
+    const row = el('div', 'group-row');
+    const info = el('div', 'grow');
+    info.append(el('strong', '', g.name), el('small', '', ` · ${g.slots} ${g.slots === 1 ? 'слот' : 'слота'}, ${g.coaches} ${g.coaches === 1 ? 'треньор' : 'треньори'}`));
+    row.append(info);
+
+    const rename = el('button', 'btn btn-outline btn-sm', 'Преименувай');
+    rename.type = 'button';
+    rename.addEventListener('click', async () => {
+      const name = prompt('Ново име на групата:', g.name);
+      if (name === null || name.trim() === g.name) return;
+      const { res, data } = await api(`/api/admin/schedule-groups/${g.id}`, { method: 'PATCH', body: JSON.stringify({ name }) });
+      if (!res.ok || !data.ok) { flash((data.errors && data.errors.name) || data.error || 'Неуспешно преименуване.', true); return; }
+      await load();
+      flash('Преименувана ✓');
+    });
+
+    const del = el('button', 'btn btn-outline btn-sm btn-danger-text', 'Изтрий');
+    del.type = 'button';
+    del.addEventListener('click', async () => {
+      const extra = g.slots ? ` Ще се изтрият и слотовете, в които е единствена (${g.slots}).` : '';
+      if (!confirm(`Да изтрия ли групата „${g.name}“? Ще се махне и от профилите на треньорите.${extra}`)) return;
+      const { res, data } = await api(`/api/admin/schedule-groups/${g.id}`, { method: 'DELETE' });
+      if (!res.ok || !data.ok) { flash(data.error || 'Неуспешно изтриване.', true); return; }
+      await load();
+      flash('Групата е изтрита ✓');
+    });
+    row.append(rename, del);
+    groupList.append(row);
+  });
+}
+
+$('#groupAddBtn').addEventListener('click', async () => {
+  const input = $('#g-name');
+  const { res, data } = await api('/api/admin/schedule-groups', { method: 'POST', body: JSON.stringify({ name: input.value }) });
+  const err = document.querySelector('[data-error-for="group_name"]');
+  if (!res.ok || !data.ok) {
+    err.textContent = (data.errors && data.errors.name) || data.error || 'Неуспешно добавяне.';
+    return;
+  }
+  err.textContent = '';
+  input.value = '';
+  await load();
+  flash('Групата е добавена ✓');
+});
+$('#groupForm').addEventListener('submit', (e) => e.preventDefault());

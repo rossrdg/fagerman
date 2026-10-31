@@ -7,7 +7,7 @@ from app import db
 from app.auth import (
     csrf_token, current_user, login_user, logout_user, owner_required,
 )
-from app.models import ROLE_COACH, ROLE_OWNER, AdminUser, utcnow
+from app.models import ROLE_COACH, ROLE_HEAD_COACH, ROLE_OWNER, AdminUser, utcnow
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -132,6 +132,14 @@ def update_user(user_id):
 
     if "display_name" in data:
         user.display_name = str(data["display_name"] or "").strip()[:80] or user.username
+    if "role" in data:
+        if data["role"] not in (ROLE_COACH, ROLE_HEAD_COACH):
+            return _err("Невалидна роля.")
+        if data["role"] == ROLE_HEAD_COACH:
+            # Има само един главен треньор: предишният става обикновен треньор.
+            for other in AdminUser.query.filter(AdminUser.role == ROLE_HEAD_COACH, AdminUser.id != user.id).all():
+                other.role = ROLE_COACH
+        user.role = data["role"]
     if "is_active" in data:
         user.is_active = bool(data["is_active"])
         if not user.is_active:
@@ -153,6 +161,11 @@ def delete_user(user_id):
     user, error = _coach_or_error(user_id)
     if error:
         return error
-    db.session.delete(user)
+    from app.routes.coaches import profile_photo_names  # снимката на профила се трие заедно с акаунта
+    from app.gallery_utils import remove_files
+
+    photo_names = profile_photo_names(user)
+    db.session.delete(user)  # профилът (CoachProfile) се трие каскадно
     db.session.commit()
+    remove_files(photo_names)
     return jsonify({"ok": True})

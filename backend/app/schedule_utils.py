@@ -1,7 +1,8 @@
 """Тренировъчен график: етикети на слотове и подготовка на публичния изглед."""
 from sqlalchemy.orm import selectinload
 
-from app.models import KIND_MEN, TEAM_ACTIVE, TrainingSlot
+from app import db
+from app.models import KIND_MEN, TEAM_ACTIVE, TrainingGroup, TrainingSlot
 
 DAY_NAMES = ["Понеделник", "Вторник", "Сряда", "Четвъртък", "Петък", "Събота", "Неделя"]
 
@@ -18,8 +19,8 @@ def _format_run(start, end):
     return f"{start}–{end}"
 
 
-def slot_label(teams):
-    """Етикет на слот от свързаните отбори: набор(и) като на графика.
+def slot_label(teams, groups=()):
+    """Етикет на слот от свързаните отбори и групи: набор(и) като на графика.
 
     2018 + 2019 -> „2018/19“; 2014/15 -> „2014/15“; 2016 + 2020 -> „2016, 2020“.
     """
@@ -46,6 +47,7 @@ def slot_label(teams):
         parts.append(_format_run(run[0], run[-1]))
     if has_men:
         parts.append("MEN")
+    parts.extend(g.name for g in sorted(groups, key=lambda g: g.name.casefold()))
     return ", ".join(parts)
 
 
@@ -56,30 +58,29 @@ def build_public_schedule(highlight_slug=None):
     свободен текст без отбори (вратари). highlight_slug маркира слотовете на
     един отбор (`mine`)."""
     slots = (
-        TrainingSlot.query.options(selectinload(TrainingSlot.teams))
+        TrainingSlot.query.options(selectinload(TrainingSlot.teams), selectinload(TrainingSlot.groups))
         .order_by(TrainingSlot.weekday, TrainingSlot.start_time, TrainingSlot.id)
         .all()
     )
 
     visible = []
     for slot in slots:
-        if slot.teams:
-            active = [t for t in slot.teams if t.status == TEAM_ACTIVE]
-            if not active:
-                continue  # всички отбори са архивирани -> скрит
-            label = slot_label(active)
+        active = [t for t in slot.teams if t.status == TEAM_ACTIVE]
+        groups = list(slot.groups)
+        if active or groups:
+            label = slot_label(active, groups)
             mine = highlight_slug is not None and any(t.slug == highlight_slug for t in active)
-            other = False
-        elif slot.label:
-            label, mine, other = slot.label, False, True
+            other = not active  # само групи без отбор (вратари) — пунктирана рамка
+        elif not slot.teams and slot.label:
+            label, mine, other = slot.label, False, True  # стар слот със свободен текст (преди групите)
         else:
-            continue
+            continue  # всички отбори са архивирани и няма групи -> скрит
         visible.append({
             "day": slot.weekday,
             "time": slot.start_time,
             "label": label,
             "mine": mine,
-            "other": other,  # вратари / свободен текст
+            "other": other,
         })
 
     times = sorted({v["time"] for v in visible})
@@ -100,3 +101,36 @@ def build_public_schedule(highlight_slug=None):
         "mine": mine,
         "mine_text": " · ".join(f"{day_name(v['day'])} {v['time']}" for v in mine),
     }
+
+
+def find_group_by_name(name, ignore_id=None):
+    """Група по име, без значение на главни/малки букви. Сравнява се в Python, защото
+    lower() на SQLite не разбира кирилица."""
+    wanted = name.strip().casefold()
+    for group in TrainingGroup.query.all():
+        if group.id != ignore_id and group.name.casefold() == wanted:
+            return group
+    return None
+
+
+def migrate_label_slots_to_groups():
+    """Еднократно (и безопасно при повторно пускане): стари слотове със свободен текст
+    (напр. „Вратари — големи“) стават истински групи, които се избират от списък."""
+    slots = TrainingSlot.query.filter(TrainingSlot.label != "").all()
+    changed = 0
+    for slot in slots:
+        if slot.teams:
+            continue
+        name = slot.label.strip()
+        group = find_group_by_name(name)
+        if group is None:
+            group = TrainingGroup(name=name[:40])
+            db.session.add(group)
+            db.session.flush()
+        if group not in slot.groups:
+            slot.groups.append(group)
+        slot.label = ""
+        changed += 1
+    if changed:
+        db.session.commit()
+    return changed

@@ -101,6 +101,7 @@ class Post(db.Model):
 
 ROLE_OWNER = "owner"  # главен администратор: всичко + управление на акаунти
 ROLE_COACH = "coach"  # треньор: само инструментите на админ страниците
+ROLE_HEAD_COACH = "head_coach"  # главен треньор: като треньор + управлява треньорите (меню „Треньори“)
 
 _HASH_METHOD = "pbkdf2:sha256"  # работи навсякъде (scrypt не е наличен на всеки хостинг)
 
@@ -133,6 +134,10 @@ class AdminUser(db.Model):
     @property
     def is_owner(self):
         return self.role == ROLE_OWNER
+
+    @property
+    def is_head_coach(self):
+        return self.role == ROLE_HEAD_COACH
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password, method=_HASH_METHOD)
@@ -216,6 +221,9 @@ class TrainingSlot(db.Model):
     updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
 
     teams = db.relationship("Team", secondary=slot_teams, backref=db.backref("training_slots", lazy="select"))
+    # Групи без отбор (напр. „Вратари — големи“) — виж TrainingGroup
+    groups = db.relationship("TrainingGroup", secondary="training_slot_groups",
+                             backref=db.backref("training_slots", lazy="select"))
 
 
 # ---------------------------------------------------------------- gallery ---
@@ -267,3 +275,72 @@ class Video(db.Model):
     created_at = db.Column(db.DateTime, default=utcnow)
 
     team = db.relationship("Team", backref=db.backref("videos", cascade="all, delete-orphan"))
+
+
+# ------------------------------------------------------ история на сезоните ---
+class SeasonSwitch(db.Model):
+    """Една смяна на сезона. Пази се цялата история, за да може да се върне
+    всеки предишен сезон (обратно, смяна по смяна)."""
+
+    __tablename__ = "season_switches"
+
+    id = db.Column(db.Integer, primary_key=True)
+    from_end = db.Column(db.Integer, nullable=False)  # крайна година на стария сезон (напр. 2027 за 2026/27)
+    to_end = db.Column(db.Integer, nullable=False)    # крайна година на новия сезон
+    archived_ids = db.Column(db.Text, nullable=False, default="[]")  # JSON: отбори, архивирани автоматично (преминали в MEN)
+    created_team_id = db.Column(db.Integer, nullable=True)           # отбор, създаден при смяната (нов най-малък набор)
+    switched_by = db.Column(db.String(80), nullable=False, default="")
+    created_at = db.Column(db.DateTime, default=utcnow)
+
+
+# ---------------------------------------------------------- профил на треньор ---
+# Кои отбори води треньорът (само за показване на сайта, не ограничава достъпа).
+coach_teams = db.Table(
+    "coach_teams",
+    db.Column("profile_id", db.Integer, db.ForeignKey("coach_profiles.id", ondelete="CASCADE"), primary_key=True),
+    db.Column("team_id", db.Integer, db.ForeignKey("teams.id", ondelete="CASCADE"), primary_key=True),
+)
+
+
+class CoachProfile(db.Model):
+    """Публичният профил на треньор (снимка, биография, отбори). Принадлежи на акаунта:
+    изтриването на акаунта изтрива и профила. Изключен акаунт запазва профила си."""
+
+    __tablename__ = "coach_profiles"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("admin_users.id", ondelete="CASCADE"), nullable=False, unique=True)
+    photo_name = db.Column(db.String(20), nullable=True)  # /uploads/<name>.jpg и <name>-800.jpg
+    bio = db.Column(db.String(600), nullable=False, default="")
+    show_on_site = db.Column(db.Boolean, nullable=False, default=True, server_default="1")
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
+
+    user = db.relationship("AdminUser", backref=db.backref("profile", uselist=False, cascade="all, delete-orphan"))
+    teams = db.relationship("Team", secondary=coach_teams, backref=db.backref("coach_profiles", lazy="select"))
+    groups = db.relationship("TrainingGroup", secondary="coach_groups",
+                             backref=db.backref("coach_profiles", lazy="select"))
+
+
+# ----------------------------------------------- групи без отбор (вратари и др.) ---
+class TrainingGroup(db.Model):
+    """Тренировъчна група, която не е отбор по набор — напр. „Вратари — големи“.
+    Избира се в графика и като „води“ при профила на треньор."""
+
+    __tablename__ = "training_groups"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(40), nullable=False, unique=True)
+    created_at = db.Column(db.DateTime, default=utcnow)
+
+
+training_slot_groups = db.Table(
+    "training_slot_groups",
+    db.Column("slot_id", db.Integer, db.ForeignKey("training_slots.id", ondelete="CASCADE"), primary_key=True),
+    db.Column("group_id", db.Integer, db.ForeignKey("training_groups.id", ondelete="CASCADE"), primary_key=True),
+)
+
+coach_groups = db.Table(
+    "coach_groups",
+    db.Column("profile_id", db.Integer, db.ForeignKey("coach_profiles.id", ondelete="CASCADE"), primary_key=True),
+    db.Column("group_id", db.Integer, db.ForeignKey("training_groups.id", ondelete="CASCADE"), primary_key=True),
+)

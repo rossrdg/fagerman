@@ -32,12 +32,17 @@
         <div>
           <h1>Отбори</h1>
           <div id="listStatus" class="admin-status">Зареждане...</div>
+          <div id="seasonUndo" class="season-undo" hidden></div>
         </div>
         <div class="toolbar-actions">
+          <button id="seasonBtn" class="btn btn-outline" type="button" hidden>Нов сезон…</button>
           <button id="refreshBtn" class="btn btn-outline" type="button">Опресни ↻</button>
           <a class="btn btn-primary" href="admin-teams.html?team=new">+ Нов отбор</a>
         </div>
       </div>
+
+      <!-- Смяна на сезона (само главен админ; попълва се от admin-season.js) -->
+      <section id="seasonPanel" class="season-panel" hidden aria-live="polite"></section>
 
       <div class="table-wrap">
         <table id="teamsTable" class="admin-table" hidden>
@@ -170,5 +175,6 @@
 
   <script src="admin-teams.js"></script>
   <script src="admin-gallery.js"></script>
+  <script src="admin-season.js"></script>
 </body>
 </html>

@@ -123,6 +123,13 @@
       if (location.pathname.endsWith('admin-schedule.html')) sched.classList.add('active');
       nav.appendChild(sched);
     }
+    if (nav && (user.role === 'owner' || user.role === 'head_coach')) {
+      const c = document.createElement('a');
+      c.href = 'admin-coaches.html';
+      c.textContent = 'Треньори';
+      if (location.pathname.endsWith('admin-coaches.html')) c.classList.add('active');
+      nav.appendChild(c);
+    }
     if (nav && user.role === 'owner') {
       const a = document.createElement('a');
       a.href = 'admin-users.html';
@@ -136,7 +143,7 @@
       const box = document.createElement('div');
       box.className = 'admin-user';
       const label = document.createElement('span');
-      label.textContent = user.display_name + (user.role === 'owner' ? ' · главен админ' : ' · треньор');
+      label.textContent = user.display_name + ({ owner: ' · главен админ', head_coach: ' · главен треньор' }[user.role] || ' · треньор');
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'btn btn-ghost';

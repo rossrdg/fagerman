@@ -58,15 +58,8 @@
       <div class="field">
         <label>Кой тренира</label>
         <div id="teamChecks" class="check-grid"></div>
-        <div class="field-hint">Можете да изберете няколко отбора (напр. U8 и U9 тренират заедно). На сайта се показва наборът им, напр. „2018/19“.</div>
+        <div class="field-hint">Отбори и групи (напр. вратари) — можете да изберете няколко. На сайта се показва наборът им, напр. „2018/19“, и името на групата.</div>
         <div class="field-error" data-error-for="team_ids"></div>
-      </div>
-
-      <div class="field">
-        <label for="f-label">Или свободен текст (без отбор)</label>
-        <input id="f-label" maxlength="40" autocomplete="off" placeholder="напр. Вратари — големи">
-        <div class="field-hint">Ползва се само ако не е избран отбор (напр. вратарски тренировки).</div>
-        <div class="field-error" data-error-for="label"></div>
       </div>
 
       <div class="form-actions">
@@ -74,6 +67,22 @@
         <button id="cancelBtn" class="btn btn-outline" type="button" hidden>Отказ</button>
       </div>
     </form>
+
+
+    <!-- Групи без отбор (напр. вратари) -->
+    <section class="gal-block groups-block">
+      <h3>Групи без отбор (напр. вратари)</h3>
+      <p class="user-hint">Показват се в „Кой тренира“ и при профила на треньор („Кои отбори води“).</p>
+      <form id="groupForm" class="gal-form" novalidate>
+        <div class="field grow">
+          <label for="g-name">Нова група</label>
+          <input id="g-name" maxlength="40" autocomplete="off" placeholder="напр. Вратари — големи">
+          <div class="field-error" data-error-for="group_name"></div>
+        </div>
+        <button id="groupAddBtn" class="btn btn-primary" type="button">Добави група</button>
+      </form>
+      <div id="groupList" class="group-list"></div>
+    </section>
 
     <!-- Всички слотове, по дни -->
     <div id="slotList"></div>
