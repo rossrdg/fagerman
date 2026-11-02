@@ -68,3 +68,9 @@ a.week-btn:hover{border-color:var(--green);color:var(--green)}
   .poster-meta{grid-area:meta;display:flex;flex-wrap:wrap;gap:4px 12px}
   .poster-result{grid-area:result}
 }
+
+/* Връзка към официалното класиране */
+.team-standings{max-width:1100px;margin:0 auto 56px;padding:0}
+.team-standings h2{font-size:clamp(26px,3vw,34px)}
+.standings-action{margin:18px 0 8px}
+.standings-host{font-size:12px;color:var(--muted);margin:0}

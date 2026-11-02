@@ -13,7 +13,7 @@ from app.auth import check_admin
 from app.models import KIND_MEN, KIND_YOUTH, TEAM_ACTIVE, TEAM_ARCHIVED, Album, Team, Video
 from app.routes.news import DEFAULT_SHARE_IMAGE, _absolute
 from app.gallery_utils import album_cover, bg_date, photo_urls, remove_files
-from app.match_utils import build_team_matches
+from app.match_utils import build_team_matches, get_standings_url, url_host
 from app.schedule_utils import build_public_schedule
 from app.team_utils import (
     auto_label, cohort_label, cohort_slug, cohort_text, get_season_end_year,
@@ -224,6 +224,7 @@ def team_page(slug):
     else:
         title = f"{data['u_label']} — {data['cohort_label']}"
         about = f"{data['u_label']} ({data['cohort_label']}) във Футболна Академия Герман, Герман, район Панчарево, София."
+    standings_url = get_standings_url(team, season_end)
     return render_template(
         "team_page.html",
         team=data,
@@ -236,6 +237,8 @@ def team_page(slug):
         albums=_public_albums(team),
         videos=_public_videos(team),
         matches=build_team_matches(team, season_end),
+        standings_url=standings_url,
+        standings_host=url_host(standings_url),
     )
 
 

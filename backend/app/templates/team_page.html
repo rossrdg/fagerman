@@ -107,11 +107,21 @@
     </section>
     {% endif %}
 
+    {% if standings_url %}
+    <section class="container team-standings" id="standings" aria-labelledby="standingsTitle">
+      <h2 id="standingsTitle">Класиране</h2>
+      <p class="schedule-note-text">Официалното класиране в първенството е на сайта на организатора и се обновява след всеки кръг.</p>
+      <p class="standings-action"><a class="btn btn-primary" href="{{ standings_url }}" target="_blank" rel="noopener noreferrer">Виж класирането <span>↗</span></a></p>
+      <p class="standings-host">Отваря се на {{ standings_host }}</p>
+    </section>
+    {% endif %}
+
+    {% if not matches or (not albums and not videos) %}
     <section class="container team-soon" aria-label="Скоро на тази страница">
       {% if not matches %}<article><h2>Мачове</h2><p>Предстоящи и изиграни мачове от първенството.</p></article>{% endif %}
-      <article><h2>Класиране</h2><p>Актуалното класиране в първенството.</p></article>
       {% if not albums and not videos %}<article><h2>Галерия</h2><p>Снимки и клипове на отбора.</p></article>{% endif %}
     </section>
+    {% endif %}
 {% else %}
     <section class="container article-missing">
       <h1>Отборът не е намерен</h1>

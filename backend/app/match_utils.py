@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta
 
 from app.models import (
     MATCH_NOT_PLAYED, MATCH_PLAYED, MATCH_POSTPONED, MATCH_REST, MATCH_SCHEDULED,
-    TEAM_ACTIVE, Match, Team,
+    TEAM_ACTIVE, Match, StandingsLink, Team,
 )
 from app.team_utils import season_text, sort_key, u_label
 
@@ -209,3 +209,15 @@ def build_team_matches(team, season_end, today=None):
             entry["is_next"] = True
             break
     return result
+
+
+def get_standings_url(team, season_end):
+    """Адресът на официалното класиране за отбора през сезона или None."""
+    link = StandingsLink.query.filter_by(team_id=team.id, season_end=season_end).first()
+    return link.url if link else None
+
+
+def url_host(url):
+    from urllib.parse import urlparse
+    host = urlparse(url or "").hostname or ""
+    return host[4:] if host.startswith("www.") else host

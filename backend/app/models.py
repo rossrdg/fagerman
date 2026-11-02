@@ -384,3 +384,19 @@ class Match(db.Model):
     updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
 
     team = db.relationship("Team", backref=db.backref("matches", cascade="all, delete-orphan"))
+
+
+class StandingsLink(db.Model):
+    """Връзка към официалното класиране на отбор за един сезон (класирането не се пази при нас)."""
+
+    __tablename__ = "standings_links"
+    __table_args__ = (db.UniqueConstraint("team_id", "season_end", name="uq_standings_team_season"),)
+
+    id = db.Column(db.Integer, primary_key=True)
+    team_id = db.Column(db.Integer, db.ForeignKey("teams.id", ondelete="CASCADE"), nullable=False, index=True)
+    season_end = db.Column(db.Integer, nullable=False)
+    url = db.Column(db.String(500), nullable=False)
+    updated_by = db.Column(db.String(80), nullable=False, default="")
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
+
+    team = db.relationship("Team", backref=db.backref("standings_links", cascade="all, delete-orphan"))

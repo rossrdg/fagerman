@@ -37,6 +37,21 @@
       </div>
     </div>
 
+    <!-- Връзка към официалното класиране (по отбор и сезон) -->
+    <form id="standingsForm" class="news-form slot-form" novalidate>
+      <h2 class="slot-form-title">Класиране</h2>
+      <div class="field">
+        <label for="f-standings">Връзка към официалното класиране на <span id="standingsFor">избрания отбор</span></label>
+        <input id="f-standings" type="url" maxlength="500" autocomplete="off" placeholder="https://...">
+        <div class="field-hint">Слага се на страницата на отбора като бутон „Виж класирането“. Празно поле = секцията не се показва. Връзката е само за този отбор и сезон; при нов сезон я въвеждате отново.</div>
+        <div class="field-error" data-error-for="url"></div>
+      </div>
+      <div class="form-actions">
+        <button id="standingsSave" class="btn btn-primary" type="button">Запази връзката</button>
+        <a id="standingsOpen" class="btn btn-outline" href="#" target="_blank" rel="noopener noreferrer" hidden>Провери връзката ↗</a>
+      </div>
+    </form>
+
     <!-- Добавяне / редакция на мач -->
     <form id="matchForm" class="news-form slot-form" novalidate>
       <h2 id="formTitle" class="slot-form-title">Нов мач</h2>

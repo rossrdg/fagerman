@@ -7,22 +7,24 @@
         POST   /api/admin/matches                             нов мач / почивен кръг
         PATCH  /api/admin/matches/<id>                        промяна (или само резултат)
         DELETE /api/admin/matches/<id>                        изтриване (всеки влязъл потребител)
+        PUT    /api/admin/standings-link                      връзка към официалното класиране (отбор + сезон)
 
 Всички влезли потребители (собственик, главен треньор, треньор) могат да добавят, променят
 и трият мачове — както при графика.
 """
 import re
 from datetime import date, time
+from urllib.parse import urlparse
 
 from flask import Blueprint, jsonify, render_template, request
 from sqlalchemy import func
 
 from app import db
 from app.auth import check_admin, current_user
-from app.match_utils import build_week, match_dict, sort_matches
+from app.match_utils import build_week, get_standings_url, match_dict, sort_matches
 from app.models import (
     MATCH_NOT_PLAYED, MATCH_PLAYED, MATCH_POSTPONED, MATCH_REST, MATCH_SCHEDULED, MATCH_STATUSES,
-    TEAM_ACTIVE, Match, Team,
+    TEAM_ACTIVE, Match, StandingsLink, Team,
 )
 from app.routes.news import DEFAULT_SHARE_IMAGE, _absolute
 from app.routes.teams import admin_dict
@@ -248,6 +250,8 @@ def admin_list():
         ],
         "matches": [match_dict(m) for m in grouped],
         "suggestions": {"opponents": opponents, "venues": venues},
+        "standings_url": get_standings_url(db.session.get(Team, team_id), season_end)
+        if team_id and db.session.get(Team, team_id) else None,
     })
 
 
@@ -310,3 +314,52 @@ def admin_delete(match_id):
     db.session.delete(match)
     db.session.commit()
     return jsonify({"ok": True})
+
+
+# ----------------------------------------------- връзка към класирането ---
+MAX_URL = 500
+
+
+def clean_https_url(value):
+    """Връща чист https адрес или None, ако не е валиден (приема само https, без интервали)."""
+    url = value.strip() if isinstance(value, str) else ""
+    if not url or len(url) > MAX_URL or re.search(r"\s|[\x00-\x1f]", url):
+        return None
+    parts = urlparse(url)
+    if parts.scheme != "https" or not parts.hostname or "." not in parts.hostname:
+        return None
+    return url
+
+
+@admin_matches_bp.put("/admin/standings-link")
+def admin_standings_link():
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return _error("Невалидна заявка.")
+    try:
+        team_id = _int_or_none(data.get("team_id"))
+        season_end = _int_or_none(data.get("season")) or get_season_end_year()
+    except ValueError:
+        return _error("Невалидна заявка.")
+    team = db.session.get(Team, team_id) if team_id else None
+    if team is None:
+        return _error("Отборът не е намерен.", 404)
+
+    raw = data.get("url")
+    link = StandingsLink.query.filter_by(team_id=team.id, season_end=season_end).first()
+    if raw is None or (isinstance(raw, str) and not raw.strip()):
+        if link:
+            db.session.delete(link)
+            db.session.commit()
+        return jsonify({"ok": True, "standings_url": None})
+
+    url = clean_https_url(raw)
+    if url is None:
+        return jsonify({"ok": False, "errors": {"url": "Въведете пълен адрес, който започва с https://"}}), 400
+    if link is None:
+        link = StandingsLink(team_id=team.id, season_end=season_end)
+        db.session.add(link)
+    link.url = url
+    link.updated_by = _who()
+    db.session.commit()
+    return jsonify({"ok": True, "standings_url": link.url})

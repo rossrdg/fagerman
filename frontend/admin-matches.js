@@ -24,6 +24,7 @@ let teamId = Number(new URLSearchParams(location.search).get('team')) || null;
 let seasonEnd = Number(new URLSearchParams(location.search).get('season')) || null;
 let editingId = null;
 let statusTimer = null;
+let standingsUrl = null;
 
 function flash(text, isError = false) {
   clearTimeout(statusTimer);
@@ -368,6 +369,41 @@ function renderPickers() {
   if (team) publicLink.href = `/teams/${team.slug}`;
 }
 
+function renderStandings() {
+  const team = teams.find(t => t.id === teamId);
+  $('#standingsFor').textContent = team ? `${teamText(team)} (${seasons.find(x => x.end === seasonEnd)?.text || ''})` : 'избрания отбор';
+  $('#f-standings').value = standingsUrl || '';
+  $('#standingsForm').hidden = !team;
+  const open = $('#standingsOpen');
+  open.hidden = !standingsUrl;
+  if (standingsUrl) open.href = standingsUrl;
+}
+
+async function saveStandings() {
+  const btn = $('#standingsSave');
+  const err = document.querySelector('#standingsForm [data-error-for="url"]');
+  err.textContent = '';
+  btn.disabled = true;
+  try {
+    const { res, data } = await api('/api/admin/standings-link', {
+      method: 'PUT',
+      body: JSON.stringify({ team_id: teamId, season: seasonEnd, url: $('#f-standings').value })
+    });
+    if (!res.ok || !data.ok) {
+      err.textContent = (data.errors && data.errors.url) || data.error || 'Неуспешно запазване.';
+      flash('Проверете връзката.', true);
+      return;
+    }
+    standingsUrl = data.standings_url;
+    renderStandings();
+    flash(standingsUrl ? 'Връзката е запазена ✓' : 'Връзката е премахната ✓');
+  } catch (e) {
+    flash('Няма връзка със сървъра. Опитай пак.', true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 function renderSuggestions(s) {
   const fill = (id, items) => {
     const list = document.getElementById(id);
@@ -392,6 +428,8 @@ async function load() {
   seasonEnd = data.season;
   renderPickers();
   renderSuggestions(data.suggestions);
+  standingsUrl = data.standings_url || null;
+  renderStandings();
   // Отборът от адреса липсва или е архивиран (или още няма избран): вземи мачовете на избрания.
   if (teamId && teamId !== requestedTeam) { await load(); return; }
   const url = new URL(location.href);
@@ -416,6 +454,8 @@ seasonSelect.addEventListener('change', async () => {
 });
 f.status.addEventListener('change', syncFormMode);
 saveBtn.addEventListener('click', save);
+$('#standingsSave').addEventListener('click', saveStandings);
+$('#standingsForm').addEventListener('submit', (e) => e.preventDefault());
 cancelBtn.addEventListener('click', resetForm);
 $('#matchForm').addEventListener('submit', (e) => e.preventDefault());
 
