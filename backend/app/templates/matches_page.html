@@ -1,0 +1,65 @@
+{% extends "news_base.html" %}
+{% from "_matches.html" import title, result %}
+{% block head %}
+  <title>Мачове — програма и резултати | Футболна Академия Герман</title>
+  <meta name="description" content="Мачовете на Футболна Академия Герман за седмицата — по отбори, с дата, час, място и резултати.">
+  <link rel="canonical" href="{{ page_url }}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Футболна Академия Герман">
+  <meta property="og:locale" content="bg_BG">
+  <meta property="og:title" content="Мачове — програма и резултати | Футболна Академия Герман">
+  <meta property="og:description" content="Седмичен афиш с мачовете на всички отбори на академията.">
+  <meta property="og:url" content="{{ page_url }}">
+  <meta property="og:image" content="{{ image_url }}">
+{% endblock %}
+{% block styles %}  <link rel="stylesheet" href="/teams.css">
+  <link rel="stylesheet" href="/schedule.css">
+  <link rel="stylesheet" href="/matches.css">{% endblock %}
+{% block nav %}<a href="/#teams">← Към отборите</a>{% endblock %}
+{% block main %}
+    <section class="container schedule-head">
+      <div class="eyebrow green">ПЪРВЕНСТВО {{ season }}</div>
+      <h1>Мачове</h1>
+      <p class="team-lead">Седмичният афиш на всички отбори. Часовете са начало на мача, а резултатите са в ред домакин – гост.</p>
+    </section>
+
+    <section class="container matches-wrap">
+      {% if week.has_any %}
+      <nav class="week-nav" aria-label="Избор на седмица">
+        {% if week.prev_url %}<a class="week-btn" href="{{ week.prev_url }}" rel="prev">← Предишна</a>
+        {% else %}<span class="week-btn disabled" aria-disabled="true">← Предишна</span>{% endif %}
+        <div class="week-title">
+          <strong>{{ week.range_text }}</strong>
+          {% if week.is_current %}<small>Тази седмица</small>
+          {% elif week.current_url %}<small><a href="{{ week.current_url }}">Към най-близката седмица</a></small>{% endif %}
+        </div>
+        {% if week.next_url %}<a class="week-btn" href="{{ week.next_url }}" rel="next">Следваща →</a>
+        {% else %}<span class="week-btn disabled" aria-disabled="true">Следваща →</span>{% endif %}
+      </nav>
+
+      {% for day in week.days %}
+      <section class="match-day{{ ' is-today' if day.is_today }}" aria-label="{{ day.date_text }}">
+        <h2>{{ day.date_text }}{% if day.is_today %} <small>днес</small>{% endif %}</h2>
+        <ul class="poster-list">
+          {% for m in day.matches %}
+          <li class="poster-row">
+            <a class="poster-team" href="/teams/{{ m.team_slug }}">{{ m.team_label }}</a>
+            <div class="poster-match">{{ title(m) }}{% if m.note %}<small class="poster-note">{{ m.note }}</small>{% endif %}</div>
+            <div class="poster-meta">
+              <span class="poster-time">{{ m.time or 'час предстои' }}</span>
+              {% if m.venue %}<span class="poster-venue">{{ m.venue }}</span>{% endif %}
+            </div>
+            <div class="poster-result">{{ result(m) }}</div>
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
+      {% else %}
+      <p class="schedule-empty">През тази седмица няма мачове.</p>
+      {% endfor %}
+      {% else %}
+      <p class="schedule-empty">Програмата на мачовете ще бъде публикувана скоро.</p>
+      {% endif %}
+      <p class="schedule-note"><a class="btn btn-primary" href="/#registration">Запиши се за тренировка <span>↗</span></a></p>
+    </section>
+{% endblock %}

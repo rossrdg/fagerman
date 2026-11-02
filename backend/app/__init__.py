@@ -78,6 +78,10 @@ def create_app(config_object="config.Config"):
     from app.routes.season import admin_season_bp
     app.register_blueprint(admin_season_bp, url_prefix="/api")  # /api/admin/season
 
+    from app.routes.matches import admin_matches_bp, page_bp as matches_page_bp
+    app.register_blueprint(matches_page_bp)  # /matches
+    app.register_blueprint(admin_matches_bp, url_prefix="/api")  # /api/admin/matches
+
     from app.routes.uploads import files_bp, uploads_bp
     app.register_blueprint(uploads_bp, url_prefix="/api")  # POST /api/admin/uploads
     app.register_blueprint(files_bp)  # GET /uploads/<file>

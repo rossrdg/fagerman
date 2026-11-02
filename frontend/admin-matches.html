@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Мачове — Админ — ФА Герман</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin.css">
+  <script src="admin-auth.js"></script>
+</head>
+<body class="admin-body">
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <span class="brand-mark">FA</span>
+      <div><strong>ФА Герман — Админ</strong><small>Мачове от първенствата</small></div>
+    </div>
+  </header>
+
+  <nav class="admin-nav" aria-label="Админ навигация">
+    <a href="admin-registrations.html">Записани за пробна тренировка</a>
+    <a href="admin-news.html">Новини</a>
+    <!-- „Отбори“, „График“, „Мачове“ и „Потребители“ се добавят от admin-auth.js -->
+  </nav>
+
+  <main class="admin-main">
+    <div class="admin-toolbar">
+      <div>
+        <h1>Мачове</h1>
+        <div id="status" class="admin-status" aria-live="polite">Зареждане...</div>
+      </div>
+      <div class="toolbar-actions match-pickers">
+        <label class="picker"><span>Отбор</span><select id="teamSelect"></select></label>
+        <label class="picker"><span>Сезон</span><select id="seasonSelect"></select></label>
+        <a id="publicLink" class="btn btn-outline" href="#" target="_blank" rel="noopener" hidden>Страница на отбора ↗</a>
+      </div>
+    </div>
+
+    <!-- Добавяне / редакция на мач -->
+    <form id="matchForm" class="news-form slot-form" novalidate>
+      <h2 id="formTitle" class="slot-form-title">Нов мач</h2>
+
+      <div class="match-grid">
+        <div class="field">
+          <label for="f-status">Вид</label>
+          <select id="f-status">
+            <option value="scheduled">Насрочен мач</option>
+            <option value="played">Изигран</option>
+            <option value="postponed">Отложен</option>
+            <option value="not_played">Непроведен</option>
+            <option value="rest">Почивен кръг (без мач)</option>
+          </select>
+          <div class="field-error" data-error-for="status"></div>
+        </div>
+        <div class="field">
+          <label for="f-round">Кръг</label>
+          <input id="f-round" type="number" min="1" max="99" inputmode="numeric">
+          <div class="field-error" data-error-for="round_no"></div>
+        </div>
+        <div class="field">
+          <label for="f-date">Дата <span id="dateReq">*</span></label>
+          <input id="f-date" type="date">
+          <div class="field-error" data-error-for="date"></div>
+        </div>
+        <div class="field" data-hide-rest>
+          <label for="f-time">Час</label>
+          <input id="f-time" type="time" step="300">
+          <div class="field-hint">Може да е празен, докато часът не е обявен.</div>
+          <div class="field-error" data-error-for="time"></div>
+        </div>
+      </div>
+
+      <div class="match-grid" data-hide-rest>
+        <div class="field">
+          <label for="f-side">ФА Герман е</label>
+          <select id="f-side">
+            <option value="home">Домакин</option>
+            <option value="away">Гост</option>
+          </select>
+          <div class="field-error" data-error-for="is_home"></div>
+        </div>
+        <div class="field wide">
+          <label for="f-opponent">Съперник *</label>
+          <input id="f-opponent" maxlength="80" autocomplete="off" list="opponentList">
+          <div class="field-error" data-error-for="opponent"></div>
+        </div>
+        <div class="field wide">
+          <label for="f-venue">Място (стадион / комплекс)</label>
+          <input id="f-venue" maxlength="120" autocomplete="off" list="venueList" placeholder="не винаги е стадион Герман">
+          <div class="field-error" data-error-for="venue"></div>
+        </div>
+      </div>
+
+      <div class="match-grid" data-hide-rest data-hide-nogoals>
+        <div class="field">
+          <label for="f-gf">Голове на ФА Герман</label>
+          <input id="f-gf" type="number" min="0" max="99" inputmode="numeric">
+          <div class="field-error" data-error-for="goals_for"></div>
+        </div>
+        <div class="field">
+          <label for="f-ga">Голове на съперника</label>
+          <input id="f-ga" type="number" min="0" max="99" inputmode="numeric">
+          <div class="field-error" data-error-for="goals_against"></div>
+        </div>
+        <div class="field-hint wide self-end">Когато въведете резултат, мачът автоматично става „Изигран“.</div>
+      </div>
+
+      <div class="field">
+        <label for="f-note">Бележка (по избор)</label>
+        <input id="f-note" maxlength="200" autocomplete="off" placeholder="напр. Нова дата ще бъде обявена">
+        <div class="field-error" data-error-for="note"></div>
+      </div>
+
+      <datalist id="opponentList"></datalist>
+      <datalist id="venueList"></datalist>
+
+      <div class="form-actions">
+        <button id="saveBtn" class="btn btn-primary" type="button">Добави</button>
+        <button id="cancelBtn" class="btn btn-outline" type="button" hidden>Отказ</button>
+      </div>
+    </form>
+
+    <!-- Мачове на избрания отбор -->
+    <div id="matchList"></div>
+  </main>
+
+  <script src="admin-matches.js"></script>
+</body>
+</html>

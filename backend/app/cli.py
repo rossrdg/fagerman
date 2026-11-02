@@ -6,15 +6,18 @@
     flask --app run seed-teams                # първоначално попълване на отборите
     flask --app run seed-schedule             # първоначален тренировъчен график
     flask --app run set-season 2027           # ръчно задава сезона (2027 = 2026/27) и чисти историята
+    flask --app run import-matches файл.xlsx           # преглед на програмата по кръгове (нищо не записва)
+    flask --app run import-matches файл.xlsx --apply   # същото + запис в базата
 """
 import click
 
 from app import db
 from app.models import (
-    KIND_MEN, KIND_YOUTH, ROLE_OWNER, AdminUser, SeasonSwitch, Team, TrainingGroup, TrainingSlot,
+    KIND_MEN, KIND_YOUTH, MATCH_NOT_PLAYED, MATCH_PLAYED, MATCH_REST, ROLE_OWNER,
+    AdminUser, Match, SeasonSwitch, Team, TrainingGroup, TrainingSlot,
 )
 from app.team_utils import (
-    YOUTH_MIN_U, cohort_label, cohort_slug, get_season_end_year, season_text, set_season_end_year,
+    YOUTH_MIN_U, cohort_label, cohort_slug, get_season_end_year, season_text, set_season_end_year, u_label,
 )
 
 # (вид, набор от, набор до, кратко описание). Текстовете на U7, U9, U11, U13, U15
@@ -157,3 +160,85 @@ def register_cli(app):
         if too_young:
             click.echo("Набори, по-малки от U6 за този сезон (вероятно тестови — архивирайте и изтрийте): "
                        + ", ".join(cohort_label(t) for t in too_young))
+
+    @app.cli.command("import-matches")
+    @click.argument("path", type=click.Path(exists=True, dir_okay=False))
+    @click.option("--apply", "do_apply", is_flag=True, help="Записва мачовете (без него се показва само преглед).")
+    @click.option("--season", type=int, default=None, help="Сезон (крайна година, напр. 2027). По подразбиране — текущият.")
+    def import_matches(path, do_apply, season):
+        """Зарежда програмата по кръгове от Excel (по един лист на отбор: U8, U9 ... MEN).
+
+        Без --apply само показва какво ще се зареди и какво не се разбира. Мач, който
+        вече съществува (същият отбор, сезон и кръг), се пропуска — нищо не се презаписва,
+        затова командата е безопасна за повторно пускане. Ако има грешки в редове или листове,
+        не се записва нищо, докато не се оправи файлът."""
+        try:
+            from openpyxl import load_workbook
+        except ImportError:
+            raise click.ClickException("Липсва openpyxl. Пуснете: pip install -r requirements.txt")
+        from app.match_import import parse_sheet, resolve_team
+
+        season_end = season or get_season_end_year()
+        workbook = load_workbook(path, data_only=True)
+        click.echo(f"Сезон {season_text(season_end)} · файл {path}\n")
+
+        to_create, skipped, problems = [], 0, 0
+        for ws in workbook.worksheets:
+            team = resolve_team(ws.title, season_end)
+            if team is None:
+                click.echo(f"=== {ws.title}: ПРОПУСНАТ — няма активен отбор с този етикет през този сезон")
+                problems += 1
+                continue
+            try:
+                rows = parse_sheet(ws)
+            except ValueError as err:
+                click.echo(f"=== {ws.title}: ПРОПУСНАТ — {err}")
+                problems += 1
+                continue
+            click.echo(f"=== {ws.title} -> {u_label(team, season_end)} · {cohort_label(team)} (/teams/{team.slug})")
+            existing = {m.round_no for m in Match.query.filter_by(team_id=team.id, season_end=season_end)}
+            for row in rows:
+                when = row.match_date.strftime("%d.%m.%Y") if row.match_date else "—"
+                if row.errors:
+                    problems += 1
+                    click.echo(f"  ред {row.source_row}: ГРЕШКА — " + "; ".join(row.errors))
+                    continue
+                if row.status == MATCH_REST:
+                    text = "почива"
+                else:
+                    hour = row.match_time.strftime("%H:%M") if row.match_time else "час предстои"
+                    side = "дома " if row.is_home else "гост "
+                    text = f"{side}{row.opponent} · {hour}"
+                    if row.status == MATCH_NOT_PLAYED:
+                        text += " · НЕПРОВЕДЕН"
+                    if row.status == MATCH_PLAYED:
+                        text += f" · резултат {row.goals_for}:{row.goals_against} (наш:техен)"
+                if row.note:
+                    text += f" · ({row.note})"
+                already = row.round_no in existing
+                click.echo(f"  Кръг {row.round_no:>2} · {when} · {text}" + ("   [вече има — пропуска се]" if already else ""))
+                for warning in row.warnings:
+                    click.echo(f"      ! {warning}")
+                if already:
+                    skipped += 1
+                else:
+                    to_create.append((team, row))
+            click.echo("")
+
+        click.echo(f"За зареждане: {len(to_create)} · вече съществуват: {skipped} · проблеми: {problems}")
+        if problems:
+            click.echo("Има проблеми (виж отгоре). Оправете файла и пуснете отново — нищо не е записано.")
+            return
+        if not do_apply:
+            click.echo("Това е само преглед. За запис добавете --apply.")
+            return
+        for team, row in to_create:
+            db.session.add(Match(
+                team_id=team.id, season_end=season_end, round_no=row.round_no,
+                match_date=row.match_date, match_time=row.match_time, is_home=row.is_home,
+                opponent=row.opponent, venue="", status=row.status,
+                goals_for=row.goals_for, goals_against=row.goals_against,
+                note=row.note, created_by="импорт от Excel", updated_by="импорт от Excel",
+            ))
+        db.session.commit()
+        click.echo(f"Записани мачове: {len(to_create)}.")

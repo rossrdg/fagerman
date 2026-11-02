@@ -1,0 +1,70 @@
+/* Мачове: седмичен афиш (/matches) и списъкът на страницата на отбор */
+.matches-wrap,.team-matches{max-width:1100px;margin-left:auto;margin-right:auto;padding:0}
+.team-matches{margin-bottom:56px}
+.team-matches h2{font-size:clamp(26px,3vw,34px)}
+
+/* Резултат и статус */
+.score-badge{display:inline-block;min-width:54px;text-align:center;padding:5px 12px;border-radius:999px;font:800 15px Manrope,Inter,sans-serif;background:#eef3f0;color:#132019}
+.score-badge.win{background:#e3f6ea;color:#16803c}
+.score-badge.loss{background:#fdeceb;color:#c0392b}
+.score-badge.draw{background:#fff7e6;color:#7a5a06}
+.match-status{display:inline-block;padding:4px 10px;border-radius:999px;background:#f0f3f1;color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.match-status.st-postponed,.match-status.st-not_played{background:#fff7e6;color:#7a5a06}
+.mt-home.is-us,.mt-away.is-us{font-weight:800;color:#132019}
+.mt-home,.mt-away{color:#34443c}
+.poster-note{display:block;margin-top:2px;font-size:12px;font-weight:500;color:var(--muted)}
+
+/* Избор на седмица */
+.week-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 24px;padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:14px}
+.week-btn{padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:#f8faf9;font-size:13px;font-weight:800;color:#132019;white-space:nowrap}
+a.week-btn:hover{border-color:var(--green);color:var(--green)}
+.week-btn.disabled{opacity:.4}
+.week-title{text-align:center;line-height:1.25}
+.week-title strong{display:block;font:800 18px Manrope,Inter,sans-serif;color:#132019}
+.week-title small{font-size:12px;color:var(--muted)}
+.week-title small a{color:var(--green);font-weight:700;text-decoration:underline}
+
+/* Афиш по дни */
+.match-day{margin-bottom:22px}
+.match-day h2{font-size:20px;margin:0 0 10px;text-transform:capitalize}
+.match-day h2 small{font:800 11px Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:var(--green);border-radius:999px;padding:3px 9px;vertical-align:middle;margin-left:6px}
+.poster-list{list-style:none;margin:0;padding:0;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.poster-row{display:grid;grid-template-columns:64px minmax(0,2.2fr) minmax(0,1.4fr) 110px;align-items:center;gap:16px;padding:14px 18px;border-top:1px solid #edf1ee}
+.poster-row:first-child{border-top:0}
+.poster-team{display:inline-grid;place-items:center;height:34px;border-radius:9px;background:var(--dark);color:#fff;font:800 13px Manrope,Inter,sans-serif;letter-spacing:.03em}
+.poster-team:hover{background:var(--green)}
+.poster-match{font-size:16px}
+.poster-meta{display:grid;gap:2px;font-size:14px}
+.poster-time{font:800 15px Manrope,Inter,sans-serif;color:#132019}
+.poster-venue{color:var(--muted);font-size:13px}
+.poster-result{text-align:right}
+
+/* Списък на страницата на отбор */
+.match-list{list-style:none;margin:20px 0 0;padding:0;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.match-row{display:grid;grid-template-columns:76px minmax(0,1.5fr) minmax(0,2fr) minmax(0,1.2fr) 100px;align-items:center;gap:14px;padding:14px 18px;border-top:1px solid #edf1ee}
+.match-row:first-child{border-top:0}
+.mr-round{font:800 13px Manrope,Inter,sans-serif;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.mr-when{font-size:14px;color:#34443c}
+.mr-teams{font-size:16px}
+.mr-venue{font-size:13px;color:var(--muted)}
+.mr-result{text-align:right}
+.match-row.is-rest{background:#f7f9f8;color:var(--muted)}
+.match-row.is-rest .mr-teams{font-size:14px;font-weight:600;color:var(--muted)}
+.match-row.is-next{background:#f0f7ff;box-shadow:inset 4px 0 0 var(--green)}
+.next-tag{font-style:normal;margin-left:6px;padding:2px 8px;border-radius:999px;background:var(--green);color:#fff;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+
+@media(max-width:899px){
+  .match-row{grid-template-columns:1fr auto;grid-template-areas:"round result" "when when" "teams teams" "venue venue";gap:4px 12px;padding:14px 16px}
+  .mr-round{grid-area:round}.mr-result{grid-area:result}.mr-when{grid-area:when}.mr-teams{grid-area:teams}.mr-venue{grid-area:venue}
+  .mr-venue:empty{display:none}
+}
+@media(max-width:767px){
+  .week-nav{flex-wrap:wrap}
+  .week-title{order:-1;flex:0 0 100%;margin-bottom:4px}
+  .week-btn{flex:1;text-align:center}
+  .poster-row{grid-template-columns:56px 1fr auto;grid-template-areas:"team match result" "team meta meta";gap:4px 12px;padding:14px 14px}
+  .poster-team{grid-area:team;align-self:start}
+  .poster-match{grid-area:match;font-size:15px}
+  .poster-meta{grid-area:meta;display:flex;flex-wrap:wrap;gap:4px 12px}
+  .poster-result{grid-area:result}
+}

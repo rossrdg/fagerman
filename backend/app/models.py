@@ -344,3 +344,43 @@ coach_groups = db.Table(
     db.Column("profile_id", db.Integer, db.ForeignKey("coach_profiles.id", ondelete="CASCADE"), primary_key=True),
     db.Column("group_id", db.Integer, db.ForeignKey("training_groups.id", ondelete="CASCADE"), primary_key=True),
 )
+
+
+# ----------------------------------------------------------------- мачове ---
+MATCH_SCHEDULED = "scheduled"    # насрочен
+MATCH_PLAYED = "played"          # изигран (има резултат)
+MATCH_POSTPONED = "postponed"    # отложен
+MATCH_NOT_PLAYED = "not_played"  # непроведен (може да му се зададе нова дата)
+MATCH_REST = "rest"              # почивен кръг — без съперник
+MATCH_STATUSES = (MATCH_SCHEDULED, MATCH_PLAYED, MATCH_POSTPONED, MATCH_NOT_PLAYED, MATCH_REST)
+
+
+class Match(db.Model):
+    """Мач (или почивен кръг) от първенство на един отбор през един сезон.
+
+    Мачът е вързан към отбора (набора) и към сезона, затова при „Нов сезон“ старите
+    мачове си остават в архива на стария сезон. Резултатът се пази от гледна точка на
+    академията (goals_for / goals_against); редът „домакин:гост“ се смята при показване.
+    """
+
+    __tablename__ = "matches"
+
+    id = db.Column(db.Integer, primary_key=True)
+    team_id = db.Column(db.Integer, db.ForeignKey("teams.id", ondelete="CASCADE"), nullable=False, index=True)
+    season_end = db.Column(db.Integer, nullable=False, index=True)  # напр. 2027 за 2026/27
+    round_no = db.Column(db.Integer, nullable=True)
+    match_date = db.Column(db.Date, nullable=True)   # празна само за отложен/непроведен без нова дата
+    match_time = db.Column(db.Time, nullable=True)   # празен, докато часът не е обявен
+    is_home = db.Column(db.Boolean, nullable=False, default=True, server_default="1")
+    opponent = db.Column(db.String(80), nullable=False, default="")
+    venue = db.Column(db.String(120), nullable=False, default="")
+    status = db.Column(db.String(12), nullable=False, default=MATCH_SCHEDULED, server_default=MATCH_SCHEDULED)
+    goals_for = db.Column(db.Integer, nullable=True)      # голове на ФА Герман
+    goals_against = db.Column(db.Integer, nullable=True)  # голове на съперника
+    note = db.Column(db.String(200), nullable=False, default="")
+    created_by = db.Column(db.String(80), nullable=False, default="")
+    updated_by = db.Column(db.String(80), nullable=False, default="")
+    created_at = db.Column(db.DateTime, default=utcnow)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
+
+    team = db.relationship("Team", backref=db.backref("matches", cascade="all, delete-orphan"))

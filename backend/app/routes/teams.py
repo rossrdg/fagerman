@@ -13,6 +13,7 @@ from app.auth import check_admin
 from app.models import KIND_MEN, KIND_YOUTH, TEAM_ACTIVE, TEAM_ARCHIVED, Album, Team, Video
 from app.routes.news import DEFAULT_SHARE_IMAGE, _absolute
 from app.gallery_utils import album_cover, bg_date, photo_urls, remove_files
+from app.match_utils import build_team_matches
 from app.schedule_utils import build_public_schedule
 from app.team_utils import (
     auto_label, cohort_label, cohort_slug, cohort_text, get_season_end_year,
@@ -234,6 +235,7 @@ def team_page(slug):
         schedule=build_public_schedule(highlight_slug=team.slug),
         albums=_public_albums(team),
         videos=_public_videos(team),
+        matches=build_team_matches(team, season_end),
     )
 
 

@@ -122,6 +122,12 @@
       sched.textContent = 'График';
       if (location.pathname.endsWith('admin-schedule.html')) sched.classList.add('active');
       nav.appendChild(sched);
+
+      const matches = document.createElement('a');
+      matches.href = 'admin-matches.html';
+      matches.textContent = 'Мачове';
+      if (location.pathname.endsWith('admin-matches.html')) matches.classList.add('active');
+      nav.appendChild(matches);
     }
     if (nav && (user.role === 'owner' || user.role === 'head_coach')) {
       const c = document.createElement('a');

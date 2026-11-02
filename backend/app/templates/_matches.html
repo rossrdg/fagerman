@@ -1,0 +1,9 @@
+{# Общи части за мачовете: име на мача и резултат/статус. #}
+{% macro title(m) -%}
+  <span class="mt-home{{ ' is-us' if m.is_home }}">{{ m.home }}</span><span class="mt-dash"> – </span><span class="mt-away{{ ' is-us' if not m.is_home }}">{{ m.away }}</span>
+{%- endmacro %}
+
+{% macro result(m) -%}
+  {% if m.score %}<span class="score-badge {{ m.outcome }}" aria-label="Резултат {{ m.score }}">{{ m.score }}</span>{% endif %}
+  {%- if m.status in ('postponed', 'not_played') %}<span class="match-status st-{{ m.status }}">{{ m.status_label }}</span>{% endif %}
+{%- endmacro %}
