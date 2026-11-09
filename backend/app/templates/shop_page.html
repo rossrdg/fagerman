@@ -1,0 +1,149 @@
+{% extends "news_base.html" %}
+{% block head %}
+  <title>Магазин | Футболна Академия Герман</title>
+  <meta name="description" content="Магазин на Футболна Академия Герман — екипи, якета, горнища, шапки и аксесоари. Избери артикул и размер, а главният треньор ще се свърже с теб за поръчката.">
+  <link rel="canonical" href="{{ page_url }}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Футболна Академия Герман">
+  <meta property="og:locale" content="bg_BG">
+  <meta property="og:title" content="Магазин | Футболна Академия Герман">
+  <meta property="og:description" content="Екипи, якета, горнища, шапки и аксесоари на академията.">
+  <meta property="og:url" content="{{ page_url }}">
+  <meta property="og:image" content="{{ image_url }}">
+{% endblock %}
+{% block styles %}  <link rel="stylesheet" href="/shop.css">{% endblock %}
+{% block nav %}<a href="/">← Към началната страница</a>{% endblock %}
+{% block main %}
+    <section class="container shop-head">
+      <div class="eyebrow green">ФУТБОЛНА АКАДЕМИЯ ГЕРМАН</div>
+      <h1>Магазин</h1>
+      <p class="team-lead">Екипи и аксесоари на академията. Избери артикули и размери, а главният треньор ще се свърже с теб по телефона, за да уточните поръчката и плащането.</p>
+    </section>
+
+    <section class="container shop-wrap">
+      {% if products %}
+      <div class="shop-grid" id="shopGrid">
+        {% for p in products %}
+        <button class="shop-card" type="button" data-id="{{ p.id }}" aria-label="{{ p.name }} — {{ p.price_text }}">
+          <span class="shop-card-img">
+            {% if p.thumb %}<img src="{{ p.thumb }}" alt="{{ p.name }}" loading="lazy">{% else %}<span class="shop-card-noimg">ФА</span>{% endif %}
+          </span>
+          <span class="shop-card-body">
+            <span class="shop-card-name">{{ p.name }}</span>
+            <span class="shop-card-price">{{ p.price_text }}</span>
+            <span class="shop-card-cta">{% if p.one_size %}Добави{% else %}Избери размер{% endif %} <span aria-hidden="true">↗</span></span>
+          </span>
+        </button>
+        {% endfor %}
+      </div>
+      <p class="shop-note">Цените са в евро. Това е заявка за поръчка, а не онлайн плащане — окончателната сума и начинът на плащане се уточняват по телефона.</p>
+      {% else %}
+      <p class="shop-empty">Магазинът ще бъде зареден скоро.</p>
+      {% endif %}
+    </section>
+
+    <!-- Количка -->
+    <button class="cart-fab" id="cartFab" type="button" aria-label="Отвори количката" hidden>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 7H6"/></svg>
+      <span class="cart-fab-text">Количка</span><span class="cart-count" id="cartCount">0</span>
+    </button>
+
+    <div class="shop-overlay" id="productModal" hidden>
+      <div class="shop-backdrop" data-close></div>
+      <div class="shop-dialog" role="dialog" aria-modal="true" aria-labelledby="pmName">
+        <button class="shop-close" type="button" data-close aria-label="Затвори">×</button>
+        <div class="pm-image"><img id="pmImage" src="" alt=""></div>
+        <div class="pm-info">
+          <h2 id="pmName"></h2>
+          <div class="pm-price" id="pmPrice"></div>
+          <div id="pmGroups" class="pm-groups"></div>
+          <div class="pm-pers" id="pmPers" hidden>
+            <label class="of-check pm-pers-toggle"><input type="checkbox" id="pmPersOn"><span>Добави име и номер <b id="pmPersFee"></b></span></label>
+            <div class="pm-pers-fields" id="pmPersFields" hidden>
+              <div class="of-field"><label for="pmPersName">Име върху тениската</label>
+                <input id="pmPersName" maxlength="14" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="напр. LOZANOV">
+                <div class="of-hint">Само латински букви, до 14 знака.</div></div>
+              <div class="of-field"><label for="pmPersNumber">Номер</label>
+                <input id="pmPersNumber" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="напр. 22">
+                <div class="of-hint">От 1 до 99. Можете да попълните и само името, или само номера.</div></div>
+            </div>
+          </div>
+          <div class="pm-error" id="pmError" role="alert"></div>
+          <button class="btn btn-primary btn-large pm-add" id="pmAdd" type="button">Добави в количката <span>↗</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="shop-overlay drawer" id="cartDrawer" hidden>
+      <div class="shop-backdrop" data-close></div>
+      <aside class="cart-panel" role="dialog" aria-modal="true" aria-labelledby="cartTitle">
+        <div class="cart-head"><h2 id="cartTitle">Количка</h2><button class="shop-close" type="button" data-close aria-label="Затвори">×</button></div>
+
+        <!-- 1. Количка -->
+        <div class="cart-view" id="viewCart">
+          <div class="cart-items" id="cartItems"></div>
+          <div class="cart-foot">
+            <div class="cart-total"><span>Общо (ориентировъчно)</span><strong id="cartTotal">0 €</strong></div>
+            <button class="btn btn-primary btn-large" id="cartCheckout" type="button" disabled>Поръчай <span>↗</span></button>
+            <p class="cart-hint">Не се плаща онлайн. След поръчката ще се свържем с теб по телефона за потвърждение и плащане.</p>
+          </div>
+        </div>
+
+        <!-- 2. Данни за поръчката -->
+        <form class="cart-view order-form" id="viewCheckout" novalidate hidden>
+          <div class="cart-items">
+            <button class="back-link" id="backToCart" type="button">← Назад към количката</button>
+            <div class="order-summary" id="orderSummary"></div>
+
+            <div class="of-field"><label for="o-name">Имена *</label>
+              <input id="o-name" name="name" autocomplete="name" maxlength="100">
+              <div class="of-error" data-error-for="name"></div></div>
+            <div class="of-field"><label for="o-email">Имейл *</label>
+              <input id="o-email" name="email" type="email" autocomplete="email" maxlength="150">
+              <div class="of-error" data-error-for="email"></div></div>
+            <div class="of-field"><label for="o-phone">Телефон *</label>
+              <input id="o-phone" name="phone" type="tel" autocomplete="tel" maxlength="40" placeholder="напр. 0888 123 456">
+              <div class="of-error" data-error-for="phone"></div></div>
+
+            <fieldset class="of-delivery">
+              <legend>Получаване</legend>
+              <label class="of-radio"><input type="radio" name="delivery" value="pickup" checked><span>Ще взема от академията</span></label>
+              <label class="of-radio"><input type="radio" name="delivery" value="delivery"><span>Доставка до адрес</span></label>
+              <div class="of-error" data-error-for="delivery"></div>
+            </fieldset>
+            <div class="of-field" id="addressField" hidden><label for="o-address">Адрес за доставка</label>
+              <textarea id="o-address" name="address" rows="3" maxlength="300" autocomplete="street-address"></textarea>
+              <div class="of-hint">По желание — ако не го попълните, ще го уточним по телефона.</div>
+              <div class="of-error" data-error-for="address"></div></div>
+
+            <label class="of-check"><input id="o-consent" type="checkbox" name="consent"><span>Запознат/а съм с <a href="/privacy" target="_blank" rel="noopener">Политиката за обработване на лични данни</a>. *</span></label>
+            <div class="of-error" data-error-for="consent"></div>
+
+            <div class="of-trap" aria-hidden="true"><label>Не попълвайте това поле<input id="o-website" name="website" tabindex="-1" autocomplete="off"></label></div>
+            <div class="of-error of-general" id="orderError" role="alert"></div>
+          </div>
+          <div class="cart-foot">
+            <button class="btn btn-primary btn-large" id="orderSubmit" type="submit">Изпрати поръчка <span>↗</span></button>
+          </div>
+        </form>
+
+        <!-- 3. Готово -->
+        <div class="cart-view order-done" id="viewDone" hidden>
+          <div class="cart-items">
+            <div class="done-mark" aria-hidden="true">✓</div>
+            <h3>Поръчката е изпратена</h3>
+            <p class="done-number">Номер на поръчката: <strong id="doneNumber"></strong></p>
+            <p>Изпратихме ти имейл с потвърждение, че сме я получили. Скоро ще ти се обадим по телефона, за да потвърдим поръчката и да уточним начина на плащане.</p>
+            <p class="cart-hint">Ако не виждаш имейла, провери и папка „Спам“.</p>
+          </div>
+          <div class="cart-foot"><button class="btn btn-primary btn-large" id="doneClose" type="button">Затвори</button></div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="shop-toast" id="shopToast" role="status" aria-live="polite"></div>
+{% endblock %}
+{% block scripts %}
+  <script type="application/json" id="shopData">{{ products|tojson }}</script>
+  <script src="/shop.js"></script>
+{% endblock %}

@@ -82,6 +82,11 @@ def create_app(config_object="config.Config"):
     app.register_blueprint(matches_page_bp)  # /matches
     app.register_blueprint(admin_matches_bp, url_prefix="/api")  # /api/admin/matches
 
+    from app.routes.shop import admin_shop_bp, page_bp as shop_page_bp, shop_api_bp
+    app.register_blueprint(shop_page_bp)  # /shop, /privacy
+    app.register_blueprint(shop_api_bp, url_prefix="/api")  # /api/shop/orders
+    app.register_blueprint(admin_shop_bp, url_prefix="/api")  # /api/admin/shop/products
+
     from app.routes.uploads import files_bp, uploads_bp
     app.register_blueprint(uploads_bp, url_prefix="/api")  # POST /api/admin/uploads
     app.register_blueprint(files_bp)  # GET /uploads/<file>
@@ -122,6 +127,8 @@ def create_app(config_object="config.Config"):
             if user is None:
                 return redirect("/admin-login.html")
             if name == "admin-users.html" and not user.is_owner:
+                return redirect("/admin-registrations.html")
+            if name in ("admin-shop.html", "admin-orders.html", "admin-reports.html") and not (user.is_owner or user.is_head_coach):
                 return redirect("/admin-registrations.html")
         # Lets /styles.css, /script.js, /hero-background.css,
         # /assets/... resolve directly, same as on a normal static host.

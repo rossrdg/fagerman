@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Магазин — Админ — ФА Герман</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="shop-admin.css">
+  <script src="admin-auth.js"></script>
+</head>
+<body class="admin-body">
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <span class="brand-mark">FA</span>
+      <div><strong>ФА Герман — Админ</strong><small>Магазин — артикули</small></div>
+    </div>
+  </header>
+
+  <nav class="admin-nav" aria-label="Админ навигация">
+    <a href="admin-registrations.html">Записани за пробна тренировка</a>
+    <a href="admin-news.html">Новини</a>
+    <!-- „Отбори“, „График“, „Мачове“, „Магазин“, „Треньори“ и „Потребители“ се добавят от admin-auth.js -->
+  </nav>
+
+  <main class="admin-main">
+    <div class="admin-toolbar">
+      <div>
+        <h1>Магазин — артикули</h1>
+        <div id="status" class="admin-status" aria-live="polite">Зареждане...</div>
+      </div>
+    </div>
+
+    <form id="productForm" class="news-form slot-form" novalidate>
+      <h2 id="formTitle" class="slot-form-title">Нов артикул</h2>
+
+      <div class="field">
+        <label for="f-name">Име на артикула *</label>
+        <input id="f-name" maxlength="120" autocomplete="off" placeholder="напр. Мачова тениска ФА Герман - синя">
+        <div class="field-error" data-error-for="name"></div>
+      </div>
+
+      <div class="field">
+        <label>Снимка</label>
+        <div class="shop-image-box">
+          <img id="imagePreview" class="shop-preview" alt="" hidden>
+          <div class="shop-image-actions">
+            <label class="btn btn-outline btn-sm shop-file-btn">
+              <span id="imageBtnText">Избери снимка</span>
+              <input id="f-image" type="file" accept="image/*" hidden>
+            </label>
+            <button id="imageRemove" class="btn btn-outline btn-sm" type="button" hidden>Махни снимката</button>
+          </div>
+        </div>
+        <div class="field-hint">Всеки формат снимка (PNG, JPG, HEIC ...). Смалява се автоматично. Показва се цяла, без изрязване.</div>
+        <div class="field-error" data-error-for="image"></div>
+      </div>
+
+      <div class="field">
+        <label for="f-mode">Размери</label>
+        <select id="f-mode">
+          <option value="both">Детски и възрастни (две цени)</option>
+          <option value="child">Само детски</option>
+          <option value="adult">Само възрастни</option>
+          <option value="one">Един размер (без избор)</option>
+        </select>
+        <div id="sizesHint" class="field-hint"></div>
+        <div class="field-error" data-error-for="size_mode"></div>
+      </div>
+
+      <div class="field-row">
+        <div class="field" id="childPriceField">
+          <label for="f-price-child">Цена детски (€) *</label>
+          <input id="f-price-child" inputmode="decimal" autocomplete="off" placeholder="напр. 41">
+          <div class="field-error" data-error-for="price_child"></div>
+        </div>
+        <div class="field" id="adultPriceField">
+          <label for="f-price-adult" id="adultPriceLabel">Цена възрастен (€) *</label>
+          <input id="f-price-adult" inputmode="decimal" autocomplete="off" placeholder="напр. 46">
+          <div class="field-error" data-error-for="price_adult"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="check-item"><input id="f-pers" type="checkbox"> Позволява персонализация (име и номер)</label>
+        <div id="feeField" class="field shop-fee" hidden>
+          <label for="f-fee">Доплащане за персонализация (€)</label>
+          <input id="f-fee" inputmode="decimal" autocomplete="off">
+          <div class="field-hint">Една сума за артикула, независимо дали е детски или възрастен размер. Клиентът я плаща само ако избере персонализация.</div>
+          <div class="field-error" data-error-for="personalization_fee"></div>
+        </div>
+      </div>
+
+      <div class="field" id="soldOutField">
+        <label>Изчерпани размери</label>
+        <div id="soldOutBoxes" class="check-grid"></div>
+        <div class="field-hint">Отметнатите размери се показват в магазина като изчерпани и не могат да се избират.</div>
+      </div>
+
+      <div class="field">
+        <label class="check-item"><input id="f-visible" type="checkbox" checked> Показва се в магазина</label>
+        <div class="field-hint">Махнете отметката, за да скриете артикула временно, без да го изтривате.</div>
+      </div>
+
+      <div class="form-actions">
+        <button id="saveBtn" class="btn btn-primary" type="button">Добави</button>
+        <button id="cancelBtn" class="btn btn-outline" type="button" hidden>Отказ</button>
+      </div>
+    </form>
+
+    <div class="table-wrap">
+      <table id="productsTable" class="admin-table shop-table" hidden>
+        <thead>
+          <tr>
+            <th>Ред</th>
+            <th>Снимка</th>
+            <th>Артикул</th>
+            <th>Цени</th>
+            <th>Персонализация</th>
+            <th>В магазина</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="productsBody"></tbody>
+      </table>
+    </div>
+    <div id="emptyState" class="admin-status" hidden>Още няма артикули. Добавете първия с формата горе.</div>
+  </main>
+
+  <script src="admin-shop.js"></script>
+</body>
+</html>

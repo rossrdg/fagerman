@@ -2,7 +2,7 @@
 // - asks the server who is logged in; no session -> redirect to the login page
 // - adds the CSRF token to every non-GET /api/ request of the page scripts
 // - adds the user name + "Изход" to the header and, for the owner, the
-//   "Потребители" item to the menu
+//   "Потребители" item to the menu (owner + head coach also get "Магазин" and "Треньори")
 (function () {
   const nativeFetch = window.fetch.bind(window);
   let csrf = '';
@@ -130,6 +130,32 @@
       nav.appendChild(matches);
     }
     if (nav && (user.role === 'owner' || user.role === 'head_coach')) {
+      const shop = document.createElement('a');
+      shop.href = 'admin-shop.html';
+      shop.textContent = 'Магазин';
+      if (location.pathname.endsWith('admin-shop.html')) shop.classList.add('active');
+      nav.appendChild(shop);
+
+      const orders = document.createElement('a');
+      orders.href = 'admin-orders.html';
+      orders.textContent = 'Поръчки';
+      if (location.pathname.endsWith('admin-orders.html') || location.pathname.endsWith('admin-reports.html')) orders.classList.add('active');
+      const badge = document.createElement('span');
+      badge.className = 'nav-badge';
+      badge.hidden = true;
+      orders.appendChild(badge);
+      nav.appendChild(orders);
+      // Значка с броя на новите поръчки; страницата „Поръчки“ я опреснява при всяка промяна.
+      window.refreshOrdersBadge = async function () {
+        try {
+          const res = await window.fetch('/api/admin/shop/orders/summary');
+          const data = await res.json();
+          badge.textContent = String(data.new || 0);
+          badge.hidden = !data.new;
+        } catch (err) { /* значката не е критична */ }
+      };
+      window.refreshOrdersBadge();
+
       const c = document.createElement('a');
       c.href = 'admin-coaches.html';
       c.textContent = 'Треньори';

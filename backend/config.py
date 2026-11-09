@@ -64,3 +64,10 @@ class Config:
     MAIL_FROM = os.environ.get("MAIL_FROM", os.environ.get("MAIL_USERNAME", ""))
     MAIL_FROM_NAME = os.environ.get("MAIL_FROM_NAME", "Футболна Академия Герман")
     MAIL_REPLY_TO = os.environ.get("MAIL_REPLY_TO", "")
+
+    # --- Магазин ---
+    # Накъде отива имейлът за нова поръчка (главният треньор). Празно = MAIL_REPLY_TO, после MAIL_FROM.
+    SHOP_ORDER_EMAIL = os.environ.get("SHOP_ORDER_EMAIL", "")
+    # Най-много поръчки от един адрес за период (защита от спам): 5 за 10 минути.
+    SHOP_ORDER_LIMIT = int(os.environ.get("SHOP_ORDER_LIMIT", "5"))
+    SHOP_ORDER_WINDOW_SECONDS = int(os.environ.get("SHOP_ORDER_WINDOW_SECONDS", "600"))

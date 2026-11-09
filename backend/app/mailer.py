@@ -37,7 +37,7 @@ def build_trial_training_email(registration):
     return subject, body
 
 
-def send_email(to_addr, subject, body):
+def send_email(to_addr, subject, body, reply_to=None):
     """Sends a plain-text email. Returns True if really sent, False in dry-run
     mode (no MAIL_SERVER configured). Raises MailError on SMTP problems."""
     cfg = current_app.config
@@ -60,7 +60,9 @@ def send_email(to_addr, subject, body):
     msg["To"] = to_addr
     msg["Date"] = formatdate(localtime=True)
     msg["Message-ID"] = make_msgid(domain=from_addr.split("@")[-1])
-    if cfg.get("MAIL_REPLY_TO"):
+    if reply_to:
+        msg["Reply-To"] = reply_to
+    elif cfg.get("MAIL_REPLY_TO"):
         msg["Reply-To"] = cfg["MAIL_REPLY_TO"]
     msg.set_content(body, charset="utf-8")
 

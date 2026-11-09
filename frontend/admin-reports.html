@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Отчети и експорт — Админ — ФА Герман</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="shop-admin.css">
+  <script src="admin-auth.js"></script>
+</head>
+<body class="admin-body">
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <span class="brand-mark">FA</span>
+      <div><strong>ФА Герман — Админ</strong><small>Магазин — отчети и експорт</small></div>
+    </div>
+  </header>
+
+  <nav class="admin-nav" aria-label="Админ навигация">
+    <a href="admin-registrations.html">Записани за пробна тренировка</a>
+    <a href="admin-news.html">Новини</a>
+    <!-- „Отбори“, „График“, „Мачове“, „Магазин“, „Поръчки“, „Треньори“ и „Потребители“ се добавят от admin-auth.js -->
+  </nav>
+
+  <main class="admin-main">
+    <div class="admin-toolbar">
+      <div>
+        <h1>Отчети и експорт</h1>
+        <div id="status" class="admin-status" aria-live="polite">Зареждане...</div>
+      </div>
+      <a class="btn btn-outline" href="admin-orders.html">← Към поръчките</a>
+    </div>
+
+    <section class="rp-card">
+      <h2>Период</h2>
+      <div class="rp-period">
+        <label>От <input id="from" type="date"></label>
+        <label>До <input id="to" type="date"></label>
+        <label class="rp-scope">В оборота да се броят
+          <select id="scope">
+            <option value="confirmed">Обработени и предадени</option>
+            <option value="all">Всички без отказаните</option>
+          </select>
+        </label>
+      </div>
+      <div class="rp-presets" id="presets"></div>
+      <div id="periodError" class="of-error"></div>
+    </section>
+
+    <section class="rp-stats" id="stats" aria-live="polite"></section>
+
+    <section class="rp-card">
+      <h2>Най-продавани артикули</h2>
+      <div id="topBox"></div>
+    </section>
+
+    <section class="rp-card">
+      <h2>Експорт в CSV</h2>
+      <p class="rp-hint">Файл за Excel с всички поръчки от избрания период (и отказаните — има колона „Статус“). Един ред за всеки артикул; общата сума на поръчката е само на първия ѝ ред, за да не се удвоява при събиране.</p>
+      <a id="exportBtn" class="btn btn-primary" href="#">Изтегли CSV за периода</a>
+    </section>
+
+    <section class="rp-card rp-danger" id="purgeCard" hidden>
+      <h2>Изтриване на стари поръчки</h2>
+      <p class="rp-hint">Поръчките съдържат лични данни (имена, телефони, адреси), затова не бива да се пазят безкрайно. Изтриват се безвъзвратно <strong>всички</strong> поръчки, по-стари от избрания срок, независимо от статуса им. Препоръчително е първо да изтеглите CSV за тях.</p>
+      <div class="rp-purge-row">
+        <label>По-стари от
+          <select id="months">
+            <option value="3">3 месеца</option>
+            <option value="6">6 месеца</option>
+            <option value="12" selected>12 месеца</option>
+            <option value="24">24 месеца</option>
+          </select>
+        </label>
+        <span id="purgeInfo" class="rp-purge-info"></span>
+      </div>
+      <div class="rp-purge-actions">
+        <a id="purgeExport" class="btn btn-outline" href="#" hidden>Изтегли CSV на тези поръчки</a>
+        <button id="purgeBtn" class="btn btn-outline btn-danger-text" type="button" disabled>Изтрий старите поръчки</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="admin-reports.js"></script>
+</body>
+</html>

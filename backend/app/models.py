@@ -400,3 +400,167 @@ class StandingsLink(db.Model):
     updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
 
     team = db.relationship("Team", backref=db.backref("standings_links", cascade="all, delete-orphan"))
+
+
+# ------------------------------------------------------------------- shop ---
+SIZE_ONE = "one"      # един размер (без избор), цената е една
+SIZE_CHILD = "child"  # само детски размери
+SIZE_ADULT = "adult"  # само възрастни размери
+SIZE_BOTH = "both"    # детски и възрастни (две цени)
+SIZE_MODES = (SIZE_BOTH, SIZE_CHILD, SIZE_ADULT, SIZE_ONE)
+
+CHILD_SIZES = ["116", "128", "140", "152", "164", "176"]
+ADULT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"]
+ONE_SIZE_LABEL = "Един размер"
+DEFAULT_PERSONALIZATION_FEE_CENTS = 500  # 5 € по подразбиране; админът го сменя за всеки артикул
+
+
+def sizes_for(mode):
+    """Размерите, които артикулът предлага според режима му."""
+    if mode == SIZE_CHILD:
+        return list(CHILD_SIZES)
+    if mode == SIZE_ADULT:
+        return list(ADULT_SIZES)
+    if mode == SIZE_BOTH:
+        return CHILD_SIZES + ADULT_SIZES
+    return [ONE_SIZE_LABEL]
+
+
+class Product(db.Model):
+    """Артикул от магазина на академията (екипи, якета, шапки ...).
+
+    Цените се пазят в евроцентове (цяло число), за да няма грешки от закръгляне.
+    При режим „един размер“ единствената цена е в price_adult_cents.
+    """
+
+    __tablename__ = "products"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    size_mode = db.Column(db.String(5), nullable=False, default=SIZE_BOTH, server_default=SIZE_BOTH)
+    price_child_cents = db.Column(db.Integer, nullable=True)
+    price_adult_cents = db.Column(db.Integer, nullable=True)
+    # Име и номер върху артикула (за сега само мачовите тениски) срещу доплащане.
+    allows_personalization = db.Column(db.Boolean, nullable=False, default=False, server_default="0")
+    personalization_fee_cents = db.Column(db.Integer, nullable=False, default=DEFAULT_PERSONALIZATION_FEE_CENTS,
+                                          server_default=str(DEFAULT_PERSONALIZATION_FEE_CENTS))
+    # Размери, които са изчерпани (не могат да се избират), разделени със запетая.
+    sold_out_sizes = db.Column(db.String(120), nullable=False, default="", server_default="")
+    image = db.Column(db.String(255), nullable=True)  # /uploads/<име>.jpg (има и умалена -800 версия)
+    is_visible = db.Column(db.Boolean, nullable=False, default=True, server_default="1")
+    sort_order = db.Column(db.Integer, nullable=False, default=0, server_default="0", index=True)
+    created_by = db.Column(db.String(80), nullable=False, default="")
+    updated_by = db.Column(db.String(80), nullable=False, default="")
+    created_at = db.Column(db.DateTime, default=utcnow)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
+
+    @property
+    def sold_out_list(self):
+        return [s for s in (self.sold_out_sizes or "").split(",") if s]
+
+    def to_dict(self):
+        def euros(cents):
+            if cents is None:
+                return None
+            return cents // 100 if cents % 100 == 0 else cents / 100
+
+        return {
+            "id": self.id,
+            "name": self.name,
+            "size_mode": self.size_mode,
+            "sizes": sizes_for(self.size_mode),
+            "price_child": euros(self.price_child_cents),
+            "price_adult": euros(self.price_adult_cents),
+            "allows_personalization": bool(self.allows_personalization),
+            "personalization_fee": euros(self.personalization_fee_cents),
+            "sold_out_sizes": self.sold_out_list,
+            "image": self.image,
+            "thumb": thumb_url(self.image),
+            "is_visible": bool(self.is_visible),
+            "sort_order": self.sort_order,
+            "updated_by": self.updated_by,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+# ----------------------------------------------------------------- orders ---
+ORDER_NEW = "new"              # нова — още никой не е звънял
+ORDER_PROCESSED = "processed"  # обработена — потвърдена и уточнено плащане по телефона
+ORDER_DELIVERED = "delivered"  # предадена на клиента
+ORDER_CANCELLED = "cancelled"  # отказана
+ORDER_STATUSES = (ORDER_NEW, ORDER_PROCESSED, ORDER_DELIVERED, ORDER_CANCELLED)
+DELIVERY_PICKUP = "pickup"      # взима се от академията
+DELIVERY_ADDRESS = "delivery"   # доставка до адрес (адресът не е задължителен)
+DELIVERY_MODES = (DELIVERY_PICKUP, DELIVERY_ADDRESS)
+
+
+class Order(db.Model):
+    """Заявка за поръчка от магазина. Няма онлайн плащане — главният треньор се обажда на клиента.
+
+    Редовете пазят „снимка на момента“ (име, размер, цена), за да не се променят старите
+    поръчки, когато админът смени цена или изтрие артикул.
+    """
+
+    __tablename__ = "orders"
+
+    id = db.Column(db.Integer, primary_key=True)
+    number = db.Column(db.String(12), nullable=False, unique=True, index=True)  # ДДММГГ-001 (по дни)
+    status = db.Column(db.String(12), nullable=False, default=ORDER_NEW, server_default=ORDER_NEW)
+    customer_name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(150), nullable=False)
+    phone = db.Column(db.String(40), nullable=False)
+    delivery = db.Column(db.String(10), nullable=False, default=DELIVERY_PICKUP, server_default=DELIVERY_PICKUP)
+    address = db.Column(db.String(300), nullable=False, default="", server_default="")
+    total_cents = db.Column(db.Integer, nullable=False, default=0)
+    consent_at = db.Column(db.DateTime, nullable=False, default=utcnow)  # кога е потвърдена политиката за лични данни
+    coach_notified = db.Column(db.Boolean, nullable=True)     # null = още не е пробвано, False = не е изпратен
+    customer_notified = db.Column(db.Boolean, nullable=True)
+    admin_note = db.Column(db.Text, nullable=False, default="", server_default="")
+    created_at = db.Column(db.DateTime, default=utcnow, index=True)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
+
+    items = db.relationship("OrderItem", backref="order", cascade="all, delete-orphan", order_by="OrderItem.id")
+
+    def to_dict(self):
+        def euros(cents):
+            return cents // 100 if cents % 100 == 0 else cents / 100
+
+        return {
+            "id": self.id, "number": self.number, "status": self.status,
+            "customer_name": self.customer_name, "email": self.email, "phone": self.phone,
+            "delivery": self.delivery, "address": self.address, "total": euros(self.total_cents),
+            "consent_at": self.consent_at.isoformat() if self.consent_at else None,
+            "coach_notified": self.coach_notified, "customer_notified": self.customer_notified,
+            "admin_note": self.admin_note,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "items": [
+                {
+                    "product_name": i.product_name, "size": i.size, "group_label": i.group_label, "qty": i.qty,
+                    "unit_price": euros(i.unit_price_cents), "personal_name": i.personal_name,
+                    "personal_number": i.personal_number, "personalization_fee": euros(i.personalization_fee_cents),
+                    "line_total": euros(i.line_total_cents),
+                }
+                for i in self.items
+            ],
+        }
+
+
+class OrderItem(db.Model):
+    __tablename__ = "order_items"
+
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True)
+    product_id = db.Column(db.Integer, nullable=True)  # без връзка: поръчката остава, ако артикулът се изтрие
+    product_name = db.Column(db.String(120), nullable=False)
+    size = db.Column(db.String(20), nullable=False)
+    group_label = db.Column(db.String(20), nullable=False, default="", server_default="")  # Детски / Възрастни
+    unit_price_cents = db.Column(db.Integer, nullable=False)
+    qty = db.Column(db.Integer, nullable=False, default=1)
+    # Персонализация (име и номер върху мачова тениска) — попълва се в следваща стъпка.
+    personal_name = db.Column(db.String(30), nullable=False, default="", server_default="")
+    personal_number = db.Column(db.String(3), nullable=False, default="", server_default="")
+    personalization_fee_cents = db.Column(db.Integer, nullable=False, default=0, server_default="0")
+
+    @property
+    def line_total_cents(self):
+        return (self.unit_price_cents + self.personalization_fee_cents) * self.qty

@@ -1,0 +1,107 @@
+/* Админ „Магазин“ */
+.shop-image-box{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.shop-preview{width:160px;height:120px;object-fit:contain;border:1px solid var(--line);border-radius:10px;background:#fff}
+.shop-image-actions{display:flex;gap:8px;flex-wrap:wrap}
+.shop-file-btn{cursor:pointer}
+.shop-fee{margin-top:14px;max-width:260px}
+.shop-table td{vertical-align:middle}
+.shop-table td.title-cell strong{font-size:14px}
+.shop-thumb{width:64px;height:64px;object-fit:contain;border:1px solid var(--line);border-radius:8px;background:#fff;display:block}
+.shop-nothumb{width:64px;height:64px;border:1px dashed var(--line);border-radius:8px;display:grid;place-items:center;font-size:10px;color:var(--muted);text-align:center}
+.shop-order{display:flex;gap:4px;align-items:center}
+.shop-order button{width:30px;height:30px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;font-size:14px;line-height:1}
+.shop-order button:disabled{opacity:.35;cursor:default}
+.shop-actions{display:flex;gap:6px;flex-wrap:wrap}
+.shop-table tr.is-hidden td{background:#f6f7f6;color:#8b9992}
+.shop-table tr.is-hidden .shop-thumb{opacity:.5}
+.shop-badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:10px;font-weight:800;background:#e8f5ec;color:#16803c}
+.shop-badge.off{background:#eceeed;color:#6b756f}
+.shop-badge.pers{background:#e6f0fb;color:#0558b0}
+.shop-small{display:block;font-size:11px;color:var(--muted);font-weight:500;margin-top:3px;white-space:normal}
+
+/* Админ „Поръчки“ */
+.order-filters{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:6px 0 18px}
+.order-chips{display:flex;gap:8px;flex-wrap:wrap}
+.order-chip{padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:#fff;font:700 13px Inter,sans-serif;color:#33433a;cursor:pointer}
+.order-chip b{margin-left:6px;color:var(--muted);font-weight:700}
+.order-chip[aria-selected="true"]{background:var(--dark);border-color:var(--dark);color:#fff}
+.order-chip[aria-selected="true"] b{color:#b9c8c0}
+.order-search{min-width:280px;max-width:100%;padding:10px 14px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px;background:#fff}
+.order-list{display:grid;gap:12px}
+.order-card{background:#fff;border:1px solid var(--line);border-left:5px solid #9fb3a8;border-radius:14px;overflow:hidden}
+.order-card.s-new{border-left-color:var(--green)}
+.order-card.s-processed{border-left-color:#16a34a}
+.order-card.s-delivered{border-left-color:#8b9992}
+.order-card.s-cancelled{border-left-color:#c0392b;background:#fcf8f7}
+.order-head{display:grid;grid-template-columns:150px 1fr auto auto 36px;gap:18px;align-items:center;padding:16px 18px;cursor:pointer}
+.order-no{font:800 15px Manrope,Inter,sans-serif;color:#132019}
+.order-date{font-size:12px;color:var(--muted);margin-top:2px}
+.order-who strong{display:block;font-size:14px}
+.order-who span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.order-total{font:800 17px Manrope,Inter,sans-serif;white-space:nowrap}
+.order-status{padding:8px 10px;border:1px solid var(--line);border-radius:9px;font:700 13px Inter,sans-serif;background:#fff;cursor:pointer}
+.order-toggle{width:34px;height:34px;border:1px solid var(--line);border-radius:9px;background:#fff;cursor:pointer;font-size:14px;transition:transform .2s}
+.order-card.open .order-toggle{transform:rotate(180deg)}
+.order-tags{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+.order-tag{padding:3px 10px;border-radius:999px;font-size:11px;font-weight:800;background:#eef3f0;color:#4a5a52}
+.order-tag.warn{background:#fdeceb;color:#c0392b}
+.order-body{display:none;padding:4px 18px 18px;border-top:1px solid #edf1ee}
+.order-card.open .order-body{display:block}
+.order-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:24px;margin-top:14px}
+.order-body h4{margin:0 0 8px;font:800 11px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#4a5a52}
+.order-items{width:100%;border-collapse:collapse;font-size:13px}
+.order-items td,.order-items th{padding:7px 8px;border-bottom:1px solid #edf1ee;text-align:left;vertical-align:top}
+.order-items th{font-size:11px;color:var(--muted);font-weight:700}
+.order-items .num{text-align:right;white-space:nowrap}
+.order-items .pers{display:block;margin-top:3px;font-weight:700;color:var(--green);font-size:12px}
+.order-sum{display:flex;justify-content:space-between;padding:10px 8px 0;font:800 15px Manrope,Inter,sans-serif}
+.order-info p{margin:0 0 8px;font-size:13px;color:#33433a}
+.order-info a{color:var(--green)}
+.order-mail{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0;font-size:13px}
+.order-mail .ok{color:#16803c;font-weight:700}
+.order-mail .bad{color:#c0392b;font-weight:700}
+.order-note textarea{width:100%;min-height:76px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px;resize:vertical}
+.order-note-actions{display:flex;gap:10px;align-items:center;margin-top:8px}
+.order-note-saved{font-size:12px;font-weight:700;color:#16803c}
+.order-foot{display:flex;justify-content:space-between;gap:12px;margin-top:16px;flex-wrap:wrap}
+@media(max-width:900px){
+  .order-head{grid-template-columns:1fr auto;gap:10px 14px}
+  .order-who{grid-column:1/-1;order:3}
+  .order-total{order:2;text-align:right}
+  .order-status{order:4}
+  .order-toggle{order:5;justify-self:end}
+  .order-tags{order:6}
+  .order-grid{grid-template-columns:1fr}
+  .order-search{min-width:0;width:100%}
+}
+.order-info h4{margin-top:16px}
+.order-info h4:first-child{margin-top:0}
+.order-search{min-width:300px}
+
+/* Админ „Отчети“ */
+.rp-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-bottom:18px}
+.rp-card h2{margin:0 0 14px;font-size:18px}
+.rp-hint{margin:0 0 14px;font-size:13px;color:#4a5a52;max-width:760px}
+.rp-period{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}
+.rp-period label,.rp-purge-row label{display:grid;gap:6px;font-size:12px;font-weight:800;color:#334039}
+.rp-period input,.rp-period select,.rp-purge-row select{padding:10px 12px;border:1px solid #cfd9d3;border-radius:10px;font:inherit;font-size:14px;background:#fff}
+.rp-presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.rp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.rp-stat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+.rp-stat span{display:block;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#6b756f}
+.rp-stat strong{display:block;margin-top:8px;font:800 28px Manrope,Inter,sans-serif;color:#132019}
+.rp-stat small{display:block;margin-top:6px;font-size:12px;color:var(--muted)}
+.rp-stat.main strong{color:var(--green)}
+.rp-top{width:100%;border-collapse:collapse;font-size:14px}
+.rp-top th,.rp-top td{padding:10px 8px;border-bottom:1px solid #edf1ee;text-align:left;vertical-align:middle}
+.rp-top th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6b756f}
+.rp-top .num{text-align:right;white-space:nowrap}
+.rp-top .bar{height:8px;border-radius:999px;background:#eaf2fb;min-width:80px}
+.rp-top .bar i{display:block;height:100%;border-radius:999px;background:var(--green)}
+.rp-empty{color:var(--muted);font-size:14px}
+.rp-danger{border-color:#efd3cf}
+.rp-purge-row{display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap}
+.rp-purge-info{font-size:14px;font-weight:700;color:#132019;padding-bottom:10px}
+.rp-purge-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+@media(max-width:900px){.rp-stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.rp-stats{grid-template-columns:1fr}.rp-top .bar-col{display:none}}

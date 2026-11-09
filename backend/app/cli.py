@@ -8,13 +8,15 @@
     flask --app run set-season 2027           # ръчно задава сезона (2027 = 2026/27) и чисти историята
     flask --app run import-matches файл.xlsx           # преглед на програмата по кръгове (нищо не записва)
     flask --app run import-matches файл.xlsx --apply   # същото + запис в базата
+    flask --app run import-products items-list.xlsx --images папка   # преглед на артикулите на магазина
+    flask --app run import-products items-list.xlsx --images папка --apply   # същото + запис
 """
 import click
 
 from app import db
 from app.models import (
     KIND_MEN, KIND_YOUTH, MATCH_NOT_PLAYED, MATCH_PLAYED, MATCH_REST, ROLE_OWNER,
-    AdminUser, Match, SeasonSwitch, Team, TrainingGroup, TrainingSlot,
+    AdminUser, Match, Product, SeasonSwitch, Team, TrainingGroup, TrainingSlot,
 )
 from app.team_utils import (
     YOUTH_MIN_U, cohort_label, cohort_slug, get_season_end_year, season_text, set_season_end_year, u_label,
@@ -242,3 +244,117 @@ def register_cli(app):
             ))
         db.session.commit()
         click.echo(f"Записани мачове: {len(to_create)}.")
+
+    @app.cli.command("import-products")
+    @click.argument("path", type=click.Path(exists=True, dir_okay=False))
+    @click.option("--images", "images_dir", type=click.Path(exists=True, file_okay=False), default=None,
+                  help="Папка със снимките на артикулите (по име на файла от таблицата).")
+    @click.option("--apply", "do_apply", is_flag=True, help="Записва артикулите (без него се показва само преглед).")
+    def import_products(path, images_dir, do_apply):
+        """Зарежда артикулите на магазина от Excel (Име, Цена детски, Цена възрастен, Размери,
+        Персонализация, Доплащане, Файл със снимка).
+
+        Без --apply само показва какво ще се зареди. Артикул със същото име, който вече е в
+        магазина, не се презаписва — командата е безопасна за повторно пускане. Ако при такъв
+        артикул още няма снимка, а в папката вече я има, снимката се добавя. Липсваща снимка
+        не спира зареждането (може да се качи после от админа); грешка в ред — спира го."""
+        try:
+            from openpyxl import load_workbook
+        except ImportError:
+            raise click.ClickException("Липсва openpyxl. Пуснете: pip install -r requirements.txt")
+        from app.shop_import import index_images, norm, parse_sheet
+        from app.shop_utils import apply_cleaned, format_eur, next_sort_order, store_image_file
+
+        workbook = load_workbook(path, data_only=True)
+        try:
+            rows = parse_sheet(workbook.worksheets[0])
+        except ValueError as err:
+            raise click.ClickException(f"Таблицата не се разбира: {err}")
+        images = index_images(images_dir) if images_dir else {}
+        click.echo(f"Файл {path} · артикули в таблицата: {len(rows)}"
+                   + (f" · снимки в папката: {sum(len(v) for v in images.values())}" if images_dir else " · без папка със снимки"))
+        click.echo("")
+
+        existing = {p.name.casefold(): p for p in Product.query.all()}
+        seen, problems = set(), 0
+        to_create, to_attach, skipped, no_image = [], [], 0, 0
+        mode_text = {"both": "детски+възрастни", "child": "само детски", "adult": "само възрастни", "one": "един размер"}
+
+        for row in rows:
+            key = row.name.casefold()
+            if key in seen:
+                row.errors.append("името се повтаря в таблицата")
+            seen.add(key)
+
+            photo = None
+            if images_dir and row.image_file:
+                matches = images.get(norm(row.image_file), [])
+                if len(matches) > 1:
+                    row.errors.append("повече от една снимка отговарят на „" + row.image_file + "“")
+                elif matches:
+                    photo = matches[0]
+            if images_dir and photo is None and not any("снимка" in e for e in row.errors):
+                row.warnings.append(f"снимката „{row.image_file or '—'}“ не е намерена в папката")
+
+            if row.errors:
+                problems += 1
+                click.echo(f"ред {row.source_row}: ГРЕШКА — {row.name or '(без име)'}: " + "; ".join(row.errors))
+                continue
+
+            c = row.cleaned
+            prices = []
+            if c["price_child_cents"] is not None:
+                prices.append(f"дет. {format_eur(c['price_child_cents'])} €")
+            if c["price_adult_cents"] is not None:
+                prices.append(("" if c["size_mode"] == "one" else "възр. ") + f"{format_eur(c['price_adult_cents'])} €")
+            pers = f" · персонализация +{format_eur(c['personalization_fee_cents'])} €" if c["allows_personalization"] else ""
+            note = ""
+            product = existing.get(key)
+            if product is not None:
+                if photo and not product.image:
+                    to_attach.append((product, photo))
+                    note = "   [вече има — ще се добави снимка]"
+                else:
+                    skipped += 1
+                    note = "   [вече има — пропуска се]"
+            else:
+                to_create.append((row, photo))
+                if photo is None:
+                    no_image += 1
+            click.echo(f"ред {row.source_row:>2} · {row.name} · {mode_text[c['size_mode']]} · {' / '.join(prices)}{pers}"
+                       + (" · със снимка" if photo else "") + note)
+            for warning in row.warnings:
+                click.echo(f"      ! {warning}")
+
+        click.echo("")
+        click.echo(f"Нови: {len(to_create)} (без снимка: {no_image}) · снимка към вече съществуващи: {len(to_attach)} · "
+                   f"пропуснати: {skipped} · грешки: {problems}")
+        if problems:
+            click.echo("Има грешки (виж отгоре). Оправете таблицата и пуснете отново — нищо не е записано.")
+            return
+        if not do_apply:
+            click.echo("Това е само преглед. За запис добавете --apply.")
+            return
+
+        failed = []
+
+        def save_image(photo, name):
+            try:
+                return store_image_file(photo)
+            except ValueError as err:
+                failed.append(f"{name}: {err}")
+                return None
+
+        for row, photo in to_create:
+            product = Product(sort_order=next_sort_order(), created_by="импорт от Excel", updated_by="импорт от Excel")
+            apply_cleaned(product, row.cleaned)
+            if photo:
+                product.image = save_image(photo, row.name)
+            db.session.add(product)
+            db.session.flush()
+        for product, photo in to_attach:
+            product.image = save_image(photo, product.name)
+        db.session.commit()
+        click.echo(f"Записани нови артикули: {len(to_create)} · добавени снимки към съществуващи: {len(to_attach)}.")
+        for line in failed:
+            click.echo(f"  ! снимката не е записана — {line}")

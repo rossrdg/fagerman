@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Поръчки — Админ — ФА Герман</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="shop-admin.css">
+  <script src="admin-auth.js"></script>
+</head>
+<body class="admin-body">
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <span class="brand-mark">FA</span>
+      <div><strong>ФА Герман — Админ</strong><small>Магазин — поръчки</small></div>
+    </div>
+  </header>
+
+  <nav class="admin-nav" aria-label="Админ навигация">
+    <a href="admin-registrations.html">Записани за пробна тренировка</a>
+    <a href="admin-news.html">Новини</a>
+    <!-- „Отбори“, „График“, „Мачове“, „Магазин“, „Поръчки“, „Треньори“ и „Потребители“ се добавят от admin-auth.js -->
+  </nav>
+
+  <main class="admin-main">
+    <div class="admin-toolbar">
+      <div>
+        <h1>Поръчки от магазина</h1>
+        <div id="status" class="admin-status" aria-live="polite">Зареждане...</div>
+      </div>
+      <a class="btn btn-outline" href="admin-reports.html">Отчети и експорт →</a>
+    </div>
+
+    <div class="order-filters">
+      <div class="order-chips" id="chips" role="tablist" aria-label="Статус на поръчките"></div>
+      <input id="search" class="order-search" type="search" placeholder="Търсене: №, име, телефон, имейл" autocomplete="off">
+    </div>
+
+    <div id="orderList" class="order-list"></div>
+    <div id="emptyState" class="admin-status" hidden></div>
+  </main>
+
+  <script src="admin-orders.js"></script>
+</body>
+</html>
