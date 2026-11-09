@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Вход за родители — ФА Герман</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="parent.css">
+</head>
+<body class="parent-body">
+  <main class="login-wrap">
+    <section class="parent-card">
+      <span class="brand-mark" style="display:grid;place-items:center;width:42px;height:42px;border:2px solid var(--green);border-radius:9px;font:800 14px Manrope;color:var(--green);transform:skew(-8deg);margin-bottom:18px">FA</span>
+      <h1>Вход за родители</h1>
+      <p class="parent-lead">Влезте с имейла, на който сте получили данните за достъп.</p>
+      <form id="loginForm" class="parent-form" novalidate>
+        <label>Имейл
+          <input name="email" type="email" autocomplete="username" autocapitalize="none" required autofocus>
+        </label>
+        <label>Парола
+          <input name="password" type="password" autocomplete="current-password" required>
+        </label>
+        <button class="btn btn-primary btn-large" type="submit">Вход</button>
+        <div id="loginStatus" class="parent-status error" role="alert" aria-live="polite"></div>
+      </form>
+      <p class="muted" style="font-size:13px;margin-top:18px">Забравена парола? Свържете се с академията — ще Ви изпратим нова временна парола.</p>
+    </section>
+  </main>
+  <script src="parent-common.js"></script>
+  <script src="parent-login.js"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+/* Родителски портал: вход, смяна на парола, начална страница */
+.parent-body{background:var(--light);min-height:100vh}
+.parent-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 28px;background:var(--dark);color:#fff}
+.parent-header .brand-mark{display:grid;place-items:center;width:38px;height:38px;border:2px solid var(--green);border-radius:9px;font:800 13px Manrope;color:var(--green);transform:skew(-8deg)}
+.parent-header .who{display:flex;align-items:center;gap:12px;font-size:13px;color:#d7e0db;flex-wrap:wrap;justify-content:flex-end}
+.parent-header .who a{color:#d7e0db;text-decoration:underline;font-weight:600}
+.parent-header .btn{padding:8px 14px;font-size:11px}
+.parent-main{max-width:860px;margin:0 auto;padding:32px 20px 80px}
+.parent-main h1{font-size:clamp(28px,4vw,40px);margin-bottom:10px}
+.parent-lead{font-size:16px;color:#34443c;margin-bottom:26px}
+.parent-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px 26px;margin-bottom:16px}
+.parent-card h2{font-size:20px;margin:0 0 6px}
+.parent-card p{margin:0 0 8px;font-size:15px}
+.parent-card .muted{color:var(--muted)}
+.child-card h2{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.child-meta{display:flex;flex-wrap:wrap;gap:10px 22px;margin:10px 0 14px;font-size:14px;color:#34443c}
+.child-meta strong{font-weight:800}
+.child-links{display:flex;gap:10px;flex-wrap:wrap}
+.parent-soon{border-style:dashed;background:#fbfcfb}
+.parent-form{max-width:460px}
+.parent-form label{display:block;font-size:12px;font-weight:800;margin-bottom:16px;color:#334039}
+.parent-form input[type=email],.parent-form input[type=password]{width:100%;margin-top:7px;border:1px solid #d8e0db;border-radius:10px;padding:13px 14px;font:inherit;background:#fbfcfb}
+.parent-form input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px #0779ea22}
+.parent-form .check{display:flex;align-items:flex-start;gap:9px;font-weight:500}
+.parent-form .check input{width:auto;margin:3px 0 0}
+.parent-form .check a{color:var(--green);text-decoration:underline}
+.parent-form .btn{width:100%}
+.parent-status{margin-top:14px;font-weight:700;font-size:13px;min-height:1.2em}
+.parent-status.error{color:#d93025}
+.parent-status.success{color:#16803c}
+.parent-field-error{font-size:12px;font-weight:700;color:#d93025;margin-top:4px}
+.parent-field-error:empty{display:none}
+.login-wrap{display:grid;place-items:center;min-height:100vh;padding:20px}
+.login-wrap .parent-card{width:min(440px,100%);padding:34px}
+[hidden]{display:none!important}
+@media(max-width:767px){.parent-header{padding:14px 16px}.parent-main{padding:22px 14px 70px}.parent-card{padding:20px}}
