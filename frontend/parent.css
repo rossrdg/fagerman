@@ -34,3 +34,8 @@
 .login-wrap .parent-card{width:min(440px,100%);padding:34px}
 [hidden]{display:none!important}
 @media(max-width:767px){.parent-header{padding:14px 16px}.parent-main{padding:22px 14px 70px}.parent-card{padding:20px}}
+.parent-card h1{font-size:clamp(28px,4vw,40px);margin-bottom:12px}
+.parent-body .btn-outline{background:#fff;color:var(--dark);border-color:#cbd6d0}
+.parent-body .btn-outline:hover{background:#f0f3f1}
+.parent-header .btn-ghost{background:transparent;border:1px solid #ffffff55;color:#fff}
+.parent-header .btn-ghost:hover{background:#fff;color:var(--dark)}
