@@ -186,3 +186,24 @@ flask --app run import-products items-list.xlsx --images папка_със_сн�
 
 Новата зависимост `tzdata` (в `requirements.txt`) осигурява часовата зона Europe/Sofia на Windows:
 `pip install -r requirements.txt`.
+
+## Футболисти и родителски портал (стъпка 1)
+
+Нови таблици: `parent_accounts` (родителски акаунт, потребителско име = имейл) и `players` (профил на дете).
+Колоната `registrations.player_id` се добавя автоматично при стартиране.
+
+| Метод | Път | Кой |
+|-------|-----|-----|
+| GET | /api/admin/players | главен админ, главен треньор (всички); треньор — само отборите си, само четене |
+| POST/PATCH | /api/admin/players[/<id>] | главен админ, главен треньор |
+| POST | /api/admin/players/<id>/new-password | главен админ, главен треньор (паролата отива по имейл) |
+| POST | /api/admin/players/<id>/archive, /restore | главен админ, главен треньор |
+| DELETE | /api/admin/players/<id>[?forever=1] | архивира; `forever` — само главен админ, само архивиран |
+| GET | /api/admin/registrations/<id>/prefill | данни от запитването за „Създай профил“ |
+| POST | /api/parent/login, /logout, /change-password | родител |
+| GET | /api/parent/me, /children | родител |
+
+Родителският вход е отделен от админ входа (други ключове в сесията, друг CSRF токен); страниците
+`parent*.html` са достъпни само за влезли родители. Временната парола изтича след 7 дни, смяната ѝ е
+задължителна, заедно със съгласието с Политиката за поверителност при първия вход.
+Проверка: `python backend/tests/test_players.py`.

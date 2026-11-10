@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -24,10 +24,13 @@ class Registration(db.Model):
     processed = db.Column(db.Boolean, nullable=False, default=False, server_default="0")
     # When the parent was last emailed about the trial training (None = never).
     notified_at = db.Column(db.DateTime, nullable=True)
+    # Set when the head coach turns this request into a player profile (the row stays in the history).
+    player_id = db.Column(db.Integer, nullable=True)
 
     def to_dict(self):
         return {
             "id": self.id,
+            "player_id": self.player_id,
             "child_name": self.child_name,
             "child_age": self.child_age,
             "parent_name": self.parent_name,
@@ -564,3 +567,73 @@ class OrderItem(db.Model):
     @property
     def line_total_cents(self):
         return (self.unit_price_cents + self.personalization_fee_cents) * self.qty
+
+# ------------------------------------------------- футболисти и родители ---
+PLAYER_ACTIVE = "active"    # тренира
+PLAYER_PAUSED = "paused"    # в пауза
+PLAYER_LEFT = "left"        # напуснал
+PLAYER_STATUSES = (PLAYER_ACTIVE, PLAYER_PAUSED, PLAYER_LEFT)
+
+
+class ParentAccount(db.Model):
+    """Родителски акаунт за портала. Различен от AdminUser: няма достъп до админ страниците.
+    Потребителското име е имейлът. Към един акаунт могат да са свързани няколко деца."""
+
+    __tablename__ = "parent_accounts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), nullable=False, unique=True, index=True)  # малки букви
+    display_name = db.Column(db.String(120), nullable=False, default="")
+    phone = db.Column(db.String(40), nullable=False, default="")
+    password_hash = db.Column(db.String(255), nullable=False)
+    # Временна парола: трябва да се смени при първия вход и изтича, ако не се ползва.
+    must_change_password = db.Column(db.Boolean, nullable=False, default=True)
+    temp_password_expires_at = db.Column(db.DateTime, nullable=True)
+    # Кога родителят е потвърдил Политиката за поверителност (при първия вход).
+    consent_at = db.Column(db.DateTime, nullable=True)
+    # Вдига се при смяна/нова парола: отворените сесии спират веднага.
+    token_version = db.Column(db.Integer, nullable=False, default=1)
+    failed_attempts = db.Column(db.Integer, nullable=False, default=0)
+    locked_until = db.Column(db.DateTime, nullable=True)
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    created_at = db.Column(db.DateTime, default=utcnow)
+    last_login_at = db.Column(db.DateTime, nullable=True)
+
+    def set_password(self, password, temporary=False, valid_days=7):
+        self.password_hash = generate_password_hash(password, method=_HASH_METHOD)
+        self.token_version = (self.token_version or 0) + 1
+        self.must_change_password = temporary
+        self.temp_password_expires_at = (utcnow() + timedelta(days=valid_days)) if temporary else None
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    @property
+    def temp_password_expired(self):
+        return bool(self.must_change_password and self.temp_password_expires_at
+                    and self.temp_password_expires_at < utcnow())
+
+
+class Player(db.Model):
+    """Профил на дете (футболист). Отборът се определя по годината на раждане,
+    освен ако не е зададен ръчно (team_override_id)."""
+
+    __tablename__ = "players"
+
+    id = db.Column(db.Integer, primary_key=True)
+    parent_id = db.Column(db.Integer, db.ForeignKey("parent_accounts.id"), nullable=False, index=True)
+    registration_id = db.Column(db.Integer, nullable=True)  # от кое запитване за пробна тренировка е
+    child_name = db.Column(db.String(120), nullable=False)
+    birth_date = db.Column(db.Date, nullable=False)
+    team_override_id = db.Column(db.Integer, db.ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
+    status = db.Column(db.String(10), nullable=False, default=PLAYER_ACTIVE, server_default=PLAYER_ACTIVE)
+    archived = db.Column(db.Boolean, nullable=False, default=False, server_default="0")
+    start_date = db.Column(db.Date, nullable=True)
+    internal_notes = db.Column(db.Text, nullable=False, default="")  # невидими за родителя
+    created_by = db.Column(db.String(80), nullable=False, default="")
+    updated_by = db.Column(db.String(80), nullable=False, default="")
+    created_at = db.Column(db.DateTime, default=utcnow)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
+
+    parent = db.relationship("ParentAccount", backref=db.backref("players", lazy="select"))
+    team_override = db.relationship("Team", foreign_keys=[team_override_id])

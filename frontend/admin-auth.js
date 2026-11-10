@@ -128,6 +128,12 @@
       matches.textContent = 'Мачове';
       if (location.pathname.endsWith('admin-matches.html')) matches.classList.add('active');
       nav.appendChild(matches);
+
+      const players = document.createElement('a');
+      players.href = 'admin-players.html';
+      players.textContent = 'Футболисти';
+      if (location.pathname.endsWith('admin-players.html')) players.classList.add('active');
+      nav.appendChild(players);
     }
     if (nav && (user.role === 'owner' || user.role === 'head_coach')) {
       const shop = document.createElement('a');

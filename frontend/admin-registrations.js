@@ -47,6 +47,17 @@ function notifiedBadge(r) {
   return `<span class="notified-badge" title="Родителят е уведомен на ${escapeHtml(formatCreatedAt(r.notified_at))}">✉ Уведомен</span>`;
 }
 
+function profileLink(r) {
+  const role = window.adminUser && window.adminUser.role;
+  if (role !== 'owner' && role !== 'head_coach') return '';
+  if (r.player_id) return '<a class="btn btn-outline btn-sm profile-link" href="admin-players.html">Има профил ✓</a>';
+  return `<a class="btn btn-primary btn-sm profile-link" href="admin-players.html?from=${r.id}">Създай профил</a>`;
+}
+
+function checkCellHtml(r) {
+  return `<input type="checkbox" class="js-processed" ${r.processed ? 'checked' : ''} aria-label="Записан">${notifiedBadge(r)}${profileLink(r)}`;
+}
+
 function rowHtml(r) {
   const age = r.child_age != null ? `${r.child_age} г.` : '—';
   return `
@@ -65,7 +76,7 @@ function rowHtml(r) {
           <input type="time" class="js-time" step="900" value="${r.training_time || ''}" aria-label="Час на тренировката">
         </div>
       </td>
-      <td class="check-cell" data-label="Записан"><input type="checkbox" class="js-processed" ${r.processed ? 'checked' : ''} aria-label="Записан">${notifiedBadge(r)}</td>
+      <td class="check-cell" data-label="Записан">${checkCellHtml(r)}</td>
     </tr>`;
 }
 
@@ -204,8 +215,7 @@ notifyYes.addEventListener('click', async () => {
 
     Object.assign(record, data.registration);
     const tr = tbody.querySelector(`tr[data-id="${record.id}"]`);
-    if (tr) tr.querySelector('.check-cell').innerHTML =
-      `<input type="checkbox" class="js-processed" checked aria-label="Записан">${notifiedBadge(record)}`;
+    if (tr) tr.querySelector('.check-cell').innerHTML = checkCellHtml(record);
 
     closeNotifyModal();
     flashStatus(data.sent
