@@ -56,7 +56,7 @@ def _csrf_ok():
     if request.method in ("GET", "HEAD", "OPTIONS"):
         return True
     expected = session.get("pcsrf", "")
-    return bool(expected) and hmac.compare_digest(request.headers.get("X-CSRF-Token", ""), expected)
+    return bool(expected) and hmac.compare_digest(request.headers.get("X-CSRF-Token", "").encode(), expected.encode())
 
 
 def parent_pending(parent):

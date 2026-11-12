@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Картотекиране — ФА Герман</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="parent.css">
+</head>
+<body class="parent-body">
+  <header class="parent-header">
+    <span class="brand-mark">FA</span>
+    <div class="who">
+      <span id="who"></span>
+      <a href="/parent-change-password.html">Смяна на парола</a>
+      <button id="logoutBtn" class="btn btn-ghost" type="button">Изход</button>
+    </div>
+  </header>
+  <main class="parent-main">
+    <p><a href="/parent-portal.html" class="text-link">← Към портала</a></p>
+    <h1 id="title">Картотекиране</h1>
+    <p id="subtitle" class="parent-lead"></p>
+
+    <section id="received" class="parent-card" hidden>
+      <h2>Картотеката е получена ✓</h2>
+      <p class="muted">Благодарим! Документите за този сезон са приключени и качените файлове са изтрити.</p>
+    </section>
+
+    <section id="howto" class="parent-card" hidden>
+      <h2>Как се прави картотекирането</h2>
+      <ol id="steps" class="steps"></ol>
+      <p class="muted privacy-note">Данните не се запазват извън файловете, които качвате. Файловете са шифровани и се виждат само от главния треньор.</p>
+    </section>
+
+    <div id="docs" aria-live="polite"><p class="muted">Зареждане...</p></div>
+  </main>
+  <script src="parent-common.js"></script>
+  <script src="parent-documents.js"></script>
+</body>
+</html>

@@ -91,6 +91,9 @@ def create_app(config_object="config.Config"):
     from app.routes.players import admin_players_bp
     app.register_blueprint(parent_bp, url_prefix="/api")  # /api/parent/*
     app.register_blueprint(admin_players_bp, url_prefix="/api")  # /api/admin/players
+    from app.routes.documents import admin_docs_bp, parent_docs_bp
+    app.register_blueprint(parent_docs_bp, url_prefix="/api")  # /api/parent/documents, /files
+    app.register_blueprint(admin_docs_bp, url_prefix="/api")  # /api/admin/documents, /files
 
     from app.routes.uploads import files_bp, uploads_bp
     app.register_blueprint(uploads_bp, url_prefix="/api")  # POST /api/admin/uploads

@@ -3,7 +3,9 @@
   let csrf = '';
 
   async function api(url, options = {}) {
-    const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+    const headers = { ...(options.headers || {}) };
+    // При качване на файл браузърът сам слага Content-Type (с граница); иначе е JSON.
+    if (!(options.body instanceof FormData) && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
     if (csrf) headers['X-CSRF-Token'] = csrf;
     const res = await fetch(url, { credentials: 'same-origin', ...options, headers });
     const data = await res.json().catch(() => ({}));

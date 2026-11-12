@@ -17,6 +17,8 @@ from flask import Blueprint, jsonify, request
 
 from app import db
 from app.auth import check_admin, current_user
+from app.doc_storage import delete_files
+from app.documents_catalog import ensure_set, purge_files, summary as docs_summary
 from app.mailer import (
     MailError, build_parent_child_added_email, build_parent_new_password_email,
     build_parent_welcome_email, send_email,
@@ -153,12 +155,26 @@ def list_players():
                    or (manager and (needle in p.parent.display_name.casefold() or needle in p.parent.email))]
     players.sort(key=lambda p: (sort_key(player_team(p)[0]) if player_team(p)[0] else (2, 0), p.child_name.casefold()))
 
+    # Документи за картотекиране: само за главен админ и главен треньор.
+    docs = {}
+    if manager:
+        for p in players:
+            card, items = ensure_set(p, season_end)
+            docs[p.id] = docs_summary(card, items)
+        db.session.commit()
+        wanted = request.args.get("docs")
+        if wanted == "missing":
+            players = [p for p in players if not docs[p.id]["card_received"] and docs[p.id]["done"] < docs[p.id]["total"]]
+        elif wanted == "pending":
+            players = [p for p in players if docs[p.id]["pending"] > 0]
+
     teams = sorted(Team.query.filter_by(status="active").all(), key=sort_key)
     return jsonify({
         "ok": True,
         "season": season_text(season_end),
         "can_edit": manager,
-        "players": [player_dict(p, season_end, manager=manager) for p in players],
+        "players": [{**player_dict(p, season_end, manager=manager), **({"docs": docs[p.id]} if manager else {})}
+                    for p in players],
         "teams": [{"id": t.id, "label": u_label(t, season_end)} for t in teams],
     })
 
@@ -359,9 +375,16 @@ def archive_player(player_id):
         return _error("Профилът не е намерен.", 404)
     player.archived = True
     player.updated_by = _who()
+    # Документите не са нужни за напуснало дете: файловете се изтриват, статусите се нулират.
+    names = purge_files(player.documents)
+    for doc in player.documents:
+        if not doc.archived:
+            doc.status = "waiting"
+            doc.comment = ""
     db.session.flush()
     _sync_parent_access(player.parent)
     db.session.commit()
+    delete_files(names)
     return jsonify({"ok": True, "player": player_dict(player, get_season_end_year(), manager=True)})
 
 
@@ -400,11 +423,13 @@ def delete_player(player_id):
     parent = player.parent
     for registration in Registration.query.filter_by(player_id=player.id).all():
         registration.player_id = None
-    db.session.delete(player)
+    names = purge_files(player.documents)
+    db.session.delete(player)  # документите и комплектите се трият каскадно
     db.session.flush()
     if not parent.players:
         db.session.delete(parent)
     db.session.commit()
+    delete_files(names)
     return jsonify({"ok": True})
 
 

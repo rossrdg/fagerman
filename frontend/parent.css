@@ -39,3 +39,29 @@
 .parent-body .btn-outline:hover{background:#f0f3f1}
 .parent-header .btn-ghost{background:transparent;border:1px solid #ffffff55;color:#fff}
 .parent-header .btn-ghost:hover{background:#fff;color:var(--dark)}
+/* Документи за картотекиране */
+.child-docs{margin:0 0 14px;font-size:14px}
+.steps{margin:8px 0 12px;padding-left:20px;font-size:15px;color:#34443c}
+.steps li{margin-bottom:8px}
+.privacy-note{font-size:13px}
+.doc-card .doc-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.doc-card .doc-head h2{margin:0}
+.doc-pill{display:inline-block;margin-left:6px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:800;background:#f0f3f1;color:var(--muted);white-space:nowrap}
+.doc-pill.doc-uploaded{background:#e6f0fb;color:#0558b0}
+.doc-pill.doc-approved{background:#e3f6ea;color:#16803c}
+.doc-pill.doc-returned{background:#fff7e6;color:#7a5a06}
+.doc-note{background:#fff7e6;border:1px solid #f0c975;color:#7a5a06;padding:10px 14px;border-radius:10px;font-size:14px;margin:6px 0 12px}
+.doc-files{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.doc-file-wrap{position:relative}
+.doc-file{display:grid;place-items:center;width:96px;height:96px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#f0f3f1;text-align:center}
+.doc-file img{width:100%;height:100%;object-fit:cover;display:block}
+.doc-file-pdf{font:800 18px Manrope,Inter,sans-serif;color:#c0392b}
+.doc-file-remove{position:absolute;top:-8px;right:-8px;width:26px;height:26px;border-radius:50%;border:1px solid #cbd6d0;background:#fff;color:#c0392b;font-size:16px;line-height:1;cursor:pointer}
+.doc-controls{display:grid;gap:12px;justify-items:start;margin-top:12px}
+.doc-controls .check{display:flex;align-items:flex-start;gap:9px;font-size:14px}
+.doc-controls .check input{margin-top:3px}
+.upload-pick{cursor:pointer}
+.upload-progress{font-size:13px;color:#4a5a52}
+.upload-progress .err{color:#c0392b;font-weight:700}
+.doc-state{margin:10px 0 0;font-weight:700;color:var(--muted)}
+.doc-state.ok{color:#16803c}

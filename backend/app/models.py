@@ -637,3 +637,66 @@ class Player(db.Model):
 
     parent = db.relationship("ParentAccount", backref=db.backref("players", lazy="select"))
     team_override = db.relationship("Team", foreign_keys=[team_override_id])
+
+
+# ------------------------------------------------ документи за картотекиране ---
+DOC_WAITING = "waiting"    # чака (още не е изпратен)
+DOC_UPLOADED = "uploaded"  # качен, чака проверка
+DOC_APPROVED = "approved"  # одобрен
+DOC_RETURNED = "returned"  # върнат за поправка (с коментар)
+DOC_STATUSES = (DOC_WAITING, DOC_UPLOADED, DOC_APPROVED, DOC_RETURNED)
+
+
+class CardSeason(db.Model):
+    """Картотекирането на едно дете за един сезон. „Картотеката е получена“ изтрива качените файлове."""
+
+    __tablename__ = "card_seasons"
+    __table_args__ = (db.UniqueConstraint("player_id", "season_end", name="uq_card_player_season"),)
+
+    id = db.Column(db.Integer, primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey("players.id", ondelete="CASCADE"), nullable=False, index=True)
+    season_end = db.Column(db.Integer, nullable=False)
+    card_received_at = db.Column(db.DateTime, nullable=True)
+    card_received_by = db.Column(db.String(80), nullable=False, default="")
+    created_at = db.Column(db.DateTime, default=utcnow)
+
+    player = db.relationship("Player", backref=db.backref("card_seasons", cascade="all, delete-orphan"))
+
+
+class PlayerDocument(db.Model):
+    """Един документ от комплекта на детето за сезона (вид, статус, коментар на треньора)."""
+
+    __tablename__ = "player_documents"
+    __table_args__ = (db.UniqueConstraint("player_id", "season_end", "doc_type", name="uq_doc_player_season_type"),)
+
+    id = db.Column(db.Integer, primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey("players.id", ondelete="CASCADE"), nullable=False, index=True)
+    season_end = db.Column(db.Integer, nullable=False)
+    doc_type = db.Column(db.String(24), nullable=False)
+    status = db.Column(db.String(10), nullable=False, default=DOC_WAITING, server_default=DOC_WAITING)
+    comment = db.Column(db.String(500), nullable=False, default="")
+    consent_at = db.Column(db.DateTime, nullable=True)  # за снимката: съгласие на родителя при качване
+    submitted_at = db.Column(db.DateTime, nullable=True)
+    reviewed_at = db.Column(db.DateTime, nullable=True)
+    reviewed_by = db.Column(db.String(80), nullable=False, default="")
+    archived = db.Column(db.Boolean, nullable=False, default=False, server_default="0")  # след „картотеката е получена“
+    created_at = db.Column(db.DateTime, default=utcnow)
+
+    player = db.relationship("Player", backref=db.backref("documents", cascade="all, delete-orphan"))
+    files = db.relationship("DocumentFile", backref="document", cascade="all, delete-orphan",
+                            order_by="DocumentFile.position, DocumentFile.id")
+
+
+class DocumentFile(db.Model):
+    """Качен файл (снимка или PDF). Самото съдържание е шифровано в DOCS_DIR/<name>.bin."""
+
+    __tablename__ = "document_files"
+
+    id = db.Column(db.Integer, primary_key=True)
+    document_id = db.Column(db.Integer, db.ForeignKey("player_documents.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = db.Column(db.String(32), nullable=False, unique=True)  # случайно име на файла
+    mime = db.Column(db.String(20), nullable=False)               # image/jpeg | application/pdf
+    size = db.Column(db.Integer, nullable=False, default=0)
+    position = db.Column(db.Integer, nullable=False, default=0)
+    uploaded_by = db.Column(db.String(80), nullable=False, default="")
+    created_at = db.Column(db.DateTime, default=utcnow)

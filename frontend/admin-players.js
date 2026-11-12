@@ -76,7 +76,7 @@ function emailMessage(status) {
 // ------------------------------------------------------------ списък ---
 function headRow() {
   const cols = canEdit
-    ? ['Дете', 'Отбор', 'Родител', 'Статус', 'Вход в портала', '']
+    ? ['Дете', 'Отбор', 'Родител', 'Статус', 'Документи', 'Вход в портала', '']
     : ['Дете', 'Отбор', 'Статус'];
   head.textContent = '';
   const tr = el('tr');
@@ -89,6 +89,17 @@ function portalText(p) {
   if (!par.is_active) return 'достъпът е спрян';
   if (!par.last_login_at) return par.must_change_password ? 'още не е влизал' : 'не е влизал';
   return par.must_change_password ? 'чака смяна на парола' : 'активен';
+}
+
+function docsCell(p) {
+  const td = el('td');
+  if (!p.docs || p.archived) { td.textContent = '—'; return td; }
+  const d = p.docs;
+  if (d.card_received) { td.append(el('span', 'doc-pill doc-approved', 'Картотека получена')); return td; }
+  td.append(el('strong', '', `${d.done}/${d.total}`), document.createTextNode(' готови'));
+  if (d.pending) td.append(el('span', 'doc-pill doc-uploaded', `${d.pending} за проверка`));
+  if (d.returned) td.append(el('span', 'doc-pill doc-returned', `${d.returned} върнати`));
+  return td;
 }
 
 function btn(text, onClick, danger = false) {
@@ -104,7 +115,7 @@ function renderList() {
   if (!players.length) {
     const tr = el('tr');
     const td = el('td', 'empty-state', 'Няма профили по тези филтри.');
-    td.colSpan = canEdit ? 6 : 3;
+    td.colSpan = canEdit ? 7 : 3;
     tr.append(td);
     body.append(tr);
   }
@@ -132,10 +143,16 @@ function renderList() {
     tr.append(st);
 
     if (canEdit) {
+      tr.append(docsCell(p));
       tr.append(el('td', '', portalText(p)));
       const actions = el('td');
       const row = el('div', 'row-actions');
       row.append(btn('Редактирай', () => openForm(p)));
+      if (!p.archived) {
+        const docs = el('a', 'btn btn-outline btn-sm', 'Документи');
+        docs.href = `admin-player-docs.html?id=${p.id}`;
+        row.append(docs);
+      }
       if (!p.archived) {
         row.append(btn('Нова парола', () => newPassword(p)), btn('Архивирай', () => archive(p)));
       } else {
@@ -172,12 +189,14 @@ async function load() {
   if ($('#teamFilter').value) params.set('team', $('#teamFilter').value);
   if ($('#statusFilter').value) params.set('status', $('#statusFilter').value);
   if ($('#archivedFilter').checked) params.set('archived', '1');
+  if ($('#docsFilter').value) params.set('docs', $('#docsFilter').value);
   const { res, data } = await api(`${API}?${params}`);
   if (!res.ok || !data.ok) throw new Error('api');
   players = data.players;
   teams = data.teams;
   canEdit = data.can_edit;
   $('#newBtn').hidden = !canEdit;
+  $('#docsFilterBox').hidden = !canEdit;
   renderFilters();
   renderList();
 }
@@ -334,7 +353,7 @@ $('#cancelBtn').addEventListener('click', closeForm);
 saveBtn.addEventListener('click', save);
 form.addEventListener('submit', (e) => e.preventDefault());
 f.birth.addEventListener('input', updateTeamHint);
-['#teamFilter', '#statusFilter', '#archivedFilter'].forEach(s => $(s).addEventListener('change', () => load()));
+['#teamFilter', '#statusFilter', '#archivedFilter', '#docsFilter'].forEach(s => $(s).addEventListener('change', () => load()));
 $('#q').addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(load, 300); });
 
 resetForm();

@@ -58,7 +58,7 @@ def _csrf_ok():
         return True
     sent = request.headers.get("X-CSRF-Token", "")
     expected = session.get("csrf", "")
-    return bool(expected) and hmac.compare_digest(sent, expected)
+    return bool(expected) and hmac.compare_digest(sent.encode(), expected.encode())
 
 
 def check_admin(owner_only=False):

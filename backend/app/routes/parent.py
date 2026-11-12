@@ -15,6 +15,7 @@ from app.models import ParentAccount, Player, utcnow
 from app.parent_auth import (
     current_parent, login_parent, logout_parent, parent_csrf_token, parent_pending, parent_required,
 )
+from app.documents_catalog import ensure_set, summary as docs_summary
 from app.player_utils import parent_child_dict
 from app.team_utils import get_season_end_year, season_text
 
@@ -120,6 +121,13 @@ def change_password():
     return jsonify(_me(parent))
 
 
+def _child_with_docs(player, season_end):
+    data = parent_child_dict(player, season_end)
+    card, docs = ensure_set(player, season_end)
+    data["docs"] = docs_summary(card, docs)
+    return data
+
+
 @parent_bp.get("/parent/children")
 @parent_required
 def children():
@@ -127,8 +135,10 @@ def children():
     season_end = get_season_end_year()
     players = (Player.query.filter_by(parent_id=parent.id, archived=False)
                .order_by(Player.child_name).all())
+    children_data = [_child_with_docs(p, season_end) for p in players]
+    db.session.commit()
     return jsonify({
         "ok": True,
         "season": season_text(season_end),
-        "children": [parent_child_dict(p, season_end) for p in players],
+        "children": children_data,
     })

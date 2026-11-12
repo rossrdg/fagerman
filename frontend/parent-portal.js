@@ -24,7 +24,21 @@ function childCard(c) {
   add('От:', fmtDate(c.start_date));
   card.append(meta);
 
+  if (c.docs) {
+    const d = c.docs;
+    const line = el('p', 'child-docs');
+    if (d.card_received) line.append(el('strong', '', 'Картотеката е получена ✓'));
+    else {
+      line.append(el('span', 'muted', 'Документи за картотекиране: '), el('strong', '', `${d.done} от ${d.total} готови`));
+      if (d.returned) line.append(el('span', 'doc-pill doc-returned', 'има върнат документ'));
+    }
+    card.append(line);
+  }
+
   const links = el('div', 'child-links');
+  const docs = el('a', 'btn btn-primary btn-sm', 'Картотекиране и документи');
+  docs.href = `/parent-documents.html?child=${c.id}`;
+  links.append(docs);
   const schedule = el('a', 'btn btn-outline btn-sm', 'Тренировъчен график');
   schedule.href = '/schedule';
   links.append(schedule);
