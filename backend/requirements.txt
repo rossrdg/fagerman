@@ -8,3 +8,5 @@ pillow-heif==1.8.1   # снимки HEIC/HEIF от iPhone (по желание �
 openpyxl==3.1.5  # само за еднократното зареждане на програмата от Excel (flask import-matches)
 tzdata==2024.2   # часова зона Europe/Sofia за отчетите (на Windows няма вградена база)
 cryptography==50.0.2  # шифроване на документите за картотекиране (DOCS_KEY)
+pypdf==5.9.0  # попълване на бланките на БФС
+reportlab==5.0.1  # текст върху бланките (шрифт Carlito)

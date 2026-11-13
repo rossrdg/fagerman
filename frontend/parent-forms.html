@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Попълване на бланките — ФА Герман</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="parent.css">
+</head>
+<body class="parent-body">
+  <header class="parent-header">
+    <span class="brand-mark">FA</span>
+    <div class="who">
+      <span id="who"></span>
+      <button id="logoutBtn" class="btn btn-ghost" type="button">Изход</button>
+    </div>
+  </header>
+  <main class="parent-main">
+    <p><a id="backLink" href="/parent-portal.html" class="text-link">← Към документите</a></p>
+    <h1>Попълване на бланките</h1>
+    <p id="subtitle" class="parent-lead"></p>
+
+    <div class="privacy-banner" role="note">
+      <strong>Данните не се запазват.</strong> Въведените ЕГН, лична карта и имена се ползват само за да се попълни документът и не се пазят на сървъра. Свалете документа сега — ако Ви потрябва нов, попълнете формата отново.
+    </div>
+
+    <form id="docForm" class="parent-card forms-card" autocomplete="off" novalidate>
+      <div id="fields"></div>
+      <div class="forms-actions">
+        <button id="genBtn" class="btn btn-primary btn-large" type="submit">Свали готовия документ (PDF)</button>
+      </div>
+      <div id="formStatus" class="parent-status" role="alert" aria-live="polite"></div>
+      <p class="muted" style="font-size:13px">Документът съдържа заявлението, декларацията и медицинското удостоверение. Разпечатайте го, подпишете заявлението и декларацията, а медицинското дайте на лекаря.</p>
+    </form>
+  </main>
+  <script src="parent-common.js"></script>
+  <script src="parent-forms.js"></script>
+</body>
+</html>

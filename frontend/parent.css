@@ -65,3 +65,15 @@
 .upload-progress .err{color:#c0392b;font-weight:700}
 .doc-state{margin:10px 0 0;font-weight:700;color:var(--muted)}
 .doc-state.ok{color:#16803c}
+
+/* Формата за бланките */
+.privacy-banner{background:#e6f0fb;border:1px solid #b9d4f3;color:#0558b0;padding:14px 18px;border-radius:14px;font-size:14px;margin-bottom:16px}
+.forms-card{max-width:none}
+.forms-group{border:0;margin:0 0 18px;padding:0}
+.forms-group legend{font:800 17px Manrope,Inter,sans-serif;margin:0 0 12px;padding:0}
+.field-label{display:block;font-size:12px;font-weight:800;margin-bottom:14px;color:#334039}
+.field-label input{display:block;width:100%;max-width:520px;margin-top:6px;border:1px solid #d8e0db;border-radius:10px;padding:12px 14px;font:inherit;font-size:15px;background:#fbfcfb}
+.field-label input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px #0779ea22}
+.field-hint{display:block;margin-top:4px;font-size:12px;font-weight:500;color:var(--muted)}
+.forms-actions{margin:18px 0 6px}
+.forms-actions .btn{width:100%;max-width:520px}

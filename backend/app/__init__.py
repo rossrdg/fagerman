@@ -94,6 +94,9 @@ def create_app(config_object="config.Config"):
     from app.routes.documents import admin_docs_bp, parent_docs_bp
     app.register_blueprint(parent_docs_bp, url_prefix="/api")  # /api/parent/documents, /files
     app.register_blueprint(admin_docs_bp, url_prefix="/api")  # /api/admin/documents, /files
+    from app.routes.forms import admin_forms_bp, parent_forms_bp
+    app.register_blueprint(parent_forms_bp, url_prefix="/api")  # /api/parent/children/<id>/forms/*
+    app.register_blueprint(admin_forms_bp, url_prefix="/api")  # /api/admin/settings/club-name
 
     from app.routes.uploads import files_bp, uploads_bp
     app.register_blueprint(uploads_bp, url_prefix="/api")  # POST /api/admin/uploads

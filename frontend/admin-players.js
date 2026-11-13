@@ -347,6 +347,24 @@ async function purge(p) {
   flash('Профилът е изтрит ✓');
 }
 
+// ------------------------------------------------- име на клуба (бланки) ---
+async function loadClub() {
+  const { res, data } = await api('/api/admin/settings/club-name');
+  if (!res.ok || !data.ok) return;
+  $('#clubBox').hidden = false;
+  $('#f-club').value = data.club_name;
+}
+
+$('#clubSave').addEventListener('click', async () => {
+  const err = document.querySelector('#clubForm [data-error-for="club_name"]');
+  err.textContent = '';
+  const { res, data } = await api('/api/admin/settings/club-name', { method: 'PUT', body: JSON.stringify({ club_name: $('#f-club').value }) });
+  if (!res.ok || !data.ok) { err.textContent = (data.errors && data.errors.club_name) || data.error || 'Неуспешно запазване.'; return; }
+  $('#f-club').value = data.club_name;
+  flash('Името на клуба е запазено ✓');
+});
+$('#clubForm').addEventListener('submit', (e) => e.preventDefault());
+
 // ------------------------------------------------------------- старт ---
 $('#newBtn').addEventListener('click', () => openForm(null));
 $('#cancelBtn').addEventListener('click', closeForm);
@@ -358,6 +376,7 @@ $('#q').addEventListener('input', () => { clearTimeout(searchTimer); searchTimer
 
 resetForm();
 load().then(() => {
+  if (canEdit) loadClub();
   const from = Number(new URLSearchParams(location.search).get('from'));
   if (from && canEdit) openFromRegistration(from);
 }).catch(() => {

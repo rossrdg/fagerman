@@ -34,5 +34,7 @@
     return node;
   }
 
-  window.Parent = { api, requireLogin, setCsrf, logout, el };
+  function getCsrf() { return csrf; }
+
+  window.Parent = { api, requireLogin, setCsrf, getCsrf, logout, el };
 })();

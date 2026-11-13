@@ -134,6 +134,18 @@
         <tbody id="playersBody"></tbody>
       </table>
     </div>
+    <section id="clubBox" class="gal-block" hidden>
+      <h3>Име на клуба за бланките</h3>
+      <form id="clubForm" class="gal-form" novalidate>
+        <div class="field grow">
+          <label for="f-club">Официално име на клуба по регистрация</label>
+          <input id="f-club" maxlength="120" autocomplete="off">
+          <div class="field-hint">Слага се в реда „До Председателя на …“ на заявленията. Празно поле = стандартното име.</div>
+          <div class="field-error" data-error-for="club_name"></div>
+        </div>
+        <button id="clubSave" class="btn btn-primary" type="button">Запази</button>
+      </form>
+    </section>
     <p class="user-hint">„Архивирай“ скрива профила и спира достъпа на родителя до детето; данните се пазят. Истинско изтриване прави само главният администратор и само за архивиран профил.</p>
   </main>
 

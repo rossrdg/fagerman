@@ -145,6 +145,8 @@ function render() {
   document.querySelector('#title').textContent = state.child_name;
   document.querySelector('#subtitle').textContent = `Картотекиране за сезон ${state.season} · ${state.category_label}`;
   document.querySelector('#received').hidden = !state.card_received;
+  document.querySelector('#formsCard').hidden = state.card_received;
+  document.querySelector('#formsLink').href = `/parent-forms.html?child=${childId}`;
   const howto = document.querySelector('#howto');
   howto.hidden = state.card_received;
   const steps = document.querySelector('#steps');
