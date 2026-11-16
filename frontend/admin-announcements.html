@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Известия — Админ — ФА Герман</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin.css">
+  <script src="admin-auth.js"></script>
+</head>
+<body class="admin-body">
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <span class="brand-mark">FA</span>
+      <div><strong>ФА Герман — Админ</strong><small>Известия към родителите</small></div>
+    </div>
+  </header>
+
+  <nav class="admin-nav" aria-label="Админ навигация">
+    <a href="admin-registrations.html">Записани за пробна тренировка</a>
+    <a href="admin-news.html">Новини</a>
+    <!-- Останалите менюта се добавят от admin-auth.js -->
+  </nav>
+
+  <main class="admin-main">
+    <div class="admin-toolbar">
+      <div>
+        <h1>Известия</h1>
+        <div id="status" class="admin-status" aria-live="polite">Зареждане...</div>
+      </div>
+      <div class="toolbar-actions">
+        <button id="newBtn" class="btn btn-primary" type="button">+ Ново известие</button>
+      </div>
+    </div>
+
+    <form id="annForm" class="news-form slot-form" novalidate hidden>
+      <h2 id="formTitle" class="slot-form-title">Ново известие</h2>
+      <div class="field">
+        <label for="f-title">Заглавие *</label>
+        <input id="f-title" maxlength="120" autocomplete="off">
+        <div class="field-error" data-error-for="title"></div>
+      </div>
+      <div class="field">
+        <label for="f-body">Текст *</label>
+        <textarea id="f-body" rows="6" maxlength="2000"></textarea>
+        <div class="field-hint">Обикновен текст; нов абзац — с празен ред. След публикуване може да го изпратите и по имейл. <span id="bodyCount">0</span>/2000</div>
+        <div class="field-error" data-error-for="body"></div>
+      </div>
+      <div class="field">
+        <label>За кого *</label>
+        <div class="check-grid">
+          <label class="check-item"><input type="radio" name="aud" value="all" checked><span>Всички родители</span></label>
+          <label class="check-item"><input type="radio" name="aud" value="team"><span>Родителите на един отбор</span></label>
+          <label class="check-item"><input type="radio" name="aud" value="player"><span>Родителя на едно дете</span></label>
+        </div>
+        <div id="audTeam" class="field narrow" style="margin-top:10px" hidden><select id="f-team"></select></div>
+        <div id="audPlayer" style="margin-top:10px" hidden>
+          <input id="f-psearch" type="search" placeholder="търси дете…" autocomplete="off" style="margin-bottom:8px">
+          <select id="f-player" size="6" style="width:100%;max-width:420px"></select>
+        </div>
+        <div class="field-error" data-error-for="team_id"></div>
+        <div class="field-error" data-error-for="player_id"></div>
+        <div class="field-error" data-error-for="audience"></div>
+      </div>
+      <div class="match-grid">
+        <div class="field">
+          <label for="f-publish">Показва се от</label>
+          <input id="f-publish" type="date">
+          <div class="field-hint">Празно = от днес. По-късна дата = насрочено.</div>
+          <div class="field-error" data-error-for="publish_date"></div>
+        </div>
+        <div class="field">
+          <label for="f-expires">Показва се до (включително)</label>
+          <input id="f-expires" type="date">
+          <div class="field-hint">Празно = без край, докато не го скриете.</div>
+          <div class="field-error" data-error-for="expires_date"></div>
+        </div>
+      </div>
+      <div id="recipientsHint" class="user-hint"></div>
+      <div class="form-actions">
+        <button id="saveBtn" class="btn btn-primary" type="button">Публикувай</button>
+        <button id="cancelBtn" class="btn btn-outline" type="button">Отказ</button>
+      </div>
+    </form>
+
+    <div class="table-wrap">
+      <table id="annTable" class="admin-table fee-table" hidden>
+        <thead><tr><th>Известие</th><th>За кого</th><th>Показва се</th><th>Състояние</th><th></th></tr></thead>
+        <tbody id="annBody"></tbody>
+      </table>
+    </div>
+    <p class="user-hint">Известията се виждат в родителския портал, под „Съобщения“. „Изпрати по имейл“ праща копие на родителите, които го получават (само за известие, което се показва сега). „Скрий“ го маха от портала, без да го изтрива.</p>
+  </main>
+  <script src="admin-announcements.js"></script>
+</body>
+</html>

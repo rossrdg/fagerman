@@ -304,3 +304,56 @@
 .quick-score input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px #0779ea22}
 .match-table .row-actions{flex-wrap:wrap}
 @media(max-width:767px){.match-grid .field.wide,.match-grid .field-hint.wide{grid-column:auto}.match-table{font-size:13px}}
+
+/* Футболисти */
+.players-table{white-space:normal}
+.players-table th,.players-table td{vertical-align:middle}
+.picker input[type=search]{border:1px solid #d8e0db;border-radius:10px;padding:10px 12px;font:inherit;font-size:13px;background:#fff;min-width:180px}
+.profile-link{display:inline-flex;margin-top:8px;white-space:nowrap}
+.info-box{background:#e6f0fb;border:1px solid #b9d4f3;color:#0558b0;padding:12px 16px;border-radius:10px;font-size:13px;font-weight:600}
+/* Документи за картотекиране */
+.docs-card-box{max-width:960px}
+.docs-card-box h2{font-size:18px;margin:0 0 8px}
+.docs-add-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.docs-add-row select{border:1px solid #d8e0db;border-radius:10px;padding:10px 12px;font:inherit;font-size:13px;background:#fff;min-width:260px}
+.doc-admin{max-width:960px}
+.doc-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.doc-head h2{margin:0;font-size:18px}
+.doc-pill{display:inline-block;margin-left:6px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:800;background:#f0f3f1;color:var(--muted);white-space:nowrap}
+.doc-pill.doc-uploaded{background:#e6f0fb;color:#0558b0}
+.doc-pill.doc-approved{background:#e3f6ea;color:#16803c}
+.doc-pill.doc-returned{background:#fff7e6;color:#7a5a06}
+.doc-comment{background:#fff7e6;border:1px solid #f0c975;color:#7a5a06;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;margin:0 0 10px}
+.doc-files{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.doc-file{display:grid;place-items:center;width:110px;height:110px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#f0f3f1;text-align:center}
+.doc-file img{width:100%;height:100%;object-fit:cover;display:block}
+.doc-file-pdf{font:800 18px Manrope,Inter,sans-serif;color:#c0392b}
+.doc-actions{justify-content:flex-start;flex-wrap:wrap;margin-top:6px}
+.return-box{margin-top:12px;display:grid;gap:8px;max-width:520px}
+.return-box textarea{width:100%;border:1px solid #d8e0db;border-radius:10px;padding:10px 12px;font:inherit;background:#fbfcfb}
+
+/* Такси */
+.fee-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 18px}
+.fee-tab{font:inherit;font-size:13px;font-weight:700;padding:10px 16px;border:1px solid var(--line);border-radius:10px;background:#fff;color:#334039;cursor:pointer}
+.fee-tab.active{background:var(--green);border-color:var(--green);color:#fff}
+.fee-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px}
+.fee-controls .picker input{border:1px solid #d8e0db;border-radius:10px;padding:10px 12px;font:inherit;font-size:13px;background:#fff}
+.month-label{font:800 18px Manrope,Inter,sans-serif;min-width:170px;text-align:center;text-transform:capitalize}
+.fee-totals{font-size:14px;font-weight:700;color:#334039;margin:6px 0 12px}
+.fee-bulk{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start;margin-bottom:14px}
+.fee-range{flex:1 1 100%;font-size:13px}
+.fee-range summary{cursor:pointer;font-weight:700;color:#334039;padding:6px 0}
+.fee-range-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin:8px 0}
+.fee-table{white-space:normal}
+.fee-amount{width:84px;border:1px solid #d8e0db;border-radius:8px;padding:7px 8px;font:inherit;font-size:13px;background:#fbfcfb}
+.fee-note{width:100%;min-width:140px;border:1px solid #d8e0db;border-radius:8px;padding:7px 8px;font:inherit;font-size:13px;background:#fbfcfb}
+.fee-status{font:inherit;font-size:13px;font-weight:700;border:1px solid #d8e0db;border-radius:8px;padding:7px 8px;background:#fff}
+.fee-status.st-paid{background:#e3f6ea;color:#16803c;border-color:#b6e2c5}
+.fee-status.st-waived{background:#f0f3f1;color:var(--muted)}
+.fee-status.st-unpaid{background:#fff7e6;color:#7a5a06;border-color:#f0c975}
+.fee-summary{display:flex;gap:18px;flex-wrap:wrap;margin:0 0 14px;font-size:15px}
+.fee-summary strong{font:800 18px Manrope,Inter,sans-serif}
+.history-list{list-style:none;margin:0;padding:0;font-size:13px}
+.history-list li{padding:8px 0;border-top:1px solid #edf1ee;color:#34443c}
+.history-list li:first-child{border-top:0}
+.history-list small{color:var(--muted);margin-left:6px}

@@ -1,0 +1,94 @@
+/* Родителски портал: вход, смяна на парола, начална страница */
+.parent-body{background:var(--light);min-height:100vh}
+.parent-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 28px;background:var(--dark);color:#fff}
+.parent-header .brand-mark{display:grid;place-items:center;width:38px;height:38px;border:2px solid var(--green);border-radius:9px;font:800 13px Manrope;color:var(--green);transform:skew(-8deg)}
+.parent-header .who{display:flex;align-items:center;gap:12px;font-size:13px;color:#d7e0db;flex-wrap:wrap;justify-content:flex-end}
+.parent-header .who a{color:#d7e0db;text-decoration:underline;font-weight:600}
+.parent-header .btn{padding:8px 14px;font-size:11px}
+.parent-main{max-width:860px;margin:0 auto;padding:32px 20px 80px}
+.parent-main h1{font-size:clamp(28px,4vw,40px);margin-bottom:10px}
+.parent-lead{font-size:16px;color:#34443c;margin-bottom:26px}
+.parent-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px 26px;margin-bottom:16px}
+.parent-card h2{font-size:20px;margin:0 0 6px}
+.parent-card p{margin:0 0 8px;font-size:15px}
+.parent-card .muted{color:var(--muted)}
+.child-card h2{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.child-meta{display:flex;flex-wrap:wrap;gap:10px 22px;margin:10px 0 14px;font-size:14px;color:#34443c}
+.child-meta strong{font-weight:800}
+.child-links{display:flex;gap:10px;flex-wrap:wrap}
+.parent-soon{border-style:dashed;background:#fbfcfb}
+.parent-form{max-width:460px}
+.parent-form label{display:block;font-size:12px;font-weight:800;margin-bottom:16px;color:#334039}
+.parent-form input[type=email],.parent-form input[type=password]{width:100%;margin-top:7px;border:1px solid #d8e0db;border-radius:10px;padding:13px 14px;font:inherit;background:#fbfcfb}
+.parent-form input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px #0779ea22}
+.parent-form .check{display:flex;align-items:flex-start;gap:9px;font-weight:500}
+.parent-form .check input{width:auto;margin:3px 0 0}
+.parent-form .check a{color:var(--green);text-decoration:underline}
+.parent-form .btn{width:100%}
+.parent-status{margin-top:14px;font-weight:700;font-size:13px;min-height:1.2em}
+.parent-status.error{color:#d93025}
+.parent-status.success{color:#16803c}
+.parent-field-error{font-size:12px;font-weight:700;color:#d93025;margin-top:4px}
+.parent-field-error:empty{display:none}
+.login-wrap{display:grid;place-items:center;min-height:100vh;padding:20px}
+.login-wrap .parent-card{width:min(440px,100%);padding:34px}
+[hidden]{display:none!important}
+@media(max-width:767px){.parent-header{padding:14px 16px}.parent-main{padding:22px 14px 70px}.parent-card{padding:20px}}
+.parent-card h1{font-size:clamp(28px,4vw,40px);margin-bottom:12px}
+.parent-body .btn-outline{background:#fff;color:var(--dark);border-color:#cbd6d0}
+.parent-body .btn-outline:hover{background:#f0f3f1}
+.parent-header .btn-ghost{background:transparent;border:1px solid #ffffff55;color:#fff}
+.parent-header .btn-ghost:hover{background:#fff;color:var(--dark)}
+/* Документи за картотекиране */
+.child-docs{margin:0 0 14px;font-size:14px}
+.steps{margin:8px 0 12px;padding-left:20px;font-size:15px;color:#34443c}
+.steps li{margin-bottom:8px}
+.privacy-note{font-size:13px}
+.doc-card .doc-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.doc-card .doc-head h2{margin:0}
+.doc-pill{display:inline-block;margin-left:6px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:800;background:#f0f3f1;color:var(--muted);white-space:nowrap}
+.doc-pill.doc-uploaded{background:#e6f0fb;color:#0558b0}
+.doc-pill.doc-approved{background:#e3f6ea;color:#16803c}
+.doc-pill.doc-returned{background:#fff7e6;color:#7a5a06}
+.doc-note{background:#fff7e6;border:1px solid #f0c975;color:#7a5a06;padding:10px 14px;border-radius:10px;font-size:14px;margin:6px 0 12px}
+.doc-files{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.doc-file-wrap{position:relative}
+.doc-file{display:grid;place-items:center;width:96px;height:96px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#f0f3f1;text-align:center}
+.doc-file img{width:100%;height:100%;object-fit:cover;display:block}
+.doc-file-pdf{font:800 18px Manrope,Inter,sans-serif;color:#c0392b}
+.doc-file-remove{position:absolute;top:-8px;right:-8px;width:26px;height:26px;border-radius:50%;border:1px solid #cbd6d0;background:#fff;color:#c0392b;font-size:16px;line-height:1;cursor:pointer}
+.doc-controls{display:grid;gap:12px;justify-items:start;margin-top:12px}
+.doc-controls .check{display:flex;align-items:flex-start;gap:9px;font-size:14px}
+.doc-controls .check input{margin-top:3px}
+.upload-pick{cursor:pointer}
+.upload-progress{font-size:13px;color:#4a5a52}
+.upload-progress .err{color:#c0392b;font-weight:700}
+.doc-state{margin:10px 0 0;font-weight:700;color:var(--muted)}
+.doc-state.ok{color:#16803c}
+
+/* Формата за бланките */
+.privacy-banner{background:#e6f0fb;border:1px solid #b9d4f3;color:#0558b0;padding:14px 18px;border-radius:14px;font-size:14px;margin-bottom:16px}
+.forms-card{max-width:none}
+.forms-group{border:0;margin:0 0 18px;padding:0}
+.forms-group legend{font:800 17px Manrope,Inter,sans-serif;margin:0 0 12px;padding:0}
+.field-label{display:block;font-size:12px;font-weight:800;margin-bottom:14px;color:#334039}
+.field-label input{display:block;width:100%;max-width:520px;margin-top:6px;border:1px solid #d8e0db;border-radius:10px;padding:12px 14px;font:inherit;font-size:15px;background:#fbfcfb}
+.field-label input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px #0779ea22}
+.field-hint{display:block;margin-top:4px;font-size:12px;font-weight:500;color:var(--muted)}
+.forms-actions{margin:18px 0 6px}
+.forms-actions .btn{width:100%;max-width:520px}
+
+/* Съобщения: напомняне за такси (спокоен тон) */
+.message-card{background:#f3f8fe;border-color:#cfe2f7}
+.message-card h2{font-size:19px}
+.fee-list{list-style:none;margin:8px 0;padding:0}
+.fee-list li{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #dbe8f6;font-size:15px}
+.fee-list li:first-child{border-top:0}
+.fee-total{margin:10px 0 4px;font-size:16px}
+.pay-title{font-size:15px;margin:14px 0 4px}
+.pay-info{white-space:pre-line;font-size:14px;color:#34443c}
+
+/* Известия от академията */
+.announcement-card h2{font-size:19px;margin-bottom:4px}
+.announcement-meta{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--muted);margin:0 0 10px}
+.announcement-body{white-space:pre-line;font-size:15px;color:#24332b;margin:0}

@@ -128,6 +128,41 @@
       matches.textContent = 'Мачове';
       if (location.pathname.endsWith('admin-matches.html')) matches.classList.add('active');
       nav.appendChild(matches);
+
+      const players = document.createElement('a');
+      players.href = 'admin-players.html';
+      players.textContent = 'Футболисти';
+      if (location.pathname.endsWith('admin-players.html')) players.classList.add('active');
+      if (user.role === 'owner' || user.role === 'head_coach') {
+        // Значка: документи, които чакат проверка.
+        const docsBadge = document.createElement('span');
+        docsBadge.className = 'nav-badge';
+        docsBadge.hidden = true;
+        players.appendChild(docsBadge);
+        window.refreshDocsBadge = async function () {
+          try {
+            const res = await window.fetch('/api/admin/documents/summary');
+            const data = await res.json();
+            docsBadge.textContent = String(data.pending || 0);
+            docsBadge.hidden = !data.pending;
+          } catch (err) { /* значката не е критична */ }
+        };
+        window.refreshDocsBadge();
+      }
+      nav.appendChild(players);
+      if (user.role === 'owner' || user.role === 'head_coach') {
+        const fees = document.createElement('a');
+        fees.href = 'admin-fees.html';
+        fees.textContent = 'Такси';
+        if (location.pathname.endsWith('admin-fees.html') || location.pathname.endsWith('admin-player-fees.html')) fees.classList.add('active');
+        nav.appendChild(fees);
+
+        const ann = document.createElement('a');
+        ann.href = 'admin-announcements.html';
+        ann.textContent = 'Известия';
+        if (location.pathname.endsWith('admin-announcements.html')) ann.classList.add('active');
+        nav.appendChild(ann);
+      }
     }
     if (nav && (user.role === 'owner' || user.role === 'head_coach')) {
       const shop = document.createElement('a');

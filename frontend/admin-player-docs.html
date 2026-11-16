@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Документи — Админ — ФА Герман</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin.css">
+  <script src="admin-auth.js"></script>
+</head>
+<body class="admin-body">
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <span class="brand-mark">FA</span>
+      <div><strong>ФА Герман — Админ</strong><small>Документи за картотекиране</small></div>
+    </div>
+  </header>
+
+  <nav class="admin-nav" aria-label="Админ навигация">
+    <a href="admin-registrations.html">Записани за пробна тренировка</a>
+    <a href="admin-news.html">Новини</a>
+    <!-- Останалите менюта се добавят от admin-auth.js -->
+  </nav>
+
+  <main class="admin-main">
+    <div class="admin-toolbar">
+      <div>
+        <h1 id="title">Документи</h1>
+        <div id="status" class="admin-status" aria-live="polite">Зареждане...</div>
+      </div>
+      <div class="toolbar-actions">
+        <a class="btn btn-outline" href="admin-players.html">← Всички футболисти</a>
+      </div>
+    </div>
+
+    <section id="cardBox" class="day-card docs-card-box" hidden></section>
+    <div id="docList"></div>
+
+    <section id="addBox" class="day-card docs-card-box" hidden>
+      <h2>Добави документ към комплекта</h2>
+      <div class="docs-add-row">
+        <select id="addType"></select>
+        <button id="addBtn" class="btn btn-outline btn-sm" type="button">Добави</button>
+      </div>
+    </section>
+    <p class="user-hint">Файловете са шифровани и се виждат само от главния треньор и главния админ. „Картотеката е получена“ изтрива качените файлове и архивира комплекта.</p>
+  </main>
+  <script src="admin-player-docs.js"></script>
+</body>
+</html>

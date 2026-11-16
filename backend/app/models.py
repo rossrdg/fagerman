@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -24,10 +24,13 @@ class Registration(db.Model):
     processed = db.Column(db.Boolean, nullable=False, default=False, server_default="0")
     # When the parent was last emailed about the trial training (None = never).
     notified_at = db.Column(db.DateTime, nullable=True)
+    # Set when the head coach turns this request into a player profile (the row stays in the history).
+    player_id = db.Column(db.Integer, nullable=True)
 
     def to_dict(self):
         return {
             "id": self.id,
+            "player_id": self.player_id,
             "child_name": self.child_name,
             "child_age": self.child_age,
             "parent_name": self.parent_name,
@@ -564,3 +567,259 @@ class OrderItem(db.Model):
     @property
     def line_total_cents(self):
         return (self.unit_price_cents + self.personalization_fee_cents) * self.qty
+
+# ------------------------------------------------- футболисти и родители ---
+PLAYER_ACTIVE = "active"    # тренира
+PLAYER_PAUSED = "paused"    # в пауза
+PLAYER_LEFT = "left"        # напуснал
+PLAYER_STATUSES = (PLAYER_ACTIVE, PLAYER_PAUSED, PLAYER_LEFT)
+
+
+class ParentAccount(db.Model):
+    """Родителски акаунт за портала. Различен от AdminUser: няма достъп до админ страниците.
+    Потребителското име е имейлът. Към един акаунт могат да са свързани няколко деца."""
+
+    __tablename__ = "parent_accounts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), nullable=False, unique=True, index=True)  # малки букви
+    display_name = db.Column(db.String(120), nullable=False, default="")
+    phone = db.Column(db.String(40), nullable=False, default="")
+    password_hash = db.Column(db.String(255), nullable=False)
+    # Временна парола: трябва да се смени при първия вход и изтича, ако не се ползва.
+    must_change_password = db.Column(db.Boolean, nullable=False, default=True)
+    temp_password_expires_at = db.Column(db.DateTime, nullable=True)
+    # Кога родителят е потвърдил Политиката за поверителност (при първия вход).
+    consent_at = db.Column(db.DateTime, nullable=True)
+    # Вдига се при смяна/нова парола: отворените сесии спират веднага.
+    token_version = db.Column(db.Integer, nullable=False, default=1)
+    failed_attempts = db.Column(db.Integer, nullable=False, default=0)
+    locked_until = db.Column(db.DateTime, nullable=True)
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    created_at = db.Column(db.DateTime, default=utcnow)
+    last_login_at = db.Column(db.DateTime, nullable=True)
+
+    def set_password(self, password, temporary=False, valid_days=7):
+        self.password_hash = generate_password_hash(password, method=_HASH_METHOD)
+        self.token_version = (self.token_version or 0) + 1
+        self.must_change_password = temporary
+        self.temp_password_expires_at = (utcnow() + timedelta(days=valid_days)) if temporary else None
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    @property
+    def temp_password_expired(self):
+        return bool(self.must_change_password and self.temp_password_expires_at
+                    and self.temp_password_expires_at < utcnow())
+
+
+class Player(db.Model):
+    """Профил на дете (футболист). Отборът се определя по годината на раждане,
+    освен ако не е зададен ръчно (team_override_id)."""
+
+    __tablename__ = "players"
+
+    id = db.Column(db.Integer, primary_key=True)
+    parent_id = db.Column(db.Integer, db.ForeignKey("parent_accounts.id"), nullable=False, index=True)
+    registration_id = db.Column(db.Integer, nullable=True)  # от кое запитване за пробна тренировка е
+    child_name = db.Column(db.String(120), nullable=False)
+    birth_date = db.Column(db.Date, nullable=False)
+    team_override_id = db.Column(db.Integer, db.ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
+    status = db.Column(db.String(10), nullable=False, default=PLAYER_ACTIVE, server_default=PLAYER_ACTIVE)
+    archived = db.Column(db.Boolean, nullable=False, default=False, server_default="0")
+    start_date = db.Column(db.Date, nullable=True)
+    internal_notes = db.Column(db.Text, nullable=False, default="")  # невидими за родителя
+    created_by = db.Column(db.String(80), nullable=False, default="")
+    updated_by = db.Column(db.String(80), nullable=False, default="")
+    created_at = db.Column(db.DateTime, default=utcnow)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
+
+    parent = db.relationship("ParentAccount", backref=db.backref("players", lazy="select"))
+    team_override = db.relationship("Team", foreign_keys=[team_override_id])
+
+
+# ------------------------------------------------ документи за картотекиране ---
+DOC_WAITING = "waiting"    # чака (още не е изпратен)
+DOC_UPLOADED = "uploaded"  # качен, чака проверка
+DOC_APPROVED = "approved"  # одобрен
+DOC_RETURNED = "returned"  # върнат за поправка (с коментар)
+DOC_STATUSES = (DOC_WAITING, DOC_UPLOADED, DOC_APPROVED, DOC_RETURNED)
+
+
+class CardSeason(db.Model):
+    """Картотекирането на едно дете за един сезон. „Картотеката е получена“ изтрива качените файлове."""
+
+    __tablename__ = "card_seasons"
+    __table_args__ = (db.UniqueConstraint("player_id", "season_end", name="uq_card_player_season"),)
+
+    id = db.Column(db.Integer, primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey("players.id", ondelete="CASCADE"), nullable=False, index=True)
+    season_end = db.Column(db.Integer, nullable=False)
+    card_received_at = db.Column(db.DateTime, nullable=True)
+    card_received_by = db.Column(db.String(80), nullable=False, default="")
+    created_at = db.Column(db.DateTime, default=utcnow)
+
+    player = db.relationship("Player", backref=db.backref("card_seasons", cascade="all, delete-orphan"))
+
+
+class PlayerDocument(db.Model):
+    """Един документ от комплекта на детето за сезона (вид, статус, коментар на треньора)."""
+
+    __tablename__ = "player_documents"
+    __table_args__ = (db.UniqueConstraint("player_id", "season_end", "doc_type", name="uq_doc_player_season_type"),)
+
+    id = db.Column(db.Integer, primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey("players.id", ondelete="CASCADE"), nullable=False, index=True)
+    season_end = db.Column(db.Integer, nullable=False)
+    doc_type = db.Column(db.String(24), nullable=False)
+    status = db.Column(db.String(10), nullable=False, default=DOC_WAITING, server_default=DOC_WAITING)
+    comment = db.Column(db.String(500), nullable=False, default="")
+    consent_at = db.Column(db.DateTime, nullable=True)  # за снимката: съгласие на родителя при качване
+    submitted_at = db.Column(db.DateTime, nullable=True)
+    reviewed_at = db.Column(db.DateTime, nullable=True)
+    reviewed_by = db.Column(db.String(80), nullable=False, default="")
+    archived = db.Column(db.Boolean, nullable=False, default=False, server_default="0")  # след „картотеката е получена“
+    created_at = db.Column(db.DateTime, default=utcnow)
+
+    player = db.relationship("Player", backref=db.backref("documents", cascade="all, delete-orphan"))
+    files = db.relationship("DocumentFile", backref="document", cascade="all, delete-orphan",
+                            order_by="DocumentFile.position, DocumentFile.id")
+
+
+class DocumentFile(db.Model):
+    """Качен файл (снимка или PDF). Самото съдържание е шифровано в DOCS_DIR/<name>.bin."""
+
+    __tablename__ = "document_files"
+
+    id = db.Column(db.Integer, primary_key=True)
+    document_id = db.Column(db.Integer, db.ForeignKey("player_documents.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = db.Column(db.String(32), nullable=False, unique=True)  # случайно име на файла
+    mime = db.Column(db.String(20), nullable=False)               # image/jpeg | application/pdf
+    size = db.Column(db.Integer, nullable=False, default=0)
+    position = db.Column(db.Integer, nullable=False, default=0)
+    uploaded_by = db.Column(db.String(80), nullable=False, default="")
+    created_at = db.Column(db.DateTime, default=utcnow)
+
+
+# ------------------------------------------------------------------ такси ---
+FEE_MONTHLY = "monthly"     # месечна такса: ред за всеки месец от началния до текущия
+FEE_ONE_TIME = "one_time"   # еднократна (екип, турнир, годишна...): един ред в месеца на падеж
+FEE_UNPAID = "unpaid"
+FEE_PAID = "paid"
+FEE_WAIVED = "waived"       # освободен (напр. лятна пауза)
+FEE_STATUSES = (FEE_UNPAID, FEE_PAID, FEE_WAIVED)
+
+
+class FeeType(db.Model):
+    """Вид такса, който главният треньор определя (напр. „Месечна такса“). Сумите са в евро центове."""
+
+    __tablename__ = "fee_types"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+    kind = db.Column(db.String(10), nullable=False, default=FEE_MONTHLY)
+    default_amount_cents = db.Column(db.Integer, nullable=False, default=0)
+    is_active = db.Column(db.Boolean, nullable=False, default=True, server_default="1")
+    created_at = db.Column(db.DateTime, default=utcnow)
+
+
+class FeeAssignment(db.Model):
+    """Такса, присвоена на играч: начален месец, по желание собствена сума и сума за първия месец."""
+
+    __tablename__ = "fee_assignments"
+
+    id = db.Column(db.Integer, primary_key=True)
+    player_id = db.Column(db.Integer, db.ForeignKey("players.id", ondelete="CASCADE"), nullable=False, index=True)
+    fee_type_id = db.Column(db.Integer, db.ForeignKey("fee_types.id"), nullable=False, index=True)
+    start_month = db.Column(db.Date, nullable=False)          # първо число на месеца
+    end_month = db.Column(db.Date, nullable=True)             # последен месец, за който се създават редове (по желание)
+    amount_cents = db.Column(db.Integer, nullable=False)
+    first_month_amount_cents = db.Column(db.Integer, nullable=True)  # скъсен първи месец
+    note = db.Column(db.String(120), nullable=False, default="")     # напр. „отстъпка за второ дете“
+    created_by = db.Column(db.String(80), nullable=False, default="")
+    created_at = db.Column(db.DateTime, default=utcnow)
+
+    player = db.relationship("Player", backref=db.backref("fee_assignments", cascade="all, delete-orphan"))
+    fee_type = db.relationship("FeeType")
+
+
+class FeeCharge(db.Model):
+    """Един ред за плащане (месец или еднократна такса). Сумата е копирана при създаването и не се променя
+    от по-късна промяна на присвояването."""
+
+    __tablename__ = "fee_charges"
+    __table_args__ = (db.UniqueConstraint("assignment_id", "month", name="uq_fee_charge_assignment_month"),)
+
+    id = db.Column(db.Integer, primary_key=True)
+    assignment_id = db.Column(db.Integer, db.ForeignKey("fee_assignments.id", ondelete="CASCADE"), nullable=False, index=True)
+    player_id = db.Column(db.Integer, db.ForeignKey("players.id", ondelete="CASCADE"), nullable=False, index=True)
+    fee_type_id = db.Column(db.Integer, db.ForeignKey("fee_types.id"), nullable=False)
+    month = db.Column(db.Date, nullable=False, index=True)    # първо число на месеца
+    amount_cents = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.String(8), nullable=False, default=FEE_UNPAID, server_default=FEE_UNPAID)
+    note = db.Column(db.String(120), nullable=False, default="")
+    paid_at = db.Column(db.DateTime, nullable=True)
+    updated_by = db.Column(db.String(80), nullable=False, default="")
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
+
+    assignment = db.relationship("FeeAssignment", backref=db.backref("charges", cascade="all, delete-orphan"))
+    fee_type = db.relationship("FeeType")
+
+
+class FeeHistory(db.Model):
+    """Кой и кога е променил плащане, сума или присвояване."""
+
+    __tablename__ = "fee_history"
+
+    id = db.Column(db.Integer, primary_key=True)
+    player_id = db.Column(db.Integer, nullable=False, index=True)
+    charge_id = db.Column(db.Integer, nullable=True)
+    assignment_id = db.Column(db.Integer, nullable=True)
+    action = db.Column(db.String(24), nullable=False)
+    detail = db.Column(db.String(300), nullable=False, default="")
+    by = db.Column(db.String(80), nullable=False, default="")
+    at = db.Column(db.DateTime, default=utcnow, index=True)
+
+
+class PortalText(db.Model):
+    """Редактируеми текстове за портала (напр. „Как се плаща“)."""
+
+    __tablename__ = "portal_texts"
+
+    key = db.Column(db.String(40), primary_key=True)
+    value = db.Column(db.Text, nullable=False, default="")
+
+
+# ------------------------------------------------------------- известия ---
+AUD_ALL = "all"        # всички родители
+AUD_TEAM = "team"      # родителите на деца от един отбор
+AUD_PLAYER = "player"  # родителят на едно дете
+AUDIENCES = (AUD_ALL, AUD_TEAM, AUD_PLAYER)
+
+
+class Announcement(db.Model):
+    """Известие от академията към родителите (само в портала). Показва се от publish_date до expires_date
+    включително; „скрито“ го маха от портала, без да го трие."""
+
+    __tablename__ = "announcements"
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(120), nullable=False)
+    body = db.Column(db.Text, nullable=False, default="")  # обикновен текст (не HTML)
+    audience = db.Column(db.String(8), nullable=False, default=AUD_ALL)
+    team_id = db.Column(db.Integer, db.ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
+    player_id = db.Column(db.Integer, db.ForeignKey("players.id", ondelete="CASCADE"), nullable=True)
+    publish_date = db.Column(db.Date, nullable=False)
+    expires_date = db.Column(db.Date, nullable=True)       # последен ден, в който се показва
+    is_hidden = db.Column(db.Boolean, nullable=False, default=False, server_default="0")
+    # Последното РЕАЛНО изпращане по имейл (тестов режим без MAIL_SERVER не се брои).
+    emailed_at = db.Column(db.DateTime, nullable=True)
+    emailed_count = db.Column(db.Integer, nullable=False, default=0, server_default="0")
+    created_by = db.Column(db.String(80), nullable=False, default="")
+    updated_by = db.Column(db.String(80), nullable=False, default="")
+    created_at = db.Column(db.DateTime, default=utcnow)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
+
+    team = db.relationship("Team")
+    player = db.relationship("Player", backref=db.backref("announcements", cascade="all, delete-orphan"))

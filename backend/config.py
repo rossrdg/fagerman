@@ -43,6 +43,12 @@ class Config:
     UPLOAD_DIR = os.environ.get("UPLOAD_DIR", str(BASE_DIR / "uploads"))
     MAX_CONTENT_LENGTH = 21 * 1024 * 1024  # largest request body (one photo up to 20 MB + form overhead)
 
+    # Документи за картотекиране (ЕГН, лични карти, медицински) — шифровани файлове ИЗВЪН публичните
+    # папки. DOCS_KEY е ключ за шифроване (Fernet); без него в production приложението не качва документи.
+    # Пазете го в бекъпа заедно с папката: без ключа файловете не могат да се прочетат.
+    DOCS_DIR = os.environ.get("DOCS_DIR", str(BASE_DIR / "documents"))
+    DOCS_KEY = os.environ.get("DOCS_KEY", "")
+
     CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "*").split(",")
 
     # Where the static site (index.html, styles.css, script.js, assets/)

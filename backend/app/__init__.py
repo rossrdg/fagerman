@@ -19,11 +19,24 @@ def _add_missing_registration_columns():
         "training_time": "TIME",
         "processed": "BOOLEAN NOT NULL DEFAULT 0",
         "notified_at": "DATETIME",
+        "player_id": "INTEGER",
     }
     with db.engine.begin() as conn:
         for name, ddl in wanted.items():
             if name not in existing:
                 conn.execute(text(f"ALTER TABLE registrations ADD COLUMN {name} {ddl}"))
+
+
+def _add_missing_announcement_columns():
+    """Известията са създадени преди колоните за имейл; db.create_all() не променя съществуваща таблица."""
+    from sqlalchemy import inspect, text
+
+    existing = {c["name"] for c in inspect(db.engine).get_columns("announcements")}
+    wanted = {"emailed_at": "DATETIME", "emailed_count": "INTEGER NOT NULL DEFAULT 0"}
+    with db.engine.begin() as conn:
+        for name, ddl in wanted.items():
+            if name not in existing:
+                conn.execute(text(f"ALTER TABLE announcements ADD COLUMN {name} {ddl}"))
 
 
 def create_app(config_object="config.Config"):
@@ -86,6 +99,21 @@ def create_app(config_object="config.Config"):
     app.register_blueprint(shop_page_bp)  # /shop, /privacy
     app.register_blueprint(shop_api_bp, url_prefix="/api")  # /api/shop/orders
     app.register_blueprint(admin_shop_bp, url_prefix="/api")  # /api/admin/shop/products
+    from app.routes.parent import parent_bp
+    from app.routes.players import admin_players_bp
+    app.register_blueprint(parent_bp, url_prefix="/api")  # /api/parent/*
+    app.register_blueprint(admin_players_bp, url_prefix="/api")  # /api/admin/players
+    from app.routes.documents import admin_docs_bp, parent_docs_bp
+    app.register_blueprint(parent_docs_bp, url_prefix="/api")  # /api/parent/documents, /files
+    app.register_blueprint(admin_docs_bp, url_prefix="/api")  # /api/admin/documents, /files
+    from app.routes.forms import admin_forms_bp, parent_forms_bp
+    app.register_blueprint(parent_forms_bp, url_prefix="/api")  # /api/parent/children/<id>/forms/*
+    app.register_blueprint(admin_forms_bp, url_prefix="/api")  # /api/admin/settings/club-name
+    from app.routes.fees import admin_fees_bp, parent_messages_bp
+    app.register_blueprint(admin_fees_bp, url_prefix="/api")  # /api/admin/fee-types, /fees, /fee-charges
+    app.register_blueprint(parent_messages_bp, url_prefix="/api")  # /api/parent/messages
+    from app.routes.announcements import admin_announcements_bp
+    app.register_blueprint(admin_announcements_bp, url_prefix="/api")  # /api/admin/announcements
 
     from app.routes.uploads import files_bp, uploads_bp
     app.register_blueprint(uploads_bp, url_prefix="/api")  # POST /api/admin/uploads
@@ -99,6 +127,7 @@ def create_app(config_object="config.Config"):
     with app.app_context():
         db.create_all()
         _add_missing_registration_columns()
+        _add_missing_announcement_columns()
         from app.schedule_utils import migrate_label_slots_to_groups
 
         migrate_label_slots_to_groups()  # стари слотове „Вратари — …“ -> групи
@@ -130,6 +159,16 @@ def create_app(config_object="config.Config"):
                 return redirect("/admin-registrations.html")
             if name in ("admin-shop.html", "admin-orders.html", "admin-reports.html") and not (user.is_owner or user.is_head_coach):
                 return redirect("/admin-registrations.html")
+        # Родителските страници: само за влезли родители; докато паролата не е сменена —
+        # единствената достъпна страница е смяната на парола.
+        if name.startswith("parent") and name.endswith(".html") and name != "parent-login.html":
+            from app.parent_auth import current_parent, parent_pending
+
+            parent = current_parent()
+            if parent is None:
+                return redirect("/parent-login.html")
+            if name != "parent-change-password.html" and parent_pending(parent):
+                return redirect("/parent-change-password.html")
         # Lets /styles.css, /script.js, /hero-background.css,
         # /assets/... resolve directly, same as on a normal static host.
         return send_from_directory(frontend_dir, filename)
