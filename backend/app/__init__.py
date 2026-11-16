@@ -27,6 +27,18 @@ def _add_missing_registration_columns():
                 conn.execute(text(f"ALTER TABLE registrations ADD COLUMN {name} {ddl}"))
 
 
+def _add_missing_announcement_columns():
+    """Известията са създадени преди колоните за имейл; db.create_all() не променя съществуваща таблица."""
+    from sqlalchemy import inspect, text
+
+    existing = {c["name"] for c in inspect(db.engine).get_columns("announcements")}
+    wanted = {"emailed_at": "DATETIME", "emailed_count": "INTEGER NOT NULL DEFAULT 0"}
+    with db.engine.begin() as conn:
+        for name, ddl in wanted.items():
+            if name not in existing:
+                conn.execute(text(f"ALTER TABLE announcements ADD COLUMN {name} {ddl}"))
+
+
 def create_app(config_object="config.Config"):
     """Application factory. Keeps setup in one place so we can add
     blueprints (news, teams, auth, ...) here as the project grows."""
@@ -97,6 +109,11 @@ def create_app(config_object="config.Config"):
     from app.routes.forms import admin_forms_bp, parent_forms_bp
     app.register_blueprint(parent_forms_bp, url_prefix="/api")  # /api/parent/children/<id>/forms/*
     app.register_blueprint(admin_forms_bp, url_prefix="/api")  # /api/admin/settings/club-name
+    from app.routes.fees import admin_fees_bp, parent_messages_bp
+    app.register_blueprint(admin_fees_bp, url_prefix="/api")  # /api/admin/fee-types, /fees, /fee-charges
+    app.register_blueprint(parent_messages_bp, url_prefix="/api")  # /api/parent/messages
+    from app.routes.announcements import admin_announcements_bp
+    app.register_blueprint(admin_announcements_bp, url_prefix="/api")  # /api/admin/announcements
 
     from app.routes.uploads import files_bp, uploads_bp
     app.register_blueprint(uploads_bp, url_prefix="/api")  # POST /api/admin/uploads
@@ -110,6 +127,7 @@ def create_app(config_object="config.Config"):
     with app.app_context():
         db.create_all()
         _add_missing_registration_columns()
+        _add_missing_announcement_columns()
         from app.schedule_utils import migrate_label_slots_to_groups
 
         migrate_label_slots_to_groups()  # стари слотове „Вратари — …“ -> групи

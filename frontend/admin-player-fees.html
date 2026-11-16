@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Такси на дете — Админ — ФА Герман</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin.css">
+  <script src="admin-auth.js"></script>
+</head>
+<body class="admin-body">
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <span class="brand-mark">FA</span>
+      <div><strong>ФА Герман — Админ</strong><small>Такси на футболист</small></div>
+    </div>
+  </header>
+
+  <nav class="admin-nav" aria-label="Админ навигация">
+    <a href="admin-registrations.html">Записани за пробна тренировка</a>
+    <a href="admin-news.html">Новини</a>
+    <!-- Останалите менюта се добавят от admin-auth.js -->
+  </nav>
+
+  <main class="admin-main">
+    <div class="admin-toolbar">
+      <div>
+        <h1 id="title">Такси</h1>
+        <div id="status" class="admin-status" aria-live="polite">Зареждане...</div>
+      </div>
+      <div class="toolbar-actions">
+        <a class="btn btn-outline" href="admin-players.html">← Всички футболисти</a>
+        <a class="btn btn-outline" href="admin-fees.html">Към „Такси“</a>
+      </div>
+    </div>
+
+    <div id="summary" class="fee-summary"></div>
+
+    <section class="day-card docs-card-box">
+      <h2>Присвои такса на това дете</h2>
+      <form id="assignForm" class="gal-form" novalidate>
+        <div class="field"><label for="a-type">Такса</label><select id="a-type"></select></div>
+        <div class="field"><label for="a-start">Начален месец</label><input id="a-start" type="month"></div>
+        <div class="field"><label for="a-amount">Сума (€)</label><input id="a-amount" inputmode="decimal" autocomplete="off" style="width:110px"></div>
+        <div class="field"><label for="a-first">Първи месец (€)</label><input id="a-first" inputmode="decimal" autocomplete="off" style="width:110px"></div>
+        <div class="field grow"><label for="a-note">Бележка</label><input id="a-note" maxlength="120" autocomplete="off" placeholder="напр. отстъпка за второ дете"></div>
+        <button id="assignBtn" class="btn btn-primary" type="button">Присвои</button>
+      </form>
+      <div id="assignErr" class="field-error"></div>
+    </section>
+
+    <section id="assignmentsBox" class="day-card docs-card-box">
+      <h2>Присвоени такси</h2>
+      <div id="assignments"></div>
+      <form id="editForm" class="gal-form" hidden novalidate>
+        <div class="field"><label>Редакция: <span id="editName"></span></label></div>
+        <div class="field"><label for="e-amount">Сума (€) за следващите месеци</label><input id="e-amount" inputmode="decimal" autocomplete="off" style="width:130px"></div>
+        <div class="field"><label for="e-end">Последен месец</label><input id="e-end" type="month"></div>
+        <div class="field grow"><label for="e-note">Бележка</label><input id="e-note" maxlength="120" autocomplete="off"></div>
+        <label class="check-item"><input id="e-apply" type="checkbox"><span>Приложи сумата и към неплатените месеци</span></label>
+        <button id="editSave" class="btn btn-primary btn-sm" type="button">Запази</button>
+        <button id="editCancel" class="btn btn-outline btn-sm" type="button">Отказ</button>
+      </form>
+    </section>
+
+    <section class="day-card docs-card-box">
+      <h2>Месеци и плащания</h2>
+      <div class="table-wrap"><table class="admin-table fee-table"><thead><tr><th>Месец</th><th>Такса</th><th>Сума (€)</th><th>Статус</th><th>Бележка</th></tr></thead><tbody id="charges"></tbody></table></div>
+    </section>
+
+    <section class="day-card docs-card-box">
+      <h2>История на промените</h2>
+      <ul id="history" class="history-list"></ul>
+    </section>
+  </main>
+  <script src="admin-player-fees.js"></script>
+</body>
+</html>

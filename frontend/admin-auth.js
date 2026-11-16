@@ -150,6 +150,19 @@
         window.refreshDocsBadge();
       }
       nav.appendChild(players);
+      if (user.role === 'owner' || user.role === 'head_coach') {
+        const fees = document.createElement('a');
+        fees.href = 'admin-fees.html';
+        fees.textContent = 'Такси';
+        if (location.pathname.endsWith('admin-fees.html') || location.pathname.endsWith('admin-player-fees.html')) fees.classList.add('active');
+        nav.appendChild(fees);
+
+        const ann = document.createElement('a');
+        ann.href = 'admin-announcements.html';
+        ann.textContent = 'Известия';
+        if (location.pathname.endsWith('admin-announcements.html')) ann.classList.add('active');
+        nav.appendChild(ann);
+      }
     }
     if (nav && (user.role === 'owner' || user.role === 'head_coach')) {
       const shop = document.createElement('a');

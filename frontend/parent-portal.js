@@ -51,11 +51,48 @@ function childCard(c) {
   return card;
 }
 
+function messageCards(data) {
+  const box = document.querySelector('#messages');
+  box.textContent = '';
+  if (!data.reminders.length && !(data.announcements || []).length) {
+    const card = el('section', 'parent-card parent-soon');
+    card.append(el('h2', '', 'Съобщения'), el('p', 'muted', 'Засега няма нови съобщения.'));
+    box.append(card);
+    return;
+  }
+  data.reminders.forEach(r => {
+    const card = el('section', 'parent-card message-card');
+    if (r.type === 'fees') {
+      card.append(el('h2', '', `Такси за ${r.child_name}`));
+      const list = el('ul', 'fee-list');
+      r.items.forEach(i => { const li = el('li'); li.append(el('span', '', i.label), el('strong', '', i.amount_text)); list.append(li); });
+      card.append(list);
+      const total = el('p', 'fee-total'); total.append(el('span', 'muted', 'Общо: '), el('strong', '', r.total_text));
+      card.append(total, el('p', 'muted', r.text));
+      if (data.pay_info) { card.append(el('h3', 'pay-title', 'Как се плаща'), el('p', 'pay-info', data.pay_info)); }
+    } else {
+      card.append(el('h2', '', 'Документи'), el('p', '', r.text));
+      const a = el('a', 'btn btn-outline btn-sm', 'Към документите'); a.href = `/parent-documents.html?child=${r.child_id}`; card.append(a);
+    }
+    box.append(card);
+  });
+  (data.announcements || []).forEach(a => {
+    const card = el('section', 'parent-card announcement-card');
+    card.append(el('h2', '', a.title));
+    const meta = [a.date_text];
+    if (a.for_children.length) meta.push(`за ${a.for_children.join(', ')}`);
+    card.append(el('p', 'announcement-meta', meta.join(' · ')));
+    card.append(el('p', 'announcement-body', a.body)); // textContent: HTML не се интерпретира
+    box.append(card);
+  });
+}
+
 (async function init() {
   const me = await Parent.requireLogin();
   if (me.must_change_password || me.needs_consent) { location.replace('/parent-change-password.html'); return; }
   document.querySelector('#who').textContent = me.parent.name;
 
+  Parent.api('/api/parent/messages').then(({ res, data }) => { if (res.ok && data.ok) messageCards(data); }).catch(() => {});
   const { res, data } = await Parent.api('/api/parent/children');
   if (res.status === 403 && data.code === 'password_change_required') { location.replace('/parent-change-password.html'); return; }
   box.textContent = '';

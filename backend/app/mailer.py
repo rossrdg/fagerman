@@ -140,3 +140,21 @@ def build_parent_child_added_email(parent, child_name, login_url):
         "\n" + SIGNATURE
     )
     return subject, body
+
+
+def build_announcement_email(parent, announcement, children_names, portal_url):
+    """Известие от академията по имейл. children_names — за кои деца важи (празно за известие към всички)."""
+    subject = announcement.title
+    about = f"Касае: {', '.join(children_names)}\n\n" if children_names else ""
+    body = (
+        f"Здравейте {parent.display_name},\n"
+        "\n"
+        f"{announcement.title}\n"
+        "\n"
+        f"{about}"
+        f"{announcement.body}\n"
+        "\n"
+        f"Известието е и във Вашия портал: {portal_url}\n"
+        "\n" + SIGNATURE
+    )
+    return subject, body

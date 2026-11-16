@@ -18,13 +18,14 @@ from flask import Blueprint, jsonify, request
 from app import db
 from app.auth import check_admin, current_user
 from app.doc_storage import delete_files
+from app.fee_utils import ensure_all as ensure_all_fees, ensure_player as ensure_player_fees, player_summary as fee_summary
 from app.documents_catalog import ensure_set, purge_files, summary as docs_summary
 from app.mailer import (
     MailError, build_parent_child_added_email, build_parent_new_password_email,
     build_parent_welcome_email, send_email,
 )
 from app.models import (
-    PLAYER_ACTIVE, PLAYER_STATUSES, ParentAccount, Player, Registration, Team,
+    PLAYER_ACTIVE, PLAYER_STATUSES, FeeHistory, ParentAccount, Player, Registration, Team,
 )
 from app.player_utils import (
     EMAIL_RE, generate_temp_password, parse_date, player_dict, player_team,
@@ -156,8 +157,11 @@ def list_players():
     players.sort(key=lambda p: (sort_key(player_team(p)[0]) if player_team(p)[0] else (2, 0), p.child_name.casefold()))
 
     # Документи за картотекиране: само за главен админ и главен треньор.
-    docs = {}
+    docs, fees = {}, {}
     if manager:
+        ensure_all_fees()
+        for p in players:
+            fees[p.id] = fee_summary(p)
         for p in players:
             card, items = ensure_set(p, season_end)
             docs[p.id] = docs_summary(card, items)
@@ -173,7 +177,7 @@ def list_players():
         "ok": True,
         "season": season_text(season_end),
         "can_edit": manager,
-        "players": [{**player_dict(p, season_end, manager=manager), **({"docs": docs[p.id]} if manager else {})}
+        "players": [{**player_dict(p, season_end, manager=manager), **({"docs": docs[p.id], "fees": fees[p.id]} if manager else {})}
                     for p in players],
         "teams": [{"id": t.id, "label": u_label(t, season_end)} for t in teams],
     })
@@ -303,6 +307,8 @@ def update_player(player_id):
         if data["status"] not in PLAYER_STATUSES:
             errors["status"] = "Невалиден статус."
         else:
+            if player.status == PLAYER_ACTIVE and data["status"] != PLAYER_ACTIVE:
+                ensure_player_fees(player)  # месеците до сега се създават, преди да спрат новите
             player.status = data["status"]
     notes = _notes(data, errors)
     if notes is not None:
@@ -373,6 +379,7 @@ def archive_player(player_id):
     player = db.session.get(Player, player_id)
     if player is None:
         return _error("Профилът не е намерен.", 404)
+    ensure_player_fees(player)  # месеците до сега се запазват; нови не се създават
     player.archived = True
     player.updated_by = _who()
     # Документите не са нужни за напуснало дете: файловете се изтриват, статусите се нулират.
@@ -424,7 +431,8 @@ def delete_player(player_id):
     for registration in Registration.query.filter_by(player_id=player.id).all():
         registration.player_id = None
     names = purge_files(player.documents)
-    db.session.delete(player)  # документите и комплектите се трият каскадно
+    FeeHistory.query.filter_by(player_id=player.id).delete()
+    db.session.delete(player)  # документите, комплектите и таксите се трият каскадно
     db.session.flush()
     if not parent.players:
         db.session.delete(parent)

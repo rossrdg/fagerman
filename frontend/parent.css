@@ -77,3 +77,18 @@
 .field-hint{display:block;margin-top:4px;font-size:12px;font-weight:500;color:var(--muted)}
 .forms-actions{margin:18px 0 6px}
 .forms-actions .btn{width:100%;max-width:520px}
+
+/* Съобщения: напомняне за такси (спокоен тон) */
+.message-card{background:#f3f8fe;border-color:#cfe2f7}
+.message-card h2{font-size:19px}
+.fee-list{list-style:none;margin:8px 0;padding:0}
+.fee-list li{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid #dbe8f6;font-size:15px}
+.fee-list li:first-child{border-top:0}
+.fee-total{margin:10px 0 4px;font-size:16px}
+.pay-title{font-size:15px;margin:14px 0 4px}
+.pay-info{white-space:pre-line;font-size:14px;color:#34443c}
+
+/* Известия от академията */
+.announcement-card h2{font-size:19px;margin-bottom:4px}
+.announcement-meta{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--muted);margin:0 0 10px}
+.announcement-body{white-space:pre-line;font-size:15px;color:#24332b;margin:0}

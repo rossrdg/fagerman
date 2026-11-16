@@ -76,7 +76,7 @@ function emailMessage(status) {
 // ------------------------------------------------------------ списък ---
 function headRow() {
   const cols = canEdit
-    ? ['Дете', 'Отбор', 'Родител', 'Статус', 'Документи', 'Вход в портала', '']
+    ? ['Дете', 'Отбор', 'Родител', 'Статус', 'Документи', 'Такси', 'Вход в портала', '']
     : ['Дете', 'Отбор', 'Статус'];
   head.textContent = '';
   const tr = el('tr');
@@ -102,6 +102,15 @@ function docsCell(p) {
   return td;
 }
 
+function feesCell(p) {
+  const td = el('td');
+  if (!p.fees || p.archived || !p.fees.has_fees) { td.textContent = '—'; return td; }
+  const f = p.fees;
+  td.append(el('span', '', f.paid_until_text ? `платено до ${f.paid_until_text}` : 'нищо платено'));
+  if (f.unpaid_count) td.append(el('span', 'doc-pill doc-returned', `${f.unpaid_count} неплатени · ${f.unpaid_total_text}`));
+  return td;
+}
+
 function btn(text, onClick, danger = false) {
   const b = el('button', 'btn btn-outline btn-sm' + (danger ? ' btn-danger-text' : ''), text);
   b.type = 'button';
@@ -115,7 +124,7 @@ function renderList() {
   if (!players.length) {
     const tr = el('tr');
     const td = el('td', 'empty-state', 'Няма профили по тези филтри.');
-    td.colSpan = canEdit ? 7 : 3;
+    td.colSpan = canEdit ? 8 : 3;
     tr.append(td);
     body.append(tr);
   }
@@ -144,6 +153,7 @@ function renderList() {
 
     if (canEdit) {
       tr.append(docsCell(p));
+      tr.append(feesCell(p));
       tr.append(el('td', '', portalText(p)));
       const actions = el('td');
       const row = el('div', 'row-actions');
@@ -151,7 +161,9 @@ function renderList() {
       if (!p.archived) {
         const docs = el('a', 'btn btn-outline btn-sm', 'Документи');
         docs.href = `admin-player-docs.html?id=${p.id}`;
-        row.append(docs);
+        const fees = el('a', 'btn btn-outline btn-sm', 'Такси');
+        fees.href = `admin-player-fees.html?id=${p.id}`;
+        row.append(docs, fees);
       }
       if (!p.archived) {
         row.append(btn('Нова парола', () => newPassword(p)), btn('Архивирай', () => archive(p)));
