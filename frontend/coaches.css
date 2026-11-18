@@ -5,9 +5,18 @@
 .coaches-wrap{margin-bottom:64px}
 /* Една карта под друга: еднаква ширина, снимка вляво, текст вдясно (на телефон снимката е отгоре) */
 .coach-grid-list{display:flex;flex-direction:column;gap:18px}
+.coaches-hero-img{
+  display:block;
+  width:100%;
+  height:auto;
+  margin-bottom:32px;
+  border-radius:18px;
+  border:1px solid var(--line);
+  background:#dbe5df;
+}
 .coach-card{display:flex;align-items:stretch;background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden}
 .coach-card.head{border-color:var(--green);box-shadow:0 0 0 1px var(--green)}
-.coach-img{flex:0 0 260px;width:260px;aspect-ratio:4/5;object-fit:cover;background:#dbe5df;display:block}
+.coach-img{flex:0 0 260px;width:260px;aspect-ratio:4/5;object-fit:cover;object-position:top center;background:#dbe5df;display:block}
 .coach-body{flex:1;min-width:0;padding:22px 26px 24px;align-self:center}
 .coach-body h2{font-size:26px;margin:6px 0 8px}
 .coach-body p{font-size:15px;margin:0 0 10px;color:#34443c}
@@ -15,6 +24,6 @@
 .coach-badge{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--green);color:#fff;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
 @media(max-width:767px){
   .coach-card{flex-direction:column}
-  .coach-img{flex:none;width:100%;aspect-ratio:4/5}
+  .coach-img{flex:none;width:100%;aspect-ratio:4/5;object-position:top center}
   .coach-body{padding:18px 18px 20px;align-self:stretch}
 }

@@ -173,7 +173,7 @@ def _apply_profile(user, data, errors):
 def admin_list():
     season_end = get_season_end_year()
     users = (AdminUser.query.filter(AdminUser.role.in_([ROLE_COACH, ROLE_HEAD_COACH]))
-             .order_by(AdminUser.role.desc(), AdminUser.display_name).all())
+             .order_by(AdminUser.role.desc(), AdminUser.id.asc()).all())
     teams = sorted(Team.query.filter_by(status=TEAM_ACTIVE).all(), key=sort_key)
     return jsonify({
         "ok": True,
@@ -320,11 +320,11 @@ def admin_remove_photo(user_id):
 
 # ----------------------------------------------------------------- public ---
 def _visible_coaches():
-    """Треньорите на сайта: главният първи, останалите по азбучен ред. Изключените
+    """Треньорите на сайта: главният първи, останалите по ред на добавяне. Изключените
     акаунти остават; скрит е само който е с махната отметка „Показвай на сайта“."""
     users = AdminUser.query.filter(AdminUser.role.in_([ROLE_COACH, ROLE_HEAD_COACH])).all()
     users = [u for u in users if u.profile is None or u.profile.show_on_site]
-    users.sort(key=lambda u: (0 if u.is_head_coach else 1, (u.display_name or u.username).casefold()))
+    users.sort(key=lambda u: (0 if u.is_head_coach else 1, u.id))
     return users
 
 
