@@ -3,6 +3,7 @@ import os
 from flask import Flask, redirect, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from sqlalchemy.exc import IntegrityError
 
 db = SQLAlchemy()
 
@@ -118,6 +119,21 @@ def create_app(config_object="config.Config"):
     from app.routes.uploads import files_bp, uploads_bp
     app.register_blueprint(uploads_bp, url_prefix="/api")  # POST /api/admin/uploads
     app.register_blueprint(files_bp)  # GET /uploads/<file>
+
+    @app.errorhandler(IntegrityError)
+    def retry_after_race(_err):
+        """Редовете за документи и такси се създават „при отваряне“ на страница. Ако две заявки го направят
+        едновременно, втората среща уникално ограничение. Връщаме сесията и изпълняваме заявката още веднъж —
+        вторият път редовете вече съществуват. Втори неуспех е истински конфликт (409), не безкраен цикъл."""
+        from flask import g, jsonify
+
+        db.session.rollback()
+        if g.get("_race_retried"):
+            return jsonify({"ok": False, "error": "Конфликт при запис. Опитайте отново."}), 409
+        g._race_retried = True
+        for cached in ("_admin_user", "_parent"):
+            g.pop(cached, None)  # свързани са със сесията, която току-що върнахме
+        return app.full_dispatch_request()
 
     @app.errorhandler(413)
     def too_large(_err):
