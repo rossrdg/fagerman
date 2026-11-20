@@ -40,6 +40,16 @@ def _add_missing_announcement_columns():
                 conn.execute(text(f"ALTER TABLE announcements ADD COLUMN {name} {ddl}"))
 
 
+def _add_missing_team_columns():
+    """Отборите са създадени преди снимката на отбора; db.create_all() не променя съществуваща таблица."""
+    from sqlalchemy import inspect, text
+
+    existing = {c["name"] for c in inspect(db.engine).get_columns("teams")}
+    if "photo_name" not in existing:
+        with db.engine.begin() as conn:
+            conn.execute(text("ALTER TABLE teams ADD COLUMN photo_name VARCHAR(20)"))
+
+
 def create_app(config_object="config.Config"):
     """Application factory. Keeps setup in one place so we can add
     blueprints (news, teams, auth, ...) here as the project grows."""
@@ -144,6 +154,7 @@ def create_app(config_object="config.Config"):
         db.create_all()
         _add_missing_registration_columns()
         _add_missing_announcement_columns()
+        _add_missing_team_columns()
         from app.schedule_utils import migrate_label_slots_to_groups
 
         migrate_label_slots_to_groups()  # стари слотове „Вратари — …“ -> групи

@@ -112,6 +112,19 @@
           <div class="field-error" data-error-for="description"></div>
         </div>
 
+        <div id="photoField" class="field" hidden>
+          <label for="teamPhotoFile">Снимка на отбора</label>
+          <div class="cover-box">
+            <img id="teamPhotoPreview" class="cover-preview" alt="" hidden>
+            <div>
+              <input id="teamPhotoFile" type="file" accept="image/*,.heic,.heif,.avif">
+              <div class="field-hint">Показва се на страницата на отбора, под описанието. Най-добре е широка снимка. До 20 MB; JPG, PNG, HEIC и др. Качвайки снимка, потвърждавате, че имате съгласие на родителите.</div>
+              <button id="teamPhotoRemove" class="btn btn-outline btn-sm" type="button" hidden>Махни снимката</button>
+            </div>
+          </div>
+          <div class="field-error" data-error-for="photo"></div>
+        </div>
+
         <div id="statusRow" class="field" hidden>
           <label>Статус</label>
           <div><span id="statusPill" class="status-pill"></span></div>

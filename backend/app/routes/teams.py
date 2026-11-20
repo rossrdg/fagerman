@@ -6,12 +6,19 @@
            DELETE /api/admin/teams/<id> истинско изтриване — само главен админ,
                                         и само за вече архивиран отбор
 """
-from flask import Blueprint, jsonify, redirect, render_template, request
+import os
+import uuid
+
+from flask import Blueprint, current_app, jsonify, redirect, render_template, request
+from PIL import Image, UnidentifiedImageError
 
 from app import db
 from app.auth import check_admin
 from app.models import KIND_MEN, KIND_YOUTH, TEAM_ACTIVE, TEAM_ARCHIVED, Album, Team, Video
 from app.routes.news import DEFAULT_SHARE_IMAGE, _absolute
+from app.routes.uploads import (
+    MAIN_SIZE, MAX_PIXELS, READABLE_FORMATS, THUMB_SIZE, UNSUPPORTED_MESSAGE, _save_jpeg, _to_rgb,
+)
 from app.gallery_utils import album_cover, bg_date, photo_urls, remove_files
 from app.match_utils import build_team_matches, get_standings_url, url_host
 from app.schedule_utils import build_public_schedule
@@ -56,6 +63,8 @@ def admin_dict(team, season_end):
         "birth_year_to": team.birth_year_to,
         "u_override": team.u_override or "",
         "u_auto": auto_label(team, season_end),
+        "photo": f"/uploads/{team.photo_name}.jpg" if team.photo_name else None,
+        "photo_thumb": f"/uploads/{team.photo_name}-800.jpg" if team.photo_name else None,
         "created_at": team.created_at.isoformat() if team.created_at else None,
         "updated_at": team.updated_at.isoformat() if team.updated_at else None,
     })
@@ -231,7 +240,9 @@ def team_page(slug):
         title=title,
         description=data["description"] or about,
         page_url=page_url,
-        image_url=_absolute(DEFAULT_SHARE_IMAGE),
+        image_url=_absolute(f"/uploads/{team.photo_name}.jpg" if team.photo_name else DEFAULT_SHARE_IMAGE),
+        photo=({"main": f"/uploads/{team.photo_name}.jpg", "thumb": f"/uploads/{team.photo_name}-800.jpg"}
+               if team.photo_name else None),
         season=season_text(season_end),
         schedule=build_public_schedule(highlight_slug=team.slug),
         albums=_public_albums(team),
@@ -314,7 +325,61 @@ def admin_delete(team_id):
     if team.status != TEAM_ARCHIVED:
         return _error("Първо архивирайте отбора.", 409)
     names = [photo.name for album in team.albums for photo in album.photos]
+    if team.photo_name:
+        names.append(team.photo_name)
     db.session.delete(team)  # албумите, снимките и клиповете се трият заедно с отбора
     db.session.commit()
     remove_files(names)
     return jsonify({"ok": True})
+
+
+# ------------------------------------------------------- снимка на отбора ---
+@admin_teams_bp.post("/admin/teams/<int:team_id>/photo")
+def admin_set_photo(team_id):
+    """Снимка на отбора (multipart "image"): обръща се по EXIF, смалява се (1600 px + 800 px) и се записва като JPEG.
+    Показва се на страницата на отбора, под описанието. Качването означава, че има съгласие на родителите."""
+    team = db.session.get(Team, team_id)
+    if team is None:
+        return _error("Отборът не е намерен.", 404)
+    file = request.files.get("image")
+    if file is None or not file.filename:
+        return _error("Не е избран файл.")
+    try:
+        img = Image.open(file.stream, formats=READABLE_FORMATS)
+        if img.width * img.height > MAX_PIXELS:
+            return _error("Снимката е с твърде голяма резолюция.")
+        img.load()
+        rgb = _to_rgb(img)
+    except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError):
+        return _error(UNSUPPORTED_MESSAGE)
+
+    folder = current_app.config["UPLOAD_DIR"]
+    os.makedirs(folder, exist_ok=True)
+    name = uuid.uuid4().hex[:20]
+    _save_jpeg(rgb, os.path.join(folder, f"{name}.jpg"), MAIN_SIZE)
+    _save_jpeg(rgb, os.path.join(folder, f"{name}-800.jpg"), THUMB_SIZE)
+
+    old = team.photo_name
+    team.photo_name = name
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        remove_files([name])
+        return _error("Снимката не можа да се запази. Опитайте пак.", 500)
+    if old:
+        remove_files([old])
+    return jsonify({"ok": True, "team": admin_dict(team, get_season_end_year())})
+
+
+@admin_teams_bp.delete("/admin/teams/<int:team_id>/photo")
+def admin_remove_photo(team_id):
+    team = db.session.get(Team, team_id)
+    if team is None:
+        return _error("Отборът не е намерен.", 404)
+    old = team.photo_name
+    team.photo_name = None
+    db.session.commit()
+    if old:
+        remove_files([old])
+    return jsonify({"ok": True, "team": admin_dict(team, get_season_end_year())})

@@ -192,8 +192,54 @@ function fillForm(t) {
   updateCount();
 }
 
+const MAX_PHOTO_BYTES = 20 * 1024 * 1024;
+const photoFile = $('#teamPhotoFile');
+const photoPreview = $('#teamPhotoPreview');
+const photoRemove = $('#teamPhotoRemove');
+
+// Снимката на отбора се качва веднага след избор (само за вече създаден отбор).
+function updatePhoto() {
+  const has = !!(current && current.photo_thumb);
+  $('#photoField').hidden = !current;
+  photoPreview.hidden = !has;
+  if (has) photoPreview.src = current.photo_thumb;
+  photoRemove.hidden = !has;
+}
+
+photoFile.addEventListener('change', async () => {
+  const file = photoFile.files[0];
+  photoFile.value = '';
+  if (!file || !current) return;
+  const err = form.querySelector('[data-error-for="photo"]');
+  err.textContent = '';
+  if (file.size > MAX_PHOTO_BYTES) { err.textContent = 'Снимката е над 20 MB.'; return; }
+  const body = new FormData();
+  body.append('image', file);
+  flash(panelStatus, 'Качване на снимката…');
+  try {
+    const res = await fetch(`${API}/${current.id}/photo`, { method: 'POST', body }); // без Content-Type: браузърът го слага
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) { err.textContent = data.error || 'Снимката не можа да се качи.'; flash(panelStatus, 'Неуспешно качване.', true); return; }
+    current = data.team;
+    updatePhoto();
+    flash(panelStatus, 'Снимката е качена ✓ — вижда се на страницата на отбора');
+  } catch (e) {
+    flash(panelStatus, 'Няма връзка със сървъра. Опитай пак.', true);
+  }
+});
+
+photoRemove.addEventListener('click', async () => {
+  if (!current || !confirm('Да махна ли снимката на отбора?')) return;
+  const { res, data } = await api(`${API}/${current.id}/photo`, { method: 'DELETE' });
+  if (!res.ok || !data.ok) { flash(panelStatus, data.error || 'Неуспешно махане.', true); return; }
+  current = data.team;
+  updatePhoto();
+  flash(panelStatus, 'Снимката е махната ✓');
+});
+
 function refreshPanelButtons() {
   const exists = !!current;
+  updatePhoto();
   const archived = exists && isArchived(current);
   $('#panelTitle').textContent = exists
     ? `${teamName(current)}${current.kind === 'men' ? '' : ' · ' + cohortOf(current)}`

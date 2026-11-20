@@ -25,3 +25,8 @@
 .coach-all{margin:28px 0 0}
 @media(max-width:1023px){.coach-photo-img{min-height:480px}}
 @media(max-width:767px){.coach-photo-img{min-height:400px}}
+
+/* Снимка на отбора: под описанието, преди бутона за записване (фиксирано съотношение — без „скачане“ при зареждане) */
+.team-photo{margin:0 0 30px;max-width:1100px}
+.team-photo img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;object-position:center 35%;border-radius:18px;background:#173b28}
+@media(max-width:767px){.team-photo{margin-bottom:22px}.team-photo img{aspect-ratio:3/2;border-radius:14px}}

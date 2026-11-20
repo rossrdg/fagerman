@@ -195,6 +195,8 @@ class Team(db.Model):
     # Ръчно зададен етикет; ако е празен, етикетът се изчислява автоматично.
     u_override = db.Column(db.String(12), nullable=True)
     description = db.Column(db.String(160), nullable=False, default="")
+    # Снимка на отбора: /uploads/<photo_name>.jpg и <photo_name>-800.jpg (показва се под описанието на страницата му).
+    photo_name = db.Column(db.String(20), nullable=True)
     status = db.Column(db.String(10), nullable=False, default=TEAM_ACTIVE, server_default=TEAM_ACTIVE)
     created_at = db.Column(db.DateTime, default=utcnow)
     updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)

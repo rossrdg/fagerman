@@ -29,6 +29,13 @@
       <div class="eyebrow green">{{ team.cohort_label|upper }}</div>
       <h1>{{ team.u_label }}</h1>
       {% if team.description %}<p class="team-lead">{{ team.description }}</p>{% endif %}
+      {% if photo %}
+      <figure class="team-photo">
+        <img src="{{ photo.main }}" srcset="{{ photo.thumb }} 800w, {{ photo.main }} 1600w"
+             sizes="(max-width: 1100px) 100vw, 1100px"
+             alt="Отбор {{ team.u_label }} — {{ team.cohort_label }}" decoding="async">
+      </figure>
+      {% endif %}
       <a class="btn btn-primary btn-large" href="/#registration">Запиши се за тренировка <span>↗</span></a>
     </section>
 
