@@ -129,6 +129,12 @@
       if (location.pathname.endsWith('admin-matches.html')) matches.classList.add('active');
       nav.appendChild(matches);
 
+      const sponsors = document.createElement('a');
+      sponsors.href = 'admin-sponsors.html';
+      sponsors.textContent = 'Партньори';
+      if (location.pathname.endsWith('admin-sponsors.html')) sponsors.classList.add('active');
+      nav.appendChild(sponsors);
+
       const players = document.createElement('a');
       players.href = 'admin-players.html';
       players.textContent = 'Футболисти';

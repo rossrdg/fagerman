@@ -357,3 +357,6 @@
 .history-list li{padding:8px 0;border-top:1px solid #edf1ee;color:#34443c}
 .history-list li:first-child{border-top:0}
 .history-list small{color:var(--muted);margin-left:6px}
+
+/* Партньори */
+.sponsor-thumb{width:96px;height:64px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:8px;padding:4px;flex:none}

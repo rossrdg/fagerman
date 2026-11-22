@@ -825,3 +825,21 @@ class Announcement(db.Model):
 
     team = db.relationship("Team")
     player = db.relationship("Player", backref=db.backref("announcements", cascade="all, delete-orphan"))
+
+
+# ------------------------------------------------------------- спонсори ---
+class Sponsor(db.Model):
+    """Партньор/спонсор: лого на картата + текст в pop-up при клик."""
+
+    __tablename__ = "sponsors"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+    headline = db.Column(db.String(160), nullable=False, default="")   # заглавие в pop-up
+    body = db.Column(db.Text, nullable=False, default="")              # обикновен текст, абзаци с празен ред
+    website = db.Column(db.String(500), nullable=False, default="")    # по избор, само https
+    logo_name = db.Column(db.String(20), nullable=False)               # /uploads/<name>.png
+    is_visible = db.Column(db.Boolean, nullable=False, default=True, server_default="1")
+    sort_order = db.Column(db.Integer, nullable=False, default=0)
+    created_at = db.Column(db.DateTime, default=utcnow)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)

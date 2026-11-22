@@ -106,6 +106,10 @@ def create_app(config_object="config.Config"):
     app.register_blueprint(matches_page_bp)  # /matches
     app.register_blueprint(admin_matches_bp, url_prefix="/api")  # /api/admin/matches
 
+    from app.routes.sponsors import admin_sponsors_bp, sponsors_bp
+    app.register_blueprint(sponsors_bp, url_prefix="/api")  # GET /api/sponsors
+    app.register_blueprint(admin_sponsors_bp, url_prefix="/api")  # /api/admin/sponsors
+
     from app.routes.shop import admin_shop_bp, page_bp as shop_page_bp, shop_api_bp
     app.register_blueprint(shop_page_bp)  # /shop, /privacy
     app.register_blueprint(shop_api_bp, url_prefix="/api")  # /api/shop/orders

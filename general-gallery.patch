@@ -1,0 +1,412 @@
+diff --git a/backend/app/__init__.py b/backend/app/__init__.py
+index 87a2357..528c0ce 100644
+--- a/backend/app/__init__.py
++++ b/backend/app/__init__.py
+@@ -50,6 +50,44 @@ def _add_missing_team_columns():
+             conn.execute(text("ALTER TABLE teams ADD COLUMN photo_name VARCHAR(20)"))
+ 
+ 
++def _make_album_team_optional():
++    """Общите албуми нямат отбор (albums.team_id е NULL). db.create_all() не сваля NOT NULL от
++    съществуваща таблица, затова колоната се преправя тук. Данните се запазват."""
++    from sqlalchemy import inspect, text
++
++    column = next(c for c in inspect(db.engine).get_columns("albums") if c["name"] == "team_id")
++    if column.get("nullable", True):
++        return
++    dialect = db.engine.dialect.name
++    if dialect == "sqlite":
++        # SQLite не може да смени колона на място: нова таблица -> копиране -> размяна.
++        with db.engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
++            conn.execute(text("PRAGMA foreign_keys=OFF"))
++            conn.execute(text("BEGIN"))
++            try:
++                conn.execute(text(
++                    "CREATE TABLE albums__new (id INTEGER NOT NULL, team_id INTEGER, title VARCHAR(80) NOT NULL, "
++                    "event_date DATE NOT NULL, is_hidden BOOLEAN NOT NULL DEFAULT 0, cover_photo_id INTEGER, "
++                    "created_at DATETIME, updated_at DATETIME, PRIMARY KEY (id), "
++                    "FOREIGN KEY(team_id) REFERENCES teams (id) ON DELETE CASCADE)"))
++                conn.execute(text(
++                    "INSERT INTO albums__new (id, team_id, title, event_date, is_hidden, cover_photo_id, created_at, updated_at) "
++                    "SELECT id, team_id, title, event_date, is_hidden, cover_photo_id, created_at, updated_at FROM albums"))
++                conn.execute(text("DROP TABLE albums"))
++                conn.execute(text("ALTER TABLE albums__new RENAME TO albums"))
++                conn.execute(text("CREATE INDEX ix_albums_team_id ON albums (team_id)"))
++                conn.execute(text("COMMIT"))
++            except Exception:
++                conn.execute(text("ROLLBACK"))
++                raise
++    elif dialect in ("mysql", "mariadb"):
++        with db.engine.begin() as conn:
++            conn.execute(text("ALTER TABLE albums MODIFY team_id INTEGER NULL"))
++    elif dialect == "postgresql":
++        with db.engine.begin() as conn:
++            conn.execute(text("ALTER TABLE albums ALTER COLUMN team_id DROP NOT NULL"))
++
++
+ def create_app(config_object="config.Config"):
+     """Application factory. Keeps setup in one place so we can add
+     blueprints (news, teams, auth, ...) here as the project grows."""
+@@ -155,6 +193,7 @@ def create_app(config_object="config.Config"):
+         _add_missing_registration_columns()
+         _add_missing_announcement_columns()
+         _add_missing_team_columns()
++        _make_album_team_optional()
+         from app.schedule_utils import migrate_label_slots_to_groups
+ 
+         migrate_label_slots_to_groups()  # стари слотове „Вратари — …“ -> групи
+diff --git a/backend/app/models.py b/backend/app/models.py
+index 3996bc1..b38a4b0 100644
+--- a/backend/app/models.py
++++ b/backend/app/models.py
+@@ -233,12 +233,13 @@ class TrainingSlot(db.Model):
+ 
+ # ---------------------------------------------------------------- gallery ---
+ class Album(db.Model):
+-    """Албум със снимки от събитие (турнир, мач, тренировка) на един отбор."""
++    """Албум със снимки от събитие (турнир, мач, тренировка) на един отбор — или общ албум без отбор."""
+ 
+     __tablename__ = "albums"
+ 
+     id = db.Column(db.Integer, primary_key=True)
+-    team_id = db.Column(db.Integer, db.ForeignKey("teams.id", ondelete="CASCADE"), nullable=False, index=True)
++    # NULL = общ албум със смесени снимки от различни отбори (показва се само в /gallery)
++    team_id = db.Column(db.Integer, db.ForeignKey("teams.id", ondelete="CASCADE"), nullable=True, index=True)
+     title = db.Column(db.String(80), nullable=False)
+     event_date = db.Column(db.Date, nullable=False)
+     is_hidden = db.Column(db.Boolean, nullable=False, default=False, server_default="0")
+diff --git a/backend/app/routes/gallery.py b/backend/app/routes/gallery.py
+index ee76531..8f72838 100644
+--- a/backend/app/routes/gallery.py
++++ b/backend/app/routes/gallery.py
+@@ -1,8 +1,11 @@
+ """Галерия на отбор: албуми със снимки + YouTube клипове.
+ 
+-Публично:  GET /teams/<slug>/albums/<id>        страница на албум (без индексиране)
++Публично:  GET /teams/<slug>/albums/<id>        страница на албум на отбор (без индексиране)
++           GET /gallery/<id>                    страница на общ албум (смесени снимки, без отбор)
+ Админ:     GET    /api/admin/teams/<id>/gallery            албуми + клипове на отбора
+-           POST   /api/admin/teams/<id>/albums             нов албум
++           POST   /api/admin/teams/<id>/albums             нов албум на отбор
++           GET    /api/admin/gallery/general               общите албуми (без отбор), показват се в /gallery
++           POST   /api/admin/gallery/albums                нов общ албум
+            GET    /api/admin/albums/<id>                   албум със снимките му
+            PATCH  /api/admin/albums/<id>                   заглавие, дата, скрит, корица
+            DELETE /api/admin/albums/<id>                   изтрива албума и файловете
+@@ -17,6 +20,7 @@ from datetime import date
+ 
+ from flask import Blueprint, current_app, jsonify, render_template, request
+ from PIL import Image, UnidentifiedImageError
++from sqlalchemy import or_
+ from sqlalchemy.orm import joinedload, selectinload
+ 
+ from app import db
+@@ -36,6 +40,7 @@ admin_gallery_bp.before_request(check_admin)  # собственик или тр
+ 
+ MAX_TITLE = 80
+ MAX_PHOTOS_PER_ALBUM = 28
++MAX_PHOTOS_GENERAL = 60  # общите албуми са смесени и по-големи
+ MIN_YEAR = 2020
+ 
+ 
+@@ -56,6 +61,10 @@ def _parse_date(value):
+     return parsed if parsed.year >= MIN_YEAR else None
+ 
+ 
++def _max_photos(album):
++    return MAX_PHOTOS_GENERAL if album.team_id is None else MAX_PHOTOS_PER_ALBUM
++
++
+ def photo_dict(photo, album):
+     main, thumb = photo_urls(photo)
+     return {
+@@ -71,7 +80,7 @@ def album_dict(album, with_photos=False):
+     data = {
+         "id": album.id, "team_id": album.team_id, "title": album.title,
+         "event_date": album.event_date.isoformat(), "date_text": bg_date(album.event_date),
+-        "is_hidden": album.is_hidden, "photo_count": len(album.photos), "max_photos": MAX_PHOTOS_PER_ALBUM,
++        "is_hidden": album.is_hidden, "photo_count": len(album.photos), "max_photos": _max_photos(album),
+         "cover_thumb": photo_urls(cover)[1] if cover else None,
+     }
+     if with_photos:
+@@ -107,7 +116,34 @@ def album_page(slug, album_id):
+     )
+ 
+ 
++@page_bp.get("/gallery/<int:album_id>")
++def general_album_page(album_id):
++    """Общ албум (без отбор) със смесени снимки."""
++    album = db.session.get(Album, album_id)
++    if album is None or album.team_id is not None or album.is_hidden or not album.photos:
++        return render_template("album_page.html", album=None, general=True), 404
++    photos = [{"url": photo_urls(p)[0], "thumb": photo_urls(p)[1], "code": p.code} for p in album.photos]
++    return render_template(
++        "album_page.html",
++        album={"title": album.title, "date_text": bg_date(album.event_date), "photos": photos},
++        team=None, general=True,
++        page_url=_absolute(f"/gallery/{album.id}"),
++        image_url=_absolute(DEFAULT_SHARE_IMAGE),
++    )
++
++
+ # ----------------------------------------------------------------- admin ---
++@admin_gallery_bp.get("/admin/gallery/general")
++def admin_general_gallery():
++    albums = Album.query.filter(Album.team_id.is_(None)).order_by(Album.event_date.desc(), Album.id.desc()).all()
++    return jsonify({"ok": True, "albums": [album_dict(a) for a in albums], "videos": []})
++
++
++@admin_gallery_bp.post("/admin/gallery/albums")
++def admin_create_general_album():
++    return _create_album(None)
++
++
+ @admin_gallery_bp.get("/admin/teams/<int:team_id>/gallery")
+ def admin_gallery(team_id):
+     team = db.session.get(Team, team_id)
+@@ -123,6 +159,11 @@ def admin_create_album(team_id):
+     team = db.session.get(Team, team_id)
+     if team is None:
+         return _error("Отборът не е намерен.", 404)
++    return _create_album(team)
++
++
++def _create_album(team):
++    """Нов албум на отбор (team) или общ албум без отбор (team=None)."""
+     data = request.get_json(silent=True)
+     if not isinstance(data, dict):
+         return _error("Невалидна заявка.")
+@@ -140,7 +181,7 @@ def admin_create_album(team_id):
+     if errors:
+         return jsonify({"ok": False, "errors": errors}), 400
+ 
+-    album = Album(team_id=team.id, title=title, event_date=event_date)
++    album = Album(team_id=team.id if team else None, title=title, event_date=event_date)
+     db.session.add(album)
+     db.session.commit()
+     return jsonify({"ok": True, "album": album_dict(album, with_photos=True)}), 201
+@@ -215,8 +256,8 @@ def admin_add_photo(album_id):
+     album = db.session.get(Album, album_id)
+     if album is None:
+         return _error("Албумът не е намерен.", 404)
+-    if len(album.photos) >= MAX_PHOTOS_PER_ALBUM:
+-        return _error(f"Албумът е пълен — максимум {MAX_PHOTOS_PER_ALBUM} снимки. Създайте нов албум.", 409)
++    if len(album.photos) >= _max_photos(album):
++        return _error(f"Албумът е пълен — максимум {_max_photos(album)} снимки. Създайте нов албум.", 409)
+     file = request.files.get("image")
+     if file is None or not file.filename:
+         return _error("Не е избран файл.")
+@@ -313,8 +354,9 @@ def gallery_index():
+     """Всички видими албуми на всички активни отбори — най-новите събития първи."""
+     season_end = get_season_end_year()
+     query = (
+-        Album.query.join(Team, Album.team_id == Team.id)
+-        .filter(Team.status == TEAM_ACTIVE, Album.is_hidden.is_(False), Album.photos.any())
++        Album.query.outerjoin(Team, Album.team_id == Team.id)
++        .filter(or_(Album.team_id.is_(None), Team.status == TEAM_ACTIVE),
++                Album.is_hidden.is_(False), Album.photos.any())
+         .order_by(Album.event_date.desc(), Album.id.desc())
+     )
+     total = query.count()
+@@ -330,11 +372,11 @@ def gallery_index():
+         cover = album_cover(album)
+         cards.append({
+             "title": album.title,
+-            "team_label": u_label(album.team, season_end),
++            "team_label": u_label(album.team, season_end) if album.team else "Всички отбори",
+             "date_text": bg_date(album.event_date),
+             "count": len(album.photos),
+             "cover": photo_urls(cover)[1],
+-            "url": f"/teams/{album.team.slug}/albums/{album.id}",
++            "url": f"/teams/{album.team.slug}/albums/{album.id}" if album.team else f"/gallery/{album.id}",
+         })
+     return render_template(
+         "gallery_page.html",
+diff --git a/backend/app/templates/album_page.html b/backend/app/templates/album_page.html
+index 1dcc642..7647bca 100644
+--- a/backend/app/templates/album_page.html
++++ b/backend/app/templates/album_page.html
+@@ -1,7 +1,7 @@
+ {% extends "news_base.html" %}
+ {% block head %}
+ {% if album %}
+-  <title>{{ album.title }} — {{ team.u_label }} | Футболна Академия Герман</title>
++  <title>{{ album.title }}{% if team %} — {{ team.u_label }}{% endif %} | Футболна Академия Герман</title>
+   {# Снимките на деца не се индексират от търсачките #}
+   <meta name="robots" content="noindex, nofollow">
+   <link rel="canonical" href="{{ page_url }}">
+@@ -12,11 +12,11 @@
+ {% endblock %}
+ {% block styles %}  <link rel="stylesheet" href="/teams.css">
+   <link rel="stylesheet" href="/gallery.css">{% endblock %}
+-{% block nav %}{% if team %}<a href="/teams/{{ team.slug }}#gallery">← {{ team.u_label }}</a>{% else %}<a href="/#teams">← Всички отбори</a>{% endif %}{% endblock %}
++{% block nav %}{% if team %}<a href="/teams/{{ team.slug }}#gallery">← {{ team.u_label }}</a>{% elif general %}<a href="/gallery">← Галерия</a>{% else %}<a href="/#teams">← Всички отбори</a>{% endif %}{% endblock %}
+ {% block main %}
+ {% if album %}
+     <section class="container album-head">
+-      <div class="eyebrow green">{{ team.u_label }} · {{ album.date_text }}</div>
++      <div class="eyebrow green">{% if team %}{{ team.u_label }}{% else %}ГАЛЕРИЯ{% endif %} · {{ album.date_text }}</div>
+       <h1>{{ album.title }}</h1>
+     </section>
+     <section class="container album-photos">
+diff --git a/frontend/admin-gallery.js b/frontend/admin-gallery.js
+index 1cfc338..23a2509 100644
+--- a/frontend/admin-gallery.js
++++ b/frontend/admin-gallery.js
+@@ -1,10 +1,15 @@
+ // Админ: галерия на отбор (албуми със снимки + YouTube клипове).
+ // Показва се в панела на отбор (admin-teams.html?team=<id>).
+ (function () {
++  const section = document.getElementById('gallerySection');
++  if (!section) return;
++  // data-scope="general": общи албуми без отбор (страница „Новини“); иначе албуми на отбора от ?team=<id>
++  const general = section.dataset.scope === 'general';
+   const teamParam = new URLSearchParams(location.search).get('team');
+   const teamId = /^\d+$/.test(teamParam || '') ? Number(teamParam) : null;
+-  const section = document.getElementById('gallerySection');
+-  if (!teamId || !section) return;
++  if (!general && !teamId) return;
++  const LIST_URL = general ? '/api/admin/gallery/general' : `/api/admin/teams/${teamId}/gallery`;
++  const CREATE_URL = general ? '/api/admin/gallery/albums' : `/api/admin/teams/${teamId}/albums`;
+ 
+   const $ = (sel) => section.querySelector(sel);
+   const statusEl = $('#galStatus');
+@@ -99,10 +104,10 @@
+   }
+ 
+   async function reloadAll() {
+-    const { res, data } = await api(`/api/admin/teams/${teamId}/gallery`);
++    const { res, data } = await api(LIST_URL);
+     if (!res.ok || !data.ok) throw new Error('api');
+     albums = data.albums;
+-    videos = data.videos;
++    videos = data.videos || [];
+   }
+ 
+   async function refresh() {
+@@ -256,7 +261,7 @@
+         if (res.status === 409) {
+           // Албумът се напълни: тази и всички следващи снимки се пропускат (неуспелите по-рано не заемат място).
+           line.className = 'err';
+-          line.textContent = `${file.name}: албумът е пълен (максимум 28 снимки) — пропусната.`;
++          line.textContent = `${file.name}: ${data.error || 'албумът е пълен'} — пропусната.`;
+           failed++;
+           for (const rest of files.slice(i + 1)) {
+             progress.append(el('div', 'err', `${rest.name}: албумът е пълен — пропусната.`));
+@@ -282,7 +287,7 @@
+ 
+   $('#albumCreateBtn').addEventListener('click', async () => {
+     const form = $('#albumForm');
+-    const { res, data } = await api(`/api/admin/teams/${teamId}/albums`, {
++    const { res, data } = await api(CREATE_URL, {
+       method: 'POST',
+       body: JSON.stringify({ title: $('#al-title').value, event_date: $('#al-date').value || todayIso() })
+     });
+@@ -301,6 +306,7 @@
+ 
+   // ----------------------------------------------------------- videos ---
+   function renderVideos() {
++    if (!videoList) return;
+     videoList.textContent = '';
+     if (!videos.length) {
+       videoList.append(el('p', 'user-hint', 'Още няма добавени клипове.'));
+@@ -324,7 +330,7 @@
+     });
+   }
+ 
+-  $('#videoAddBtn').addEventListener('click', async () => {
++  if ($('#videoAddBtn')) $('#videoAddBtn').addEventListener('click', async () => {
+     const form = $('#videoForm');
+     const { res, data } = await api(`/api/admin/teams/${teamId}/videos`, {
+       method: 'POST',
+@@ -342,7 +348,7 @@
+     flash('Клипът е добавен ✓');
+   });
+ 
+-  [$('#albumForm'), $('#videoForm')].forEach(f => f.addEventListener('submit', e => e.preventDefault()));
++  [$('#albumForm'), $('#videoForm')].filter(Boolean).forEach(f => f.addEventListener('submit', e => e.preventDefault()));
+ 
+   // ------------------------------------------------------------- start ---
+   $('#al-date').value = todayIso();
+diff --git a/frontend/admin-news.html b/frontend/admin-news.html
+index 202ad08..fd03fcd 100644
+--- a/frontend/admin-news.html
++++ b/frontend/admin-news.html
+@@ -38,6 +38,7 @@
+         </div>
+         <div class="toolbar-actions">
+           <button id="refreshBtn" class="btn btn-outline" type="button">Опресни ↻</button>
++          <button id="galleryBtn" class="btn btn-outline" type="button">🖼 Галерия</button>
+           <button id="newBtn" class="btn btn-primary" type="button">+ Нова статия</button>
+         </div>
+       </div>
+@@ -58,6 +59,41 @@
+       </div>
+     </section>
+ 
++    <!-- ===== Общи албуми (смесени снимки на отбори) — показват се в /gallery ===== -->
++    <section id="galleryView" hidden>
++      <div class="admin-toolbar">
++        <div>
++          <h1>Галерия</h1>
++          <div id="galStatus" class="admin-status" aria-live="polite"></div>
++        </div>
++        <div class="toolbar-actions">
++          <a class="btn btn-outline" href="/gallery" target="_blank" rel="noopener">Виж общата галерия ↗</a>
++          <button id="galleryBackBtn" class="btn btn-outline" type="button">← Към новините</button>
++        </div>
++      </div>
++
++      <section id="gallerySection" class="gallery-admin" data-scope="general" hidden>
++        <div class="gal-block">
++          <h3>Общи албуми</h3>
++          <p class="user-hint">Тук се качват смесени снимки от различни отбори като един албум. Албумите се показват в общата галерия на сайта (/gallery). Албумите на отделен отбор се правят от панела на отбора.</p>
++          <form id="albumForm" class="gal-form" novalidate>
++            <div class="field grow">
++              <label for="al-title">Нова галерия — заглавие *</label>
++              <input id="al-title" maxlength="80" autocomplete="off" placeholder="напр. Турнир Ботев — всички отбори">
++              <div class="field-error" data-error-for="title"></div>
++            </div>
++            <div class="field">
++              <label for="al-date">Дата на събитието</label>
++              <input id="al-date" type="date">
++              <div class="field-error" data-error-for="event_date"></div>
++            </div>
++            <button id="albumCreateBtn" class="btn btn-primary" type="button">+ Добави галерия</button>
++          </form>
++          <div id="albumList" class="album-list"></div>
++        </div>
++      </section>
++    </section>
++
+     <!-- ===== Редактор ===== -->
+     <section id="editorView" hidden>
+       <div class="admin-toolbar">
+@@ -157,5 +193,6 @@
+ 
+   <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+   <script src="admin-news.js"></script>
++  <script src="admin-gallery.js"></script>
+ </body>
+ </html>
+diff --git a/frontend/admin-news.js b/frontend/admin-news.js
+index d06b826..2ffbb0a 100644
+--- a/frontend/admin-news.js
++++ b/frontend/admin-news.js
+@@ -384,4 +384,16 @@ document.addEventListener('click', (e) => {
+ });
+ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeEmojiPanel(); });
+ 
++// ------------------------------------------------- общи албуми (Галерия) ---
++const galleryView = $('#galleryView');
++function showGallery(on) {
++  listView.hidden = on;
++  galleryView.hidden = !on;
++  history.replaceState(null, '', on ? '#gallery' : location.pathname + location.search);
++  window.scrollTo(0, 0);
++}
++$('#galleryBtn').addEventListener('click', () => showGallery(true));
++$('#galleryBackBtn').addEventListener('click', () => showGallery(false));
++if (location.hash === '#gallery') showGallery(true);
++
+ loadPosts();

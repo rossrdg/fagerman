@@ -100,7 +100,55 @@ async function loadTeams(){
     grid.append(newsEl('p','team-empty','Отборите не могат да се заредят в момента. Опитайте отново по-късно.'));
   }
 }
+// ---- Партньори: логата идват от /api/sponsors, при клик се отваря pop-up с текста ----
+async function loadSponsors(){
+  const section=document.querySelector('#partners');
+  const grid=document.querySelector('#partnerGrid');
+  const modal=document.querySelector('#sponsorModal');
+  if(!section||!grid||!modal)return;
+  let opener=null;
+
+  function closeModal(){
+    modal.classList.remove('open');modal.setAttribute('aria-hidden','true');
+    if(opener)opener.focus();
+  }
+  function openModal(s,trigger){
+    opener=trigger;
+    const logo=modal.querySelector('#sponsorLogo');
+    logo.src=s.logo;logo.alt=s.name;
+    modal.querySelector('#sponsorTitle').textContent=s.headline||s.name;
+    const text=modal.querySelector('#sponsorText');
+    text.textContent='';
+    s.body.split(/\n\s*\n/).filter(p=>p.trim()).forEach(p=>text.append(newsEl('p','',p.trim())));
+    const link=modal.querySelector('#sponsorLink');
+    link.hidden=!s.website;
+    if(s.website)link.href=s.website;
+    modal.classList.add('open');modal.setAttribute('aria-hidden','false');
+    modal.querySelector('.modal-close').focus();
+  }
+  modal.querySelector('.modal-close').addEventListener('click',closeModal);
+  modal.querySelector('.modal-backdrop').addEventListener('click',closeModal);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal.classList.contains('open'))closeModal()});
+
+  try{
+    const res=await fetch('/api/sponsors');
+    const data=await res.json();
+    if(!res.ok||!data.ok||!data.sponsors.length)return;
+    data.sponsors.forEach(s=>{
+      const card=newsEl('button','partner-card');
+      card.type='button';
+      card.setAttribute('aria-label',s.name+' — повече информация');
+      const img=document.createElement('img');
+      img.src=s.logo;img.alt=s.name;img.loading='lazy';
+      card.append(img);
+      card.addEventListener('click',()=>openModal(s,card));
+      grid.append(card);
+    });
+    section.hidden=false;
+  }catch(err){/* секцията остава скрита */}
+}
 loadNews();
+loadSponsors();
 // ---- Снимка на главния треньор (от профила му в админа); без снимка остава placeholder-ът ----
 async function loadHeadCoach(){
   const box=document.querySelector('#headCoachPhoto');
