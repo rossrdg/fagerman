@@ -1,10 +1,15 @@
 // Админ: галерия на отбор (албуми със снимки + YouTube клипове).
 // Показва се в панела на отбор (admin-teams.html?team=<id>).
 (function () {
+  const section = document.getElementById('gallerySection');
+  if (!section) return;
+  // data-scope="general": общи албуми без отбор (страница „Новини“); иначе албуми на отбора от ?team=<id>
+  const general = section.dataset.scope === 'general';
   const teamParam = new URLSearchParams(location.search).get('team');
   const teamId = /^\d+$/.test(teamParam || '') ? Number(teamParam) : null;
-  const section = document.getElementById('gallerySection');
-  if (!teamId || !section) return;
+  if (!general && !teamId) return;
+  const LIST_URL = general ? '/api/admin/gallery/general' : `/api/admin/teams/${teamId}/gallery`;
+  const CREATE_URL = general ? '/api/admin/gallery/albums' : `/api/admin/teams/${teamId}/albums`;
 
   const $ = (sel) => section.querySelector(sel);
   const statusEl = $('#galStatus');
@@ -99,10 +104,10 @@
   }
 
   async function reloadAll() {
-    const { res, data } = await api(`/api/admin/teams/${teamId}/gallery`);
+    const { res, data } = await api(LIST_URL);
     if (!res.ok || !data.ok) throw new Error('api');
     albums = data.albums;
-    videos = data.videos;
+    videos = data.videos || [];
   }
 
   async function refresh() {
@@ -256,7 +261,7 @@
         if (res.status === 409) {
           // Албумът се напълни: тази и всички следващи снимки се пропускат (неуспелите по-рано не заемат място).
           line.className = 'err';
-          line.textContent = `${file.name}: албумът е пълен (максимум 28 снимки) — пропусната.`;
+          line.textContent = `${file.name}: ${data.error || 'албумът е пълен'} — пропусната.`;
           failed++;
           for (const rest of files.slice(i + 1)) {
             progress.append(el('div', 'err', `${rest.name}: албумът е пълен — пропусната.`));
@@ -282,7 +287,7 @@
 
   $('#albumCreateBtn').addEventListener('click', async () => {
     const form = $('#albumForm');
-    const { res, data } = await api(`/api/admin/teams/${teamId}/albums`, {
+    const { res, data } = await api(CREATE_URL, {
       method: 'POST',
       body: JSON.stringify({ title: $('#al-title').value, event_date: $('#al-date').value || todayIso() })
     });
@@ -301,6 +306,7 @@
 
   // ----------------------------------------------------------- videos ---
   function renderVideos() {
+    if (!videoList) return;
     videoList.textContent = '';
     if (!videos.length) {
       videoList.append(el('p', 'user-hint', 'Още няма добавени клипове.'));
@@ -324,7 +330,7 @@
     });
   }
 
-  $('#videoAddBtn').addEventListener('click', async () => {
+  if ($('#videoAddBtn')) $('#videoAddBtn').addEventListener('click', async () => {
     const form = $('#videoForm');
     const { res, data } = await api(`/api/admin/teams/${teamId}/videos`, {
       method: 'POST',
@@ -342,7 +348,7 @@
     flash('Клипът е добавен ✓');
   });
 
-  [$('#albumForm'), $('#videoForm')].forEach(f => f.addEventListener('submit', e => e.preventDefault()));
+  [$('#albumForm'), $('#videoForm')].filter(Boolean).forEach(f => f.addEventListener('submit', e => e.preventDefault()));
 
   // ------------------------------------------------------------- start ---
   $('#al-date').value = todayIso();

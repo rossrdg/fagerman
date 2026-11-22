@@ -38,6 +38,7 @@
         </div>
         <div class="toolbar-actions">
           <button id="refreshBtn" class="btn btn-outline" type="button">Опресни ↻</button>
+          <button id="galleryBtn" class="btn btn-outline" type="button">🖼 Галерия</button>
           <button id="newBtn" class="btn btn-primary" type="button">+ Нова статия</button>
         </div>
       </div>
@@ -56,6 +57,41 @@
           <tbody id="postsBody"></tbody>
         </table>
       </div>
+    </section>
+
+    <!-- ===== Общи албуми (смесени снимки на отбори) — показват се в /gallery ===== -->
+    <section id="galleryView" hidden>
+      <div class="admin-toolbar">
+        <div>
+          <h1>Галерия</h1>
+          <div id="galStatus" class="admin-status" aria-live="polite"></div>
+        </div>
+        <div class="toolbar-actions">
+          <a class="btn btn-outline" href="/gallery" target="_blank" rel="noopener">Виж общата галерия ↗</a>
+          <button id="galleryBackBtn" class="btn btn-outline" type="button">← Към новините</button>
+        </div>
+      </div>
+
+      <section id="gallerySection" class="gallery-admin" data-scope="general" hidden>
+        <div class="gal-block">
+          <h3>Общи албуми</h3>
+          <p class="user-hint">Тук се качват смесени снимки от различни отбори като един албум. Албумите се показват в общата галерия на сайта (/gallery). Албумите на отделен отбор се правят от панела на отбора.</p>
+          <form id="albumForm" class="gal-form" novalidate>
+            <div class="field grow">
+              <label for="al-title">Нова галерия — заглавие *</label>
+              <input id="al-title" maxlength="80" autocomplete="off" placeholder="напр. Турнир Ботев — всички отбори">
+              <div class="field-error" data-error-for="title"></div>
+            </div>
+            <div class="field">
+              <label for="al-date">Дата на събитието</label>
+              <input id="al-date" type="date">
+              <div class="field-error" data-error-for="event_date"></div>
+            </div>
+            <button id="albumCreateBtn" class="btn btn-primary" type="button">+ Добави галерия</button>
+          </form>
+          <div id="albumList" class="album-list"></div>
+        </div>
+      </section>
     </section>
 
     <!-- ===== Редактор ===== -->
@@ -157,5 +193,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
   <script src="admin-news.js"></script>
+  <script src="admin-gallery.js"></script>
 </body>
 </html>

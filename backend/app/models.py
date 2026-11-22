@@ -233,12 +233,13 @@ class TrainingSlot(db.Model):
 
 # ---------------------------------------------------------------- gallery ---
 class Album(db.Model):
-    """Албум със снимки от събитие (турнир, мач, тренировка) на един отбор."""
+    """Албум със снимки от събитие (турнир, мач, тренировка) на един отбор — или общ албум без отбор."""
 
     __tablename__ = "albums"
 
     id = db.Column(db.Integer, primary_key=True)
-    team_id = db.Column(db.Integer, db.ForeignKey("teams.id", ondelete="CASCADE"), nullable=False, index=True)
+    # NULL = общ албум със смесени снимки от различни отбори (показва се само в /gallery)
+    team_id = db.Column(db.Integer, db.ForeignKey("teams.id", ondelete="CASCADE"), nullable=True, index=True)
     title = db.Column(db.String(80), nullable=False)
     event_date = db.Column(db.Date, nullable=False)
     is_hidden = db.Column(db.Boolean, nullable=False, default=False, server_default="0")

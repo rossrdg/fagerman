@@ -23,7 +23,9 @@ function newsCard(post,i){
   media.href=href;media.setAttribute('aria-label',post.title);
   if(post.cover_image){
     const img=document.createElement('img');
-    img.src=post.cover_thumb||post.cover_image;img.alt='';img.loading='lazy';
+    const src=post.cover_thumb||post.cover_image;
+    img.src=src;img.alt='';img.loading='lazy';
+    media.classList.add('has-cover');media.style.setProperty('--cover','url("'+src.replace(/["\\]/g,'')+'")');
     media.append(img);
   }else{media.textContent='FA'}
 

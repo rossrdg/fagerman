@@ -384,4 +384,16 @@ document.addEventListener('click', (e) => {
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeEmojiPanel(); });
 
+// ------------------------------------------------- общи албуми (Галерия) ---
+const galleryView = $('#galleryView');
+function showGallery(on) {
+  listView.hidden = on;
+  galleryView.hidden = !on;
+  history.replaceState(null, '', on ? '#gallery' : location.pathname + location.search);
+  window.scrollTo(0, 0);
+}
+$('#galleryBtn').addEventListener('click', () => showGallery(true));
+$('#galleryBackBtn').addEventListener('click', () => showGallery(false));
+if (location.hash === '#gallery') showGallery(true);
+
 loadPosts();

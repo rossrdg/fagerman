@@ -22,7 +22,7 @@
       <div class="news-grid">
         {% for p in posts %}
         <article class="news-card">
-          <a class="news-img n{{ (loop.index0 % 3) + 1 }}" href="{{ p.url }}" aria-label="{{ p.title }}">{% if p.cover_thumb %}<img src="{{ p.cover_thumb }}" alt="" loading="lazy">{% else %}FA{% endif %}</a>
+          <a class="news-img n{{ (loop.index0 % 3) + 1 }}{% if p.cover_thumb %} has-cover{% endif %}"{% if p.cover_thumb %} style="--cover:url('{{ p.cover_thumb }}')"{% endif %} href="{{ p.url }}" aria-label="{{ p.title }}">{% if p.cover_thumb %}<img src="{{ p.cover_thumb }}" alt="" loading="lazy">{% else %}FA{% endif %}</a>
           <div class="news-body">
             <span>{{ [p.category, p.date]|select|join(' · ') or 'НОВИНИ' }}</span>
             <h3><a href="{{ p.url }}">{{ p.title }}</a></h3>

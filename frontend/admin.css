@@ -89,7 +89,7 @@
 /* Photos */
 .field.narrow{max-width:360px}
 .cover-box{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.cover-preview{width:200px;height:112px;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:#eef3f0}
+.cover-preview{width:200px;height:112px;object-fit:contain;border-radius:10px;border:1px solid var(--line);background:#eef3f0}
 .cover-actions{display:flex;gap:8px;flex-wrap:wrap}
 .editor-box .ql-editor img{max-width:100%;height:auto;border-radius:8px}
 

@@ -50,6 +50,44 @@ def _add_missing_team_columns():
             conn.execute(text("ALTER TABLE teams ADD COLUMN photo_name VARCHAR(20)"))
 
 
+def _make_album_team_optional():
+    """Общите албуми нямат отбор (albums.team_id е NULL). db.create_all() не сваля NOT NULL от
+    съществуваща таблица, затова колоната се преправя тук. Данните се запазват."""
+    from sqlalchemy import inspect, text
+
+    column = next(c for c in inspect(db.engine).get_columns("albums") if c["name"] == "team_id")
+    if column.get("nullable", True):
+        return
+    dialect = db.engine.dialect.name
+    if dialect == "sqlite":
+        # SQLite не може да смени колона на място: нова таблица -> копиране -> размяна.
+        with db.engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+            conn.execute(text("PRAGMA foreign_keys=OFF"))
+            conn.execute(text("BEGIN"))
+            try:
+                conn.execute(text(
+                    "CREATE TABLE albums__new (id INTEGER NOT NULL, team_id INTEGER, title VARCHAR(80) NOT NULL, "
+                    "event_date DATE NOT NULL, is_hidden BOOLEAN NOT NULL DEFAULT 0, cover_photo_id INTEGER, "
+                    "created_at DATETIME, updated_at DATETIME, PRIMARY KEY (id), "
+                    "FOREIGN KEY(team_id) REFERENCES teams (id) ON DELETE CASCADE)"))
+                conn.execute(text(
+                    "INSERT INTO albums__new (id, team_id, title, event_date, is_hidden, cover_photo_id, created_at, updated_at) "
+                    "SELECT id, team_id, title, event_date, is_hidden, cover_photo_id, created_at, updated_at FROM albums"))
+                conn.execute(text("DROP TABLE albums"))
+                conn.execute(text("ALTER TABLE albums__new RENAME TO albums"))
+                conn.execute(text("CREATE INDEX ix_albums_team_id ON albums (team_id)"))
+                conn.execute(text("COMMIT"))
+            except Exception:
+                conn.execute(text("ROLLBACK"))
+                raise
+    elif dialect in ("mysql", "mariadb"):
+        with db.engine.begin() as conn:
+            conn.execute(text("ALTER TABLE albums MODIFY team_id INTEGER NULL"))
+    elif dialect == "postgresql":
+        with db.engine.begin() as conn:
+            conn.execute(text("ALTER TABLE albums ALTER COLUMN team_id DROP NOT NULL"))
+
+
 def create_app(config_object="config.Config"):
     """Application factory. Keeps setup in one place so we can add
     blueprints (news, teams, auth, ...) here as the project grows."""
@@ -159,6 +197,7 @@ def create_app(config_object="config.Config"):
         _add_missing_registration_columns()
         _add_missing_announcement_columns()
         _add_missing_team_columns()
+        _make_album_team_optional()
         from app.schedule_utils import migrate_label_slots_to_groups
 
         migrate_label_slots_to_groups()  # стари слотове „Вратари — …“ -> групи

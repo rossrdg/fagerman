@@ -1,8 +1,11 @@
 """Галерия на отбор: албуми със снимки + YouTube клипове.
 
-Публично:  GET /teams/<slug>/albums/<id>        страница на албум (без индексиране)
+Публично:  GET /teams/<slug>/albums/<id>        страница на албум на отбор (без индексиране)
+           GET /gallery/<id>                    страница на общ албум (смесени снимки, без отбор)
 Админ:     GET    /api/admin/teams/<id>/gallery            албуми + клипове на отбора
-           POST   /api/admin/teams/<id>/albums             нов албум
+           POST   /api/admin/teams/<id>/albums             нов албум на отбор
+           GET    /api/admin/gallery/general               общите албуми (без отбор), показват се в /gallery
+           POST   /api/admin/gallery/albums                нов общ албум
            GET    /api/admin/albums/<id>                   албум със снимките му
            PATCH  /api/admin/albums/<id>                   заглавие, дата, скрит, корица
            DELETE /api/admin/albums/<id>                   изтрива албума и файловете
@@ -17,6 +20,7 @@ from datetime import date
 
 from flask import Blueprint, current_app, jsonify, render_template, request
 from PIL import Image, UnidentifiedImageError
+from sqlalchemy import or_
 from sqlalchemy.orm import joinedload, selectinload
 
 from app import db
@@ -36,6 +40,7 @@ admin_gallery_bp.before_request(check_admin)  # собственик или тр
 
 MAX_TITLE = 80
 MAX_PHOTOS_PER_ALBUM = 28
+MAX_PHOTOS_GENERAL = 60  # общите албуми са смесени и по-големи
 MIN_YEAR = 2020
 
 
@@ -56,6 +61,10 @@ def _parse_date(value):
     return parsed if parsed.year >= MIN_YEAR else None
 
 
+def _max_photos(album):
+    return MAX_PHOTOS_GENERAL if album.team_id is None else MAX_PHOTOS_PER_ALBUM
+
+
 def photo_dict(photo, album):
     main, thumb = photo_urls(photo)
     return {
@@ -71,7 +80,7 @@ def album_dict(album, with_photos=False):
     data = {
         "id": album.id, "team_id": album.team_id, "title": album.title,
         "event_date": album.event_date.isoformat(), "date_text": bg_date(album.event_date),
-        "is_hidden": album.is_hidden, "photo_count": len(album.photos), "max_photos": MAX_PHOTOS_PER_ALBUM,
+        "is_hidden": album.is_hidden, "photo_count": len(album.photos), "max_photos": _max_photos(album),
         "cover_thumb": photo_urls(cover)[1] if cover else None,
     }
     if with_photos:
@@ -107,7 +116,34 @@ def album_page(slug, album_id):
     )
 
 
+@page_bp.get("/gallery/<int:album_id>")
+def general_album_page(album_id):
+    """Общ албум (без отбор) със смесени снимки."""
+    album = db.session.get(Album, album_id)
+    if album is None or album.team_id is not None or album.is_hidden or not album.photos:
+        return render_template("album_page.html", album=None, general=True), 404
+    photos = [{"url": photo_urls(p)[0], "thumb": photo_urls(p)[1], "code": p.code} for p in album.photos]
+    return render_template(
+        "album_page.html",
+        album={"title": album.title, "date_text": bg_date(album.event_date), "photos": photos},
+        team=None, general=True,
+        page_url=_absolute(f"/gallery/{album.id}"),
+        image_url=_absolute(DEFAULT_SHARE_IMAGE),
+    )
+
+
 # ----------------------------------------------------------------- admin ---
+@admin_gallery_bp.get("/admin/gallery/general")
+def admin_general_gallery():
+    albums = Album.query.filter(Album.team_id.is_(None)).order_by(Album.event_date.desc(), Album.id.desc()).all()
+    return jsonify({"ok": True, "albums": [album_dict(a) for a in albums], "videos": []})
+
+
+@admin_gallery_bp.post("/admin/gallery/albums")
+def admin_create_general_album():
+    return _create_album(None)
+
+
 @admin_gallery_bp.get("/admin/teams/<int:team_id>/gallery")
 def admin_gallery(team_id):
     team = db.session.get(Team, team_id)
@@ -123,6 +159,11 @@ def admin_create_album(team_id):
     team = db.session.get(Team, team_id)
     if team is None:
         return _error("Отборът не е намерен.", 404)
+    return _create_album(team)
+
+
+def _create_album(team):
+    """Нов албум на отбор (team) или общ албум без отбор (team=None)."""
     data = request.get_json(silent=True)
     if not isinstance(data, dict):
         return _error("Невалидна заявка.")
@@ -140,7 +181,7 @@ def admin_create_album(team_id):
     if errors:
         return jsonify({"ok": False, "errors": errors}), 400
 
-    album = Album(team_id=team.id, title=title, event_date=event_date)
+    album = Album(team_id=team.id if team else None, title=title, event_date=event_date)
     db.session.add(album)
     db.session.commit()
     return jsonify({"ok": True, "album": album_dict(album, with_photos=True)}), 201
@@ -215,8 +256,8 @@ def admin_add_photo(album_id):
     album = db.session.get(Album, album_id)
     if album is None:
         return _error("Албумът не е намерен.", 404)
-    if len(album.photos) >= MAX_PHOTOS_PER_ALBUM:
-        return _error(f"Албумът е пълен — максимум {MAX_PHOTOS_PER_ALBUM} снимки. Създайте нов албум.", 409)
+    if len(album.photos) >= _max_photos(album):
+        return _error(f"Албумът е пълен — максимум {_max_photos(album)} снимки. Създайте нов албум.", 409)
     file = request.files.get("image")
     if file is None or not file.filename:
         return _error("Не е избран файл.")
@@ -313,8 +354,9 @@ def gallery_index():
     """Всички видими албуми на всички активни отбори — най-новите събития първи."""
     season_end = get_season_end_year()
     query = (
-        Album.query.join(Team, Album.team_id == Team.id)
-        .filter(Team.status == TEAM_ACTIVE, Album.is_hidden.is_(False), Album.photos.any())
+        Album.query.outerjoin(Team, Album.team_id == Team.id)
+        .filter(or_(Album.team_id.is_(None), Team.status == TEAM_ACTIVE),
+                Album.is_hidden.is_(False), Album.photos.any())
         .order_by(Album.event_date.desc(), Album.id.desc())
     )
     total = query.count()
@@ -330,11 +372,11 @@ def gallery_index():
         cover = album_cover(album)
         cards.append({
             "title": album.title,
-            "team_label": u_label(album.team, season_end),
+            "team_label": u_label(album.team, season_end) if album.team else "Всички отбори",
             "date_text": bg_date(album.event_date),
             "count": len(album.photos),
             "cover": photo_urls(cover)[1],
-            "url": f"/teams/{album.team.slug}/albums/{album.id}",
+            "url": f"/teams/{album.team.slug}/albums/{album.id}" if album.team else f"/gallery/{album.id}",
         })
     return render_template(
         "gallery_page.html",
