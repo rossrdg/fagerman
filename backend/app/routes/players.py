@@ -6,14 +6,14 @@
   PATCH  /api/admin/players/<id>                  редакция
   POST   /api/admin/players/<id>/new-password     нова временна парола на родителя (+ имейл)
   POST   /api/admin/players/<id>/archive|restore
-  DELETE /api/admin/players/<id>                  архивира; ?forever=1 — истинско изтриване (само главен админ, само архивиран)
+  DELETE /api/admin/players/<id>                  архивира; ?forever=1 — истинско изтриване (главен админ и главен треньор, само архивиран)
   GET    /api/admin/registrations/<id>/prefill    данни от запитването за формата „Създай профил“
 
 Права: главен админ и главен треньор създават/редактират. Обикновен треньор вижда САМО играчите
 на отборите си (от профила му), само за четене, без родителски данни, бележки и такси."""
 from datetime import date
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, current_app, jsonify, request
 
 from app import db
 from app.auth import check_admin, current_user
@@ -416,18 +416,19 @@ def restore_player(player_id):
 
 @admin_players_bp.delete("/admin/players/<int:player_id>")
 def delete_player(player_id):
-    """Без ?forever=1 само архивира. Истинско изтриване — само главен админ и само за архивиран профил."""
+    """Без ?forever=1 само архивира. Истинско изтриване — главен админ и главен треньор, само за архивиран профил."""
     if request.args.get("forever") != "1":
         return archive_player(player_id)
     user = current_user()
-    if not user.is_owner:
-        return _error("Истинско изтриване прави само главният администратор.", 403)
+    if not (user.is_owner or user.is_head_coach):
+        return _error("Истинско изтриване прави само главният админ и главният треньор.", 403)
     player = db.session.get(Player, player_id)
     if player is None:
         return _error("Профилът не е намерен.", 404)
     if not player.archived:
         return _error("Първо архивирайте профила.", 409)
     parent = player.parent
+    current_app.logger.warning("Профил на футболист № %s изтрит завинаги от %s.", player.id, user.username)
     for registration in Registration.query.filter_by(player_id=player.id).all():
         registration.player_id = None
     names = purge_files(player.documents)

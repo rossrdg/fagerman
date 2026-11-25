@@ -81,6 +81,21 @@ function renderChips() {
   });
 }
 
+function canDelete() {
+  const role = window.adminUser && window.adminUser.role;
+  return role === 'owner' || role === 'head_coach';
+}
+
+async function deleteOrder(o) {
+  if (!confirm(`Да се изтрие ли поръчка № ${o.number} от ${o.customer_name}?\n\nИзтриват се и личните данни на клиента. Това не може да се върне.`)) return;
+  const { res, data } = await api(`${API}/${o.id}`, { method: 'DELETE' });
+  if (!res.ok) { flash(data.error || 'Не е изтрита.', true); return; }
+  open.delete(o.id);
+  flash('Поръчката е изтрита.');
+  await load();
+  if (window.refreshOrdersBadge) window.refreshOrdersBadge();
+}
+
 // ----------------------------------------------------------- карта ---
 function personalText(i) {
   const parts = [];
@@ -143,7 +158,16 @@ function buildCard(o) {
     if (window.refreshOrdersBadge) window.refreshOrdersBadge();
     flash('Статусът е променен: ' + STATUS_LABEL[data.order.status] + '.');
   });
-  head.appendChild(select);
+  const statusBox = el('div', 'order-status-box');
+  statusBox.appendChild(select);
+  if (canDelete()) {
+    const del = el('button', 'btn btn-outline btn-sm btn-danger-text order-delete', 'Изтрий');
+    del.type = 'button';
+    del.setAttribute('aria-label', 'Изтрий поръчка ' + o.number);
+    del.addEventListener('click', (e) => { e.stopPropagation(); deleteOrder(o); });
+    statusBox.appendChild(del);
+  }
+  head.appendChild(statusBox);
 
   const toggle = el('button', 'order-toggle', '▾');
   toggle.type = 'button';
@@ -238,23 +262,6 @@ function buildCard(o) {
   note.appendChild(actions);
   body.appendChild(note);
 
-  // --- изтриване (само главният админ)
-  if (window.adminUser && window.adminUser.role === 'owner') {
-    const foot = el('div', 'order-foot');
-    const del = el('button', 'btn btn-outline btn-sm btn-danger-text', 'Изтрий поръчката');
-    del.type = 'button';
-    del.addEventListener('click', async () => {
-      if (!confirm(`Да се изтрие ли поръчка № ${o.number} от ${o.customer_name}?\n\nИзтриват се и личните данни на клиента. Това не може да се върне.`)) return;
-      const { res, data } = await api(`${API}/${o.id}`, { method: 'DELETE' });
-      if (!res.ok) { flash(data.error || 'Не е изтрита.', true); return; }
-      open.delete(o.id);
-      flash('Поръчката е изтрита.');
-      await load();
-      if (window.refreshOrdersBadge) window.refreshOrdersBadge();
-    });
-    foot.appendChild(del);
-    body.appendChild(foot);
-  }
   card.appendChild(body);
   return card;
 }

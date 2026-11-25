@@ -157,6 +157,9 @@ function renderList() {
       tr.append(el('td', '', portalText(p)));
       const actions = el('td');
       const row = el('div', 'row-actions');
+      const role = window.adminUser && window.adminUser.role;
+      // Истинско изтриване: главен админ и главен треньор, само за архивиран профил (вляво от „Редактирай“)
+      if (p.archived && (role === 'owner' || role === 'head_coach')) row.append(btn('Изтрий', () => purge(p), true));
       row.append(btn('Редактирай', () => openForm(p)));
       if (!p.archived) {
         const docs = el('a', 'btn btn-outline btn-sm', 'Документи');
@@ -169,7 +172,6 @@ function renderList() {
         row.append(btn('Нова парола', () => newPassword(p)), btn('Архивирай', () => archive(p)));
       } else {
         row.append(btn('Възстанови', () => restore(p)));
-        if (window.adminUser && window.adminUser.role === 'owner') row.append(btn('Изтрий завинаги', () => purge(p), true));
       }
       actions.append(row);
       tr.append(actions);
@@ -352,7 +354,7 @@ async function restore(p) {
 }
 
 async function purge(p) {
-  if (!confirm(`Да изтрия ли профила на ${p.child_name} ЗАВИНАГИ? Това не може да се върне.`)) return;
+  if (!confirm(`Да изтрия ли профила на ${p.child_name} ЗАВИНАГИ?\n\nИзтриват се и всички качени документи, таксите и личните данни. Ако родителят няма други деца, се изтрива и акаунтът му. Това не може да се върне.`)) return;
   const { res, data } = await api(`${API}/${p.id}?forever=1`, { method: 'DELETE' });
   if (!res.ok || !data.ok) { flash(data.error || 'Неуспешно изтриване.', true); return; }
   await load();

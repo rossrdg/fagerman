@@ -15,7 +15,7 @@
         GET    /api/admin/shop/orders/summary         {"new": n} — нови поръчки (за значката в менюто)
         PATCH  /api/admin/shop/orders/<id>            {"status": ..., "admin_note": ...}
         POST   /api/admin/shop/orders/<id>/resend     {"to": "coach" | "customer"} — повторно изпращане на имейл
-        DELETE /api/admin/shop/orders/<id>            само главен админ (изтрива личните данни)
+        DELETE /api/admin/shop/orders/<id>            главен админ и главен треньор (изтрива личните данни)
 
 Админ — отчети (период по софийско време, дати във вид 2026-11-05; празно = без ограничение):
         GET    /api/admin/shop/reports/stats?from=&to=&scope=confirmed|all   оборот и най-продавани артикули
@@ -278,11 +278,13 @@ def resend_order_email(order_id):
 
 @admin_shop_bp.delete("/admin/shop/orders/<int:order_id>")
 def delete_order(order_id):
-    if not current_user().is_owner:
-        return _error("Поръчките се изтриват само от главния админ.", 403)
+    user = current_user()
+    if not (user.is_owner or user.is_head_coach):
+        return _error("Поръчките се изтриват само от главния админ и главния треньор.", 403)
     order = db.session.get(Order, order_id)
     if order is None:
         return _error("Поръчката не е намерена.", 404)
+    current_app.logger.info("Поръчка %s изтрита от %s.", order.number, user.username)
     db.session.delete(order)
     db.session.commit()
     return jsonify({"ok": True, "counts": _status_counts()})

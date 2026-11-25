@@ -38,6 +38,8 @@
 .order-date{font-size:12px;color:var(--muted);margin-top:2px}
 .order-who strong{display:block;font-size:14px}
 .order-who span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.order-status-box{display:grid;gap:8px;justify-items:stretch}
+.order-delete{width:100%}
 .order-total{font:800 17px Manrope,Inter,sans-serif;white-space:nowrap}
 .order-status{padding:8px 10px;border:1px solid var(--line);border-radius:9px;font:700 13px Inter,sans-serif;background:#fff;cursor:pointer}
 .order-toggle{width:34px;height:34px;border:1px solid var(--line);border-radius:9px;background:#fff;cursor:pointer;font-size:14px;transition:transform .2s}
@@ -68,7 +70,7 @@
   .order-head{grid-template-columns:1fr auto;gap:10px 14px}
   .order-who{grid-column:1/-1;order:3}
   .order-total{order:2;text-align:right}
-  .order-status{order:4}
+  .order-status-box{order:4}
   .order-toggle{order:5;justify-self:end}
   .order-tags{order:6}
   .order-grid{grid-template-columns:1fr}

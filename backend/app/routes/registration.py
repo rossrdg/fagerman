@@ -5,8 +5,8 @@ from flask import Blueprint, current_app, request, jsonify
 
 from app import db
 from app.mailer import MailError, build_trial_training_email, send_email
-from app.auth import admin_required
-from app.models import Registration
+from app.auth import admin_required, current_user
+from app.models import Player, Registration
 
 registration_bp = Blueprint("registration", __name__)
 
@@ -146,3 +146,23 @@ def notify_parent(registration_id):
         db.session.commit()
 
     return jsonify({"ok": True, "sent": sent, "registration": registration.to_dict()})
+
+
+@registration_bp.delete("/registration/<int:registration_id>")
+@admin_required
+def delete_registration(registration_id):
+    """Изтрива запитване за пробна тренировка (лични данни на дете и родител).
+    Само главен админ и главен треньор. Запитване, от което има създаден профил, не се трие:
+    то остава в историята на профила."""
+    user = current_user()
+    if not (user.is_owner or user.is_head_coach):
+        return jsonify({"ok": False, "error": "Записите се изтриват само от главния админ и главния треньор."}), 403
+    registration = db.session.get(Registration, registration_id)
+    if registration is None:
+        return jsonify({"ok": False, "error": "Записът не е намерен."}), 404
+    if registration.player_id and db.session.get(Player, registration.player_id) is not None:
+        return jsonify({"ok": False, "error": "За този запис има създаден профил на футболист. Първо изтрийте профила."}), 409
+    current_app.logger.info("Запис за пробна тренировка № %s изтрит от %s.", registration.id, user.username)
+    db.session.delete(registration)
+    db.session.commit()
+    return jsonify({"ok": True})

@@ -111,6 +111,6 @@ for page in ("parent-portal.html", "parent-change-password.html", "parent-login.
     code = pc.get("/" + page, follow_redirects=False).status_code
     exp = 302 if page == "admin-players.html" else 200
     ok(code == exp, f"страница {page}: {code}")
-ok(head.delete(f"/api/admin/players/{d['player']['id']}?forever=1", headers=H).status_code == 403, "главен треньор не изтрива завинаги")
-ok(owner.delete(f"/api/admin/players/{d['player']['id']}?forever=1", headers=O).status_code == 200, "главен админ изтрива завинаги")
+ok(head.delete(f"/api/admin/players/{d['player']['id']}?forever=1", headers=H).status_code == 200, "главен треньор изтрива архивиран профил завинаги")
+ok(owner.delete(f"/api/admin/players/{d2['player']['id']}?forever=1", headers=O).status_code == 200, "главен админ изтрива завинаги")
 print("ВСИЧКО МИНА")

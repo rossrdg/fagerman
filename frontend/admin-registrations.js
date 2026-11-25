@@ -54,8 +54,18 @@ function profileLink(r) {
   return `<a class="btn btn-primary btn-sm profile-link" href="admin-players.html?from=${r.id}">Създай профил</a>`;
 }
 
+function canDelete() {
+  const role = window.adminUser && window.adminUser.role;
+  return role === 'owner' || role === 'head_coach';
+}
+
+function deleteButton(r) {
+  if (!canDelete()) return '';
+  return '<button type="button" class="btn btn-outline btn-sm btn-danger-text js-delete reg-delete">Изтрий</button>';
+}
+
 function checkCellHtml(r) {
-  return `<input type="checkbox" class="js-processed" ${r.processed ? 'checked' : ''} aria-label="Записан">${notifiedBadge(r)}${profileLink(r)}`;
+  return `<input type="checkbox" class="js-processed" ${r.processed ? 'checked' : ''} aria-label="Записан">${notifiedBadge(r)}${profileLink(r)}${deleteButton(r)}`;
 }
 
 function rowHtml(r) {
@@ -161,6 +171,30 @@ tbody.addEventListener('change', async (e) => {
     flashStatus('Неуспешно запазване. Опитай пак.', true);
   } finally {
     inputs.forEach(i => (i.disabled = false));
+  }
+});
+
+// ---- Изтриване (главен админ и главен треньор) ----
+tbody.addEventListener('click', async (e) => {
+  const btn = e.target.closest('.js-delete');
+  const tr = e.target.closest('tr[data-id]');
+  if (!btn || !tr) return;
+  const id = Number(tr.dataset.id);
+  const record = registrations.find(r => r.id === id);
+  if (!record) return;
+  if (!confirm(`Да изтрия ли записа на „${record.child_name}“ (${record.parent_name})?\n\nИзтриват се и личните данни. Това не може да се върне.`)) return;
+
+  btn.disabled = true;
+  try {
+    const res = await fetch(`/api/registration/${id}`, { method: 'DELETE' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Неуспешно изтриване.');
+    registrations = registrations.filter(r => r.id !== id);
+    renderRows();
+    flashStatus('Записът е изтрит ✓');
+  } catch (err) {
+    btn.disabled = false;
+    flashStatus(err.message, true);
   }
 });
 

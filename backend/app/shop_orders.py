@@ -183,9 +183,11 @@ def create_order(customer, lines):
     prefix = f"{sofia_now():%d%m%y}"
     total = sum((l["unit"] + l["fee"]) * l["qty"] for l in lines)
     for _ in range(6):
-        count = Order.query.filter(Order.number.like(f"{prefix}-%")).count()
+        # По най-големия номер за деня, не по броя: след изтрита поръчка броят би дал вече заето число.
+        used = [int(n.rsplit("-", 1)[1]) for (n,) in Order.query.with_entities(Order.number)
+                .filter(Order.number.like(f"{prefix}-%")).all() if n.rsplit("-", 1)[1].isdigit()]
         order = Order(
-            number=f"{prefix}-{count + 1:03d}", customer_name=customer["name"], email=customer["email"],
+            number=f"{prefix}-{max(used, default=0) + 1:03d}", customer_name=customer["name"], email=customer["email"],
             phone=customer["phone"], delivery=customer["delivery"], address=customer["address"],
             total_cents=total, consent_at=utcnow(),
         )

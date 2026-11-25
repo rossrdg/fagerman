@@ -360,3 +360,6 @@
 
 /* Партньори */
 .sponsor-thumb{width:96px;height:64px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:8px;padding:4px;flex:none}
+
+/* Изтриване на запис за пробна тренировка */
+.reg-table td.check-cell .reg-delete{display:flex;margin:8px auto 0;white-space:nowrap}
